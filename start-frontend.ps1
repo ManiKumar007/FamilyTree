@@ -16,8 +16,8 @@ else {
 }
 
 Write-Host ""
-Write-Host "Starting MyFamilyTree Flutter App (Chrome)..." -ForegroundColor Green
+Write-Host "Starting MyFamilyTree Flutter App (Chrome on port 5500)..." -ForegroundColor Green
 Write-Host ""
 
 Set-Location app
-C:\src\flutter\bin\flutter.bat run -d chrome
+C:\src\flutter\bin\flutter.bat run -d chrome --web-port=5500

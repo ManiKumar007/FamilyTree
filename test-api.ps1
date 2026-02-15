@@ -17,7 +17,7 @@ catch {
 Write-Host "`n2. Testing CORS..." -ForegroundColor Yellow
 try {
     $response = Invoke-WebRequest -Uri http://localhost:3000/api/health `
-        -Headers @{"Origin" = "http://localhost:8080" } `
+        -Headers @{"Origin" = "http://localhost:5500" } `
         -UseBasicParsing
     $corsHeader = $response.Headers["Access-Control-Allow-Origin"]
     if ($corsHeader) {
@@ -25,7 +25,7 @@ try {
     }
     else {
         Write-Host "⚠️  CORS header not found" -ForegroundColor Yellow
-        Write-Host "   Check backend/.env has APP_URL=http://localhost:8080" -ForegroundColor Gray
+        Write-Host "   Check backend/.env has APP_URL=http://localhost:5500" -ForegroundColor Gray
     }
 }
 catch {

@@ -24,7 +24,7 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "=====================================" -ForegroundColor Green
     Write-Host "  App running at:" -ForegroundColor Green
-    Write-Host "  http://localhost:8080" -ForegroundColor Cyan
+    Write-Host "  http://localhost:5500" -ForegroundColor Cyan
     Write-Host "=====================================" -ForegroundColor Green
     Write-Host ""
     Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Gray
@@ -33,11 +33,11 @@ if ($LASTEXITCODE -eq 0) {
     # Serve the built files using Python (if available) or PHP
     if (Get-Command python -ErrorAction SilentlyContinue) {
         Set-Location build\web
-        python -m http.server 8080
+        python -m http.server 5500
     }
     elseif (Get-Command php -ErrorAction SilentlyContinue) {
         Set-Location build\web
-        php -S localhost:8080
+        php -S localhost:5500
     }
     else {
         Write-Host "Error: Neither Python nor PHP found." -ForegroundColor Red

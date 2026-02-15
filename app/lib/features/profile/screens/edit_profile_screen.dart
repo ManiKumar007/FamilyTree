@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../services/api_service.dart';
 import '../../../models/models.dart';
+import '../../../config/theme.dart';
+import '../../../widgets/common_widgets.dart';
+import '../../../widgets/image_upload_widget.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   final String personId;
@@ -16,6 +20,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   final _occupationController = TextEditingController();
@@ -24,8 +29,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   String _gender = 'male';
   String _maritalStatus = 'single';
   DateTime? _dateOfBirth;
+  DateTime? _weddingDate;
+  Person? _currentPerson;
+  XFile? _selectedImage;
+  String? _uploadedImageUrl;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isUploadingImage = false;
   String? _error;
 
   @override
@@ -38,8 +48,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final api = ref.read(apiServiceProvider);
       final person = await api.getPerson(widget.personId);
+      _currentPerson = person;
       _nameController.text = person.name;
       _phoneController.text = person.phone.replaceFirst('+91', '');
+      _emailController.text = person.email ?? '';
       _cityController.text = person.city ?? '';
       _stateController.text = person.state ?? '';
       _occupationController.text = person.occupation ?? '';
@@ -49,10 +61,49 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       if (person.dateOfBirth != null) {
         _dateOfBirth = DateTime.tryParse(person.dateOfBirth!);
       }
+      if (person.weddingDate != null) {
+        _weddingDate = DateTime.tryParse(person.weddingDate!);
+      }
     } catch (e) {
       _error = e.toString();
     }
     setState(() { _isLoading = false; });
+  }
+
+  Future<void> _handleImageSelected(XFile imageFile) async {
+    setState(() {
+      _selectedImage = imageFile;
+      _isUploadingImage = true;
+      _error = null;
+    });
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final imageUrl = await api.uploadProfileImage(widget.personId, imageFile);
+      setState(() {
+        _uploadedImageUrl = imageUrl;
+        _isUploadingImage = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image uploaded successfully!')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to upload image: $e';
+        _isUploadingImage = false;
+        _selectedImage = null;
+      });
+    }
+  }
+
+  Future<void> _handleImageRemoved() async {
+    setState(() {
+      _selectedImage = null;
+      _uploadedImageUrl = null;
+    });
   }
 
   Future<void> _save() async {
@@ -61,7 +112,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     try {
       final api = ref.read(apiServiceProvider);
-      await api.updatePerson(widget.personId, {
+      
+      final updateData = {
         'name': _nameController.text.trim(),
         'phone': '+91${_phoneController.text.trim()}',
         'gender': _gender,
@@ -71,12 +123,28 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'occupation': _occupationController.text.trim().isEmpty ? null : _occupationController.text.trim(),
         'community': _communityController.text.trim().isEmpty ? null : _communityController.text.trim(),
         'marital_status': _maritalStatus,
-      });
+        'wedding_date': _weddingDate?.toIso8601String().split('T')[0],
+      };
+
+      // Add email if provided
+      if (_emailController.text.trim().isNotEmpty) {
+        updateData['email'] = _emailController.text.trim();
+      }
+
+      // Add uploaded image URL if available
+      if (_uploadedImageUrl != null) {
+        updateData['photo_url'] = _uploadedImageUrl;
+      } else if (_selectedImage == null && _uploadedImageUrl == null) {
+        // User removed the image
+        updateData['photo_url'] = null;
+      }
+
+      await api.updatePerson(widget.personId, updateData);
 
       if (mounted) {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated!')),
+          const SnackBar(content: Text('Profile updated successfully!')),
         );
       }
     } catch (e) {
@@ -90,6 +158,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _cityController.dispose();
     _stateController.dispose();
     _occupationController.dispose();
@@ -107,100 +176,292 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Full Name *', prefixIcon: Icon(Icons.person)),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+      appBar: AppBar(
+        title: const Text('Edit Profile'),
+        actions: [
+          if (_isSaving)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(labelText: 'Phone *', prefixIcon: Icon(Icons.phone), prefixText: '+91 '),
-                    keyboardType: TextInputType.phone,
-                    validator: (v) => v == null || v.trim().length != 10 ? '10-digit number required' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: _gender,
-                    decoration: const InputDecoration(labelText: 'Gender', prefixIcon: Icon(Icons.wc)),
-                    items: const [
-                      DropdownMenuItem(value: 'male', child: Text('Male')),
-                      DropdownMenuItem(value: 'female', child: Text('Female')),
-                      DropdownMenuItem(value: 'other', child: Text('Other')),
-                    ],
-                    onChanged: (v) => setState(() { _gender = v!; }),
-                  ),
-                  const SizedBox(height: 16),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.cake),
-                    title: Text(_dateOfBirth == null
-                        ? 'Date of Birth'
-                        : '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}'),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final d = await showDatePicker(
-                        context: context,
-                        initialDate: _dateOfBirth ?? DateTime(1990),
-                        firstDate: DateTime(1920),
-                        lastDate: DateTime.now(),
-                      );
-                      if (d != null) setState(() { _dateOfBirth = d; });
-                    },
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Colors.grey[400]!),
+                ),
+              ),
+            ),
+        ],
+      ),
+      body: LoadingOverlay(
+        isLoading: _isUploadingImage,
+        message: 'Uploading image...',
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: AppSizing.maxFormWidth),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Profile Image Upload
+                    Center(
+                      child: ImageUploadWidget(
+                        currentImageUrl: _uploadedImageUrl ?? _currentPerson?.photoUrl,
+                        gender: _gender,
+                        onImageSelected: _handleImageSelected,
+                        onImageRemoved: _handleImageRemoved,
+                        size: AppSizing.avatarXl,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<String>(
-                    value: _maritalStatus,
-                    decoration: const InputDecoration(labelText: 'Marital Status', prefixIcon: Icon(Icons.favorite)),
-                    items: const [
-                      DropdownMenuItem(value: 'single', child: Text('Single')),
-                      DropdownMenuItem(value: 'married', child: Text('Married')),
-                      DropdownMenuItem(value: 'divorced', child: Text('Divorced')),
-                      DropdownMenuItem(value: 'widowed', child: Text('Widowed')),
-                    ],
-                    onChanged: (v) => setState(() { _maritalStatus = v!; }),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(children: [
-                    Expanded(child: TextFormField(controller: _cityController, decoration: const InputDecoration(labelText: 'City'))),
-                    const SizedBox(width: 12),
-                    Expanded(child: TextFormField(controller: _stateController, decoration: const InputDecoration(labelText: 'State'))),
-                  ]),
-                  const SizedBox(height: 16),
-                  TextFormField(controller: _occupationController, decoration: const InputDecoration(labelText: 'Occupation', prefixIcon: Icon(Icons.work))),
-                  const SizedBox(height: 16),
-                  TextFormField(controller: _communityController, decoration: const InputDecoration(labelText: 'Community', prefixIcon: Icon(Icons.group))),
-                  const SizedBox(height: 24),
-                  if (_error != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(8)),
-                      child: Text(_error!, style: TextStyle(color: Colors.red[700])),
+                    const SizedBox(height: AppSpacing.lg),
+                    Center(
+                      child: Text(
+                        'Tap to upload profile photo (optional)',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: kTextSecondary,
+                            ),
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.xl),
+
+                    // Personal Information Section
+                    const SectionHeader(
+                      title: 'Personal Information',
+                      icon: Icons.person,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Full Name *',
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone *',
+                        prefixIcon: Icon(Icons.phone),
+                        prefixText: '+91 ',
+                      ),
+                      keyboardType: TextInputType.phone,
+                      validator: (v) => v == null || v.trim().length != 10 
+                          ? '10-digit number required' 
+                          : null,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email (Optional)',
+                        prefixIcon: Icon(Icons.email),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return null;
+                        if (!v.contains('@')) return 'Invalid email';
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    DropdownButtonFormField<String>(
+                      value: _gender,
+                      decoration: const InputDecoration(
+                        labelText: 'Gender',
+                        prefixIcon: Icon(Icons.wc),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'male', child: Text('Male')),
+                        DropdownMenuItem(value: 'female', child: Text('Female')),
+                        DropdownMenuItem(value: 'other', child: Text('Other')),
+                      ],
+                      onChanged: (v) => setState(() { _gender = v!; }),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    InkWell(
+                      onTap: () async {
+                        final d = await showDatePicker(
+                          context: context,
+                          initialDate: _dateOfBirth ?? DateTime(1990),
+                          firstDate: DateTime(1920),
+                          lastDate: DateTime.now(),
+                        );
+                        if (d != null) setState(() { _dateOfBirth = d; });
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Date of Birth',
+                          prefixIcon: Icon(Icons.cake),
+                          suffixIcon: Icon(Icons.calendar_today),
+                        ),
+                        child: Text(
+                          _dateOfBirth == null
+                              ? 'Select date'
+                              : '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    DropdownButtonFormField<String>(
+                      value: _maritalStatus,
+                      decoration: const InputDecoration(
+                        labelText: 'Marital Status',
+                        prefixIcon: Icon(Icons.favorite),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'single', child: Text('Single')),
+                        DropdownMenuItem(value: 'married', child: Text('Married')),
+                        DropdownMenuItem(value: 'divorced', child: Text('Divorced')),
+                        DropdownMenuItem(value: 'widowed', child: Text('Widowed')),
+                      ],
+                      onChanged: (v) => setState(() { _maritalStatus = v!; }),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    if (_maritalStatus == 'married')
+                      InkWell(
+                        onTap: () async {
+                          final d = await showDatePicker(
+                            context: context,
+                            initialDate: _weddingDate ?? DateTime.now(),
+                            firstDate: DateTime(1920),
+                            lastDate: DateTime.now(),
+                          );
+                          if (d != null) setState(() { _weddingDate = d; });
+                        },
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Wedding Date (Optional)',
+                            prefixIcon: Icon(Icons.celebration),
+                            suffixIcon: Icon(Icons.calendar_today),
+                          ),
+                          child: Text(
+                            _weddingDate == null
+                                ? 'Select date'
+                                : '${_weddingDate!.day}/${_weddingDate!.month}/${_weddingDate!.year}',
+                          ),
+                        ),
+                      ),
+                    if (_maritalStatus == 'married')
+                      const SizedBox(height: AppSpacing.md),
+
+                    const SizedBox(height: AppSpacing.lg),
+                    
+                    // Professional & Location Information
+                    const SectionHeader(
+                      title: 'Professional & Location',
+                      icon: Icons.work,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    TextFormField(
+                      controller: _occupationController,
+                      decoration: const InputDecoration(
+                        labelText: 'Occupation (Optional)',
+                        prefixIcon: Icon(Icons.work),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    TextFormField(
+                      controller: _communityController,
+                      decoration: const InputDecoration(
+                        labelText: 'Community (Optional)',
+                        prefixIcon: Icon(Icons.groups),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _cityController,
+                            decoration: const InputDecoration(
+                              labelText: 'City',
+                              prefixIcon: Icon(Icons.location_city),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _stateController,
+                            decoration: const InputDecoration(
+                              labelText: 'State',
+                              prefixIcon: Icon(Icons.map),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: AppSpacing.xl),
+                    
+                    // Error Message
+                    if (_error != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        decoration: BoxDecoration(
+                          color: kErrorColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
+                          border: Border.all(color: kErrorColor.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.error_outline, color: kErrorColor),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                _error!,
+                                style: TextStyle(color: kErrorColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                    ],
+                    
+                    // Save Button
+                    ElevatedButton(
+                      onPressed: _isSaving || _isUploadingImage ? null : _save,
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Save Changes'),
+                    ),
+                    
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    // Cancel Button
+                    OutlinedButton(
+                      onPressed: _isSaving || _isUploadingImage
+                          ? null
+                          : () => context.pop(),
+                      child: const Text('Cancel'),
+                    ),
                   ],
-                  ElevatedButton(
-                    onPressed: _isSaving ? null : _save,
-                    child: _isSaving
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Text('Save Changes'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

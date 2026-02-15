@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/profile_setup_screen.dart';
+import '../features/landing/screens/landing_screen.dart';
 import '../features/tree/screens/tree_view_screen.dart';
 import '../features/tree/screens/add_member_screen.dart';
 import '../features/profile/screens/person_detail_screen.dart';
@@ -12,10 +13,14 @@ import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
 import '../features/invite/screens/invite_screen.dart';
 import '../features/merge/screens/merge_review_screen.dart';
+import '../features/admin/screens/admin_dashboard_screen.dart';
+import '../features/admin/screens/error_logs_screen.dart';
+import '../features/admin/screens/user_management_screen.dart';
+import '../features/admin/screens/admin_analytics_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/landing',
     redirect: (context, state) {
       // 🚧 TEMPORARY: Auth bypass for testing
       // Skip profile setup screen during auth bypass
@@ -44,6 +49,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       */
     },
     routes: [
+      // Landing Page
+      GoRoute(
+        path: '/landing',
+        builder: (context, state) => const LandingScreen(),
+      ),
+
       // Login
       GoRoute(
         path: '/login',
@@ -58,7 +69,7 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Home - Tree View
       GoRoute(
-        path: '/',
+        path: '/tree',
         builder: (context, state) => const TreeViewScreen(),
         routes: [
           // Add family member
@@ -73,6 +84,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
         ],
+      ),
+
+      // Legacy route - redirect to tree
+      GoRoute(
+        path: '/',
+        redirect: (context, state) => '/tree',
       ),
 
       // Person detail
@@ -112,6 +129,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => MergeReviewScreen(
           mergeRequestId: state.pathParameters['id']!,
         ),
+      ),
+
+      // Admin routes
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/admin/users',
+        builder: (context, state) => const UserManagementScreen(),
+      ),
+      GoRoute(
+        path: '/admin/errors',
+        builder: (context, state) => const ErrorLogsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/analytics',
+        builder: (context, state) => const AdminAnalyticsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

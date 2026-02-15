@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:image_picker/image_picker.dart';
 import '../config/constants.dart';
 import '../models/models.dart';
 import 'auth_service.dart';
@@ -66,6 +69,56 @@ class ApiService {
     );
     if (response.statusCode != 200) throw _handleError(response);
     return Person.fromJson(jsonDecode(response.body));
+  }
+
+  // ==================== IMAGE UPLOAD ====================
+
+  /// Upload profile image to Supabase Storage
+  Future<String> uploadProfileImage(String personId, XFile imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final fileExt = imageFile.path.split('.').last;
+      final fileName = '$personId-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final filePath = 'profiles/$fileName';
+
+      // Upload to Supabase Storage
+      final supabase = Supabase.instance.client;
+      await supabase.storage.from('avatars').uploadBinary(
+        filePath,
+        bytes,
+        fileOptions: FileOptions(
+          contentType: 'image/${fileExt == 'jpg' ? 'jpeg' : fileExt}',
+          upsert: false,
+        ),
+      );
+
+      // Get public URL
+      final publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
+      
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Failed to upload image: $e');
+    }
+  }
+
+  /// Delete profile image from Supabase Storage
+  Future<void> deleteProfileImage(String imageUrl) async {
+    try {
+      // Extract file path from URL
+      final uri = Uri.parse(imageUrl);
+      final pathSegments = uri.pathSegments;
+      final filePathIndex = pathSegments.indexOf('avatars') + 1;
+      if (filePathIndex >= pathSegments.length) return;
+      
+      final filePath = pathSegments.sublist(filePathIndex).join('/');
+
+      // Delete from Supabase Storage
+      final supabase = Supabase.instance.client;
+      await supabase.storage.from('avatars').remove([filePath]);
+    } catch (e) {
+      // Silently fail - don't throw error if deletion fails
+      print('Warning: Could not delete image: $e');
+    }
   }
 
   // ==================== TREE ====================

@@ -13,6 +13,7 @@ import { treeRouter } from './routes/tree';
 import { searchRouter } from './routes/search';
 import { mergeRouter } from './routes/merge';
 import { inviteRouter } from './routes/invite';
+import adminRouter from './routes/admin';
 
 const app = express();
 
@@ -46,6 +47,7 @@ app.use('/api/tree', treeRouter);
 app.use('/api/search', searchRouter);
 app.use('/api/merge', mergeRouter);
 app.use('/api/invite', inviteRouter);
+app.use('/api/admin', adminRouter);
 
 // Error handler (must be last)
 app.use(errorHandler);

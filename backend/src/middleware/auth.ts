@@ -16,8 +16,8 @@ export async function authMiddleware(
   next: NextFunction
 ): Promise<void> {
   // 🚧 TEMPORARY: Auth bypass for testing
-  // Using real user ID from database to satisfy foreign key constraints
-  req.userId = '81f049e2-2273-4db9-87dc-2676c0b505ac';
+  // Using admin user ID from user_metadata table
+  req.userId = '00000000-0000-0000-0000-000000000001';
   req.userEmail = 'manich623@gmail.com';
   next();
   return;

@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
+import { errorLogger } from '../services/errorLogger';
 
 export function errorHandler(
   err: Error,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction
 ): void {
@@ -12,6 +13,11 @@ export function errorHandler(
   const message = process.env.NODE_ENV === 'production'
     ? 'Internal server error'
     : err.message;
+
+  // Log the error to database (async, fire-and-forget)
+  errorLogger.logExpressError(err, req).catch(logErr => {
+    console.error('Failed to log error to database:', logErr);
+  });
 
   res.status(statusCode).json({
     error: message,

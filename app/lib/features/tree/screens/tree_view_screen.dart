@@ -57,6 +57,11 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         title: const Text('MyFamilyTree'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.admin_panel_settings),
+            tooltip: 'Admin Panel',
+            onPressed: () => context.push('/admin'),
+          ),
+          IconButton(
             icon: const Icon(Icons.search),
             tooltip: 'Search Network',
             onPressed: () => context.push('/search'),
