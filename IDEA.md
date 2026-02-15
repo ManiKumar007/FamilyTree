@@ -68,15 +68,19 @@ Each user who joins brings in 5–15 new potential users. **The product is the d
 
 ### Stack
 
-| Layer              | Technology                           |
-|--------------------|--------------------------------------|
-| Frontend           | Flutter (single codebase: Android, iOS, Web) |
-| Backend            | Dart (Serverpod) or Node.js          |
-| Primary Database   | PostgreSQL (via Supabase)            |
-| Auth               | Phone OTP (Supabase Auth / Firebase) |
-| File Storage       | Supabase Storage / AWS S3            |
-| Notifications      | WhatsApp Business API + FCM          |
-| Graph Queries      | PostgreSQL recursive CTEs (Neo4j later if needed) |
+| Layer              | Technology                                          | Free Tier                              |
+|--------------------|------------------------------------------------------|----------------------------------------|
+| Frontend           | Flutter (single codebase: Android, iOS, Web)         | Open source                            |
+| Backend            | Node.js + Express                                    | Open source                            |
+| Primary Database   | PostgreSQL (via Supabase)                            | Supabase Free: 500 MB, unlimited API   |
+| Auth               | Phone OTP (Supabase Auth)                            | Supabase Free: 50k MAUs                |
+| File Storage       | Supabase Storage                                     | Supabase Free: 1 GB                    |
+| Notifications      | Firebase Cloud Messaging (push) + free WhatsApp (later) | FCM is free                         |
+| Graph Queries      | PostgreSQL recursive CTEs (Neo4j later if needed)    | Included in Supabase                   |
+| Hosting (backend)  | Render / Railway (free tier)                         | Render Free: 750 hrs/mo, Railway: $5 credit/mo |
+| CI/CD              | GitHub Actions                                       | Free for public repos                  |
+
+> **Cost at prototype stage: $0/month.** All services used are within free tiers. No AWS needed until scale.
 
 ### Why PostgreSQL over Neo4j?
 
@@ -208,6 +212,7 @@ WHERE p.marital_status = 'single';
 
 - [ ] Validate idea: Create a WhatsApp bot / Google Form MVP for one community
 - [ ] Design Flutter app wireframes
-- [ ] Set up Supabase project (DB + Auth + Storage)
+- [ ] Set up Supabase project (DB + Auth + Storage) — free tier
+- [ ] Set up Node.js + Express backend, deploy on Render (free tier)
 - [ ] Build MVP: tree creation + invite flow + basic search
 - [ ] Beta launch with 50 families in one community
