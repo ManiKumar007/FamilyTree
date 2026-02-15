@@ -1,4 +1,4 @@
-# Kula Tree — Indian Family Tree App
+# MyFamilyTree — Indian Family Tree App
 
 > **Status**: Idea / Pre-MVP
 > **Last updated**: February 15, 2026
@@ -18,7 +18,7 @@ In India, family networks are central to life — marriages, business referrals,
 
 ## Solution
 
-**Kula Tree** is a cross-platform app (Android, iOS, Web) where users can:
+**MyFamilyTree** is a cross-platform app (Android, iOS, Web) where users can:
 
 1. **Build their family tree** — Add family members with details like name, photo, birthday, wedding anniversary, occupation, age, community, and mobile number.
 2. **Merge trees** — When two users share a common relative, they can merge their trees to form a larger connected family graph.

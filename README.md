@@ -1,4 +1,4 @@
-# Kula Tree
+# MyFamilyTree
 
 Indian Family Tree app with built-in matchmaking and professional network discovery.
 
