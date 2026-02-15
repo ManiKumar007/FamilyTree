@@ -208,9 +208,7 @@ class _InviteDialogState extends ConsumerState<InviteDialog> {
           ),
           ElevatedButton(
             onPressed: () {
-              SharePlus.instance.share(
-                ShareParams(text: _message ?? _inviteUrl!),
-              );
+              Share.share(_message ?? _inviteUrl!);
             },
             child: const Text('Share via WhatsApp'),
           ),

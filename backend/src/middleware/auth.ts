@@ -15,6 +15,14 @@ export async function authMiddleware(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  // 🚧 TEMPORARY: Auth bypass for testing
+  // Using real user ID from database to satisfy foreign key constraints
+  req.userId = '81f049e2-2273-4db9-87dc-2676c0b505ac';
+  req.userEmail = 'manich623@gmail.com';
+  next();
+  return;
+  
+  /* ORIGINAL AUTH CODE (commented out):
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -38,4 +46,5 @@ export async function authMiddleware(
   } catch (err) {
     res.status(401).json({ error: 'Authentication failed' });
   }
+  */
 }

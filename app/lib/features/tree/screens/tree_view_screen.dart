@@ -22,15 +22,19 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
   @override
   void initState() {
     super.initState();
-    _checkProfileSetup();
+    // 🚧 TEMPORARY: Disabled profile check for auth bypass testing
+    // _checkProfileSetup();
   }
 
   Future<void> _checkProfileSetup() async {
+    // 🚧 TEMPORARY: Disabled for auth bypass testing
+    /* ORIGINAL CODE:
     // Check if user has completed profile setup
     final profile = await ref.read(myProfileProvider.future);
     if (profile == null && mounted) {
       context.go('/profile-setup');
     }
+    */
   }
 
   void _centerOnUser() {

@@ -17,6 +17,15 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
+      // 🚧 TEMPORARY: Auth bypass for testing
+      // Skip profile setup screen during auth bypass
+      if (state.matchedLocation == '/profile-setup') {
+        return '/';
+      }
+      
+      return null;
+      
+      /* ORIGINAL AUTH CODE (commented out):
       final session = Supabase.instance.client.auth.currentSession;
       final isLoggedIn = session != null;
       final isLoginRoute = state.matchedLocation == '/login';
@@ -32,6 +41,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (isLoggedIn && isLoginRoute) return '/';
 
       return null;
+      */
     },
     routes: [
       // Login

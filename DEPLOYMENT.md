@@ -4,11 +4,148 @@ This guide covers deploying MyFamilyTree to production and testing the complete 
 
 ## Table of Contents
 
+0. [Local Development & Performance](#0-local-development--performance)
 1. [Supabase Setup](#1-supabase-setup)
 2. [Backend Deployment](#2-backend-deployment)
 3. [Flutter App Deployment](#3-flutter-app-deployment)
 4. [Testing Strategy](#4-testing-strategy)
 5. [Post-Deployment Checklist](#5-post-deployment-checklist)
+
+---
+
+## 0. Local Development & Performance
+
+### 0.1 Quick Start Scripts
+
+The project includes automated PowerShell scripts for easy local development:
+
+| Script                          | Purpose                                              | Load Time         |
+| ------------------------------- | ---------------------------------------------------- | ----------------- |
+| `start-all.ps1`                 | Starts both backend and frontend in separate windows | 3+ min (debug)    |
+| `start-backend.ps1`             | Starts only the backend server                       | ~5 sec            |
+| `start-frontend.ps1`            | Starts Flutter app in DEBUG mode (slow, hot reload)  | 3-4 min           |
+| `start-frontend-fast.ps1` ⚡    | Starts Flutter app in PROFILE mode                   | **30-60 sec**     |
+| `start-frontend-release.ps1` 🚀 | Starts Flutter app in RELEASE mode                   | **20-40 sec**     |
+| `build-and-serve.ps1` 💎        | Builds & serves production app                       | **2-5 sec** loads |
+| `stop-all.ps1`                  | Stops all running instances                          | instant           |
+
+**Usage:** Right-click any script and select **Run with PowerShell**
+
+All scripts automatically:
+
+- ✅ Detect and kill existing instances before starting
+- ✅ Prevent port conflicts
+- ✅ Show colored status messages
+
+### 0.2 Performance Optimization
+
+#### Flutter Web Load Times
+
+Flutter web has different build modes with varying performance:
+
+| Mode              | Initial Load | Hot Reload | Debugging  | Best For                            |
+| ----------------- | ------------ | ---------- | ---------- | ----------------------------------- |
+| **Debug**         | 3-4 min      | ✅ Yes     | ✅ Full    | Finding bugs                        |
+| **Profile**       | 30-60 sec    | ✅ Yes     | ⚠️ Limited | **Daily development (recommended)** |
+| **Release**       | 20-40 sec    | ❌ No      | ❌ No      | Testing performance                 |
+| **Build & Serve** | 2-5 sec      | ❌ No      | ❌ No      | Final testing                       |
+
+**Key Points:**
+
+- The 3-4 minute load time in debug mode is **expected behavior**
+- Debug mode includes full DevTools, source maps, and hot reload infrastructure
+- For daily development, use **`start-frontend-fast.ps1`** (10x faster)
+- Once loaded, use **hot reload** (press 'r' in terminal) for 2-5 second updates
+
+#### Recommended Workflow
+
+```powershell
+# 1. Start backend (one-time, ~5 seconds)
+.\start-backend.ps1
+
+# 2. Start frontend in profile mode (30-60 seconds first load)
+.\start-frontend-fast.ps1
+
+# 3. Make code changes, then press 'r' in Flutter terminal (2-5 seconds)
+# No need to restart!
+
+# 4. When done, stop everything
+.\stop-all.ps1
+```
+
+#### Production Build
+
+For testing the final optimized version:
+
+```powershell
+# Build once (~1-2 minutes)
+.\build-and-serve.ps1
+
+# Then access at http://localhost:8080
+# Page loads in 2-5 seconds (like production!)
+```
+
+### 0.3 Environment Setup
+
+Before running locally, ensure you have:
+
+1. **Backend** (`backend/.env`):
+
+   ```env
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+   SUPABASE_ANON_KEY=your-anon-key
+   PORT=3000
+   ```
+
+2. **Frontend** (`app/.env`):
+
+   ```env
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_ANON_KEY=your-anon-key
+   API_BASE_URL=http://localhost:3000/api
+   ```
+
+3. **First Time Setup**:
+
+   ```powershell
+   # Enable PowerShell scripts
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+   # Install backend dependencies
+   cd backend
+   npm install
+
+   # Install Flutter dependencies
+   cd ../app
+   flutter pub get
+   ```
+
+### 0.4 Troubleshooting
+
+**Problem**: Scripts won't run
+
+```powershell
+# Solution: Enable script execution
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+**Problem**: Port already in use
+
+```powershell
+# Solution: Kill all instances
+.\stop-all.ps1
+# Then restart
+.\start-all.ps1
+```
+
+**Problem**: App takes 3+ minutes to load
+**Solution**: This is normal for debug mode. Use `start-frontend-fast.ps1` for 30-60 second loads.
+
+**Problem**: Changes not appearing
+**Solution**: Press 'r' in the Flutter terminal for hot reload (2-5 seconds)
+
+For more details, see [QUICK-START.md](QUICK-START.md)
 
 ---
 
@@ -29,11 +166,13 @@ This guide covers deploying MyFamilyTree to production and testing the complete 
 ### 1.2 Run Database Migrations
 
 1. Install Supabase CLI:
+
    ```bash
    npm install -g supabase
    ```
 
 2. Login and link your project:
+
    ```bash
    supabase login
    supabase link --project-ref YOUR_PROJECT_REF
@@ -46,6 +185,7 @@ This guide covers deploying MyFamilyTree to production and testing the complete 
    ```
 
 Alternatively, manually execute SQL files:
+
 1. Go to **SQL Editor** in Supabase dashboard
 2. Run each migration file in order:
    - `001_create_persons.sql`
@@ -57,8 +197,9 @@ Alternatively, manually execute SQL files:
 ### 1.3 Configure Authentication
 
 Follow [AUTH_SETUP.md](AUTH_SETUP.md) to:
+
 - Enable Google OAuth provider
-- Enable Email provider  
+- Enable Email provider
 - Configure OAuth redirect URLs
 - Set up email templates
 
@@ -78,13 +219,14 @@ If using profile photos:
 2. Create a new bucket: `avatars`
 3. Set bucket as **Public**
 4. Add RLS policies for uploads:
+
    ```sql
    -- Allow authenticated users to upload
    CREATE POLICY "Users can upload own avatar"
    ON storage.objects FOR INSERT
    TO authenticated
    WITH CHECK (bucket_id = 'avatars');
-   
+
    -- Allow public read
    CREATE POLICY "Public avatar read"
    ON storage.objects FOR SELECT
@@ -103,6 +245,7 @@ Railway provides easy deployment with zero configuration.
 #### 2.1 Prepare Repository
 
 1. Ensure `.gitignore` excludes:
+
    ```
    .env
    node_modules/
@@ -110,6 +253,7 @@ Railway provides easy deployment with zero configuration.
    ```
 
 2. Add start script to `backend/package.json`:
+
    ```json
    {
      "scripts": {
@@ -136,6 +280,7 @@ Railway provides easy deployment with zero configuration.
 #### 2.3 Add Environment Variables
 
 In Railway project settings, add variables:
+
 ```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
@@ -215,12 +360,14 @@ Similar to Railway, but with some manual steps:
 ### 3.1 Update Production Configuration
 
 1. Create production `.env` file:
+
    ```bash
    cd app
    cp .env.example .env.prod
    ```
 
 2. Fill in production values:
+
    ```env
    SUPABASE_URL=https://your-project.supabase.co
    SUPABASE_ANON_KEY=your-production-anon-key
@@ -241,11 +388,13 @@ Similar to Railway, but with some manual steps:
 #### Prepare for Release
 
 1. **Create keystore**:
+
    ```bash
    keytool -genkey -v -keystore ~/upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
    ```
 
 2. **Configure signing** in `android/app/build.gradle`:
+
    ```gradle
    android {
        ...
@@ -268,8 +417,9 @@ Similar to Railway, but with some manual steps:
    ```
 
 3. **Better approach**: Use `key.properties`:
-   
+
    Create `android/key.properties`:
+
    ```properties
    storePassword=YOUR_STORE_PASSWORD
    keyPassword=YOUR_KEY_PASSWORD
@@ -278,6 +428,7 @@ Similar to Railway, but with some manual steps:
    ```
 
    Update `android/app/build.gradle`:
+
    ```gradle
    def keystoreProperties = new Properties()
    def keystorePropertiesFile = rootProject.file('key.properties')
@@ -299,6 +450,7 @@ Similar to Railway, but with some manual steps:
    ```
 
 4. **Build release APK**:
+
    ```bash
    flutter build apk --release
    ```
@@ -340,6 +492,7 @@ Similar to Railway, but with some manual steps:
 #### Prepare for Release
 
 1. **Open in Xcode**:
+
    ```bash
    cd ios
    open Runner.xcworkspace
@@ -359,6 +512,7 @@ Similar to Railway, but with some manual steps:
 3. **Update `Info.plist`** (ensure production URLs)
 
 4. **Build archive**:
+
    ```bash
    flutter build ios --release
    ```
@@ -394,11 +548,13 @@ Similar to Railway, but with some manual steps:
 ### 3.4 Web Deployment (Optional)
 
 1. **Build for web**:
+
    ```bash
    flutter build web --release
    ```
 
 2. **Deploy to Firebase Hosting**:
+
    ```bash
    npm install -g firebase-tools
    firebase login
@@ -408,6 +564,7 @@ Similar to Railway, but with some manual steps:
    ```
 
 3. **Or deploy to Vercel**:
+
    ```bash
    npm install -g vercel
    cd build/web
@@ -428,24 +585,26 @@ npm install --save-dev jest @types/jest ts-jest supertest @types/supertest
 ```
 
 Create `backend/tests/routes.test.ts`:
-```typescript
-import request from 'supertest';
-import app from '../src/index';
 
-describe('API Routes', () => {
-  it('GET /api/health should return 200', async () => {
-    const res = await request(app).get('/api/health');
+```typescript
+import request from "supertest";
+import app from "../src/index";
+
+describe("API Routes", () => {
+  it("GET /api/health should return 200", async () => {
+    const res = await request(app).get("/api/health");
     expect(res.status).toBe(200);
   });
 
-  it('GET /api/persons/:id requires auth', async () => {
-    const res = await request(app).get('/api/persons/123');
+  it("GET /api/persons/:id requires auth", async () => {
+    const res = await request(app).get("/api/persons/123");
     expect(res.status).toBe(401);
   });
 });
 ```
 
 Run tests:
+
 ```bash
 npm test
 ```
@@ -453,6 +612,7 @@ npm test
 ### 4.2 Widget Tests (Flutter)
 
 Create `app/test/widget_test.dart`:
+
 ```dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:myfamilytree/features/tree/widgets/person_card.dart';
@@ -481,6 +641,7 @@ void main() {
 ```
 
 Run tests:
+
 ```bash
 cd app
 flutter test
@@ -489,6 +650,7 @@ flutter test
 ### 4.3 Integration Tests
 
 Create `app/integration_test/app_test.dart`:
+
 ```dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -503,13 +665,14 @@ void main() {
 
     // Should show login screen
     expect(find.text('MyFamilyTree'), findsOneWidget);
-    
+
     // Test navigation, forms, etc.
   });
 }
 ```
 
 Run integration tests:
+
 ```bash
 flutter test integration_test
 ```
@@ -517,6 +680,7 @@ flutter test integration_test
 ### 4.4 Manual Testing Checklist
 
 #### Authentication
+
 - [ ] Sign up with Google works
 - [ ] Sign up with email magic link works
 - [ ] Email is received and link opens app
@@ -524,11 +688,13 @@ flutter test integration_test
 - [ ] Sign in persists across app restarts
 
 #### Profile Setup
+
 - [ ] First-time user is prompted to complete profile
 - [ ] Profile form validates required fields
 - [ ] Profile is saved correctly
 
 #### Family Tree
+
 - [ ] Empty tree shows appropriate message
 - [ ] Can add family members (father, mother, spouse, child, sibling)
 - [ ] Person cards display correctly
@@ -537,6 +703,7 @@ flutter test integration_test
 - [ ] Connection lines render properly
 
 #### Add Family Member
+
 - [ ] Form validates phone number
 - [ ] Can select relationship type
 - [ ] Optional fields work correctly
@@ -544,24 +711,28 @@ flutter test integration_test
 - [ ] Merge detection triggers when appropriate
 
 #### Person Details
+
 - [ ] Tapping person card opens detail screen
 - [ ] All person info displays
 - [ ] Can edit own profile
 - [ ] Can send invites to unverified persons
 
 #### Search & Network
+
 - [ ] Can search by name
 - [ ] Can search by phone
 - [ ] Search results are accurate
 - [ ] Can view other family trees (with permission)
 
 #### Merge Requests
+
 - [ ] Merge notification appears when applicable
 - [ ] Can review merge details
 - [ ] Can accept/reject merge
 - [ ] Trees merge correctly on accept
 
 #### Invitations
+
 - [ ] Can generate invite link
 - [ ] Invite link opens app
 - [ ] Recipient can claim profile
@@ -575,6 +746,7 @@ flutter test integration_test
 - **Memory usage**: Stay under 250MB on mobile
 
 Tools:
+
 ```bash
 # Flutter DevTools
 flutter pub global activate devtools
@@ -626,6 +798,7 @@ flutter build apk --analyze-size
 #### Backend Monitoring
 
 Use Railway/Render/Heroku dashboards or:
+
 ```bash
 # Add logging
 import winston from 'winston';
@@ -643,6 +816,7 @@ const logger = winston.createLogger({
 #### App Monitoring
 
 Add Firebase Crashlytics:
+
 ```yaml
 # pubspec.yaml
 dependencies:
@@ -659,6 +833,7 @@ FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
 #### Database Monitoring
 
 Check Supabase dashboard:
+
 - API usage
 - Database size
 - Active connections
@@ -678,22 +853,26 @@ Check Supabase dashboard:
 ### Common Issues
 
 **Issue: "Network error" in app**
+
 - Verify backend URL is correct
 - Check backend is running
 - Verify CORS settings
 - Check auth token is being sent
 
 **Issue: "Database connection failed"**
+
 - Verify Supabase credentials
 - Check RLS policies
 - Ensure service role key is used only on backend
 
 **Issue: Google Sign-In fails**
+
 - Verify OAuth Client IDs
 - Check SHA-1 fingerprints (Android)
 - Ensure redirect URIs match
 
 **Issue: App crashes on startup**
+
 - Check environment variables are loaded
 - Verify Supabase initialization
 - Check for missing dependencies

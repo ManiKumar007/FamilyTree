@@ -16,10 +16,16 @@ treeRouter.get('/', async (req: AuthenticatedRequest, res: Response) => {
     const person = await getPersonByAuthUser(req.userId!);
 
     if (!person) {
+      // 🚧 TEMPORARY: Return empty tree instead of error during auth bypass
+      res.json({ nodes: [], rootPersonId: null });
+      return;
+      
+      /* ORIGINAL CODE (commented out):
       res.status(404).json({
         error: 'Profile not found. Complete profile setup first.',
       });
       return;
+      */
     }
 
     const tree = await getFullTree(person.id);
