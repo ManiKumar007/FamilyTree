@@ -4,4 +4,5 @@ class AppConfig {
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
   static String get apiBaseUrl => dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
+  static String get googleWebClientId => dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
 }

@@ -16,6 +16,14 @@ Future<void> main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
 
+  // Handle deep links for magic link authentication
+  Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    final session = data.session;
+    if (session != null) {
+      debugPrint('User signed in: ${session.user.email}');
+    }
+  });
+
   runApp(
     const ProviderScope(
       child: MyFamilyTreeApp(),

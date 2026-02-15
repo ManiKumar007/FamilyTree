@@ -1,11 +1,24 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../config/constants.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
+  GoogleSignIn? _googleSignIn;
+
+  /// Get or create GoogleSignIn instance
+  GoogleSignIn get googleSignIn {
+    _googleSignIn ??= GoogleSignIn(
+      scopes: ['email', 'profile'],
+      serverClientId: AppConfig.googleWebClientId.isNotEmpty 
+        ? AppConfig.googleWebClientId 
+        : null,
+    );
+    return _googleSignIn!;
+  }
 
   /// Current session
   Session? get currentSession => _supabase.auth.currentSession;
@@ -21,9 +34,8 @@ class AuthService {
 
   /// Sign in with Google
   Future<AuthResponse> signInWithGoogle() async {
-    final googleSignIn = GoogleSignIn(
-      scopes: ['email', 'profile'],
-    );
+    // Sign out from previous session to avoid account picker issues
+    await googleSignIn.signOut();
 
     final googleUser = await googleSignIn.signIn();
     if (googleUser == null) {
