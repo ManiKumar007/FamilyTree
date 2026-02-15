@@ -2,11 +2,16 @@
 node_modules/
 .dart_tool/
 build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Build outputs
+dist/
+backend/dist/
 
 # IDE
 .idea/
 *.iml
-.vscode/
 
 # OS
 .DS_Store
@@ -15,7 +20,23 @@ Thumbs.db
 # Environment
 .env
 .env.local
+.env.production
 
-# Generated
+# Flutter generated
 *.g.dart
 *.freezed.dart
+.packages
+
+# Android
+app/android/.gradle/
+app/android/app/build/
+app/android/local.properties
+*.apk
+*.aab
+
+# iOS
+app/ios/Pods/
+app/ios/.symlinks/
+
+# Web
+app/build/
