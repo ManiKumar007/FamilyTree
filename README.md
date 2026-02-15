@@ -70,35 +70,59 @@ Built specifically for **Indian families** with features like N-circle network s
 - Node.js 24+ and npm 11+
 - Flutter 3.24+ with Dart 3.5+
 - Supabase account (free tier works)
+- Google Cloud Console project (for OAuth)
 
-### 1. Database Setup
-1. Create a Supabase project at [supabase.com](https://supabase.com)
-2. Run migrations in the SQL Editor (in order):
-   - `supabase/migrations/001_create_persons.sql`
-   - `supabase/migrations/002_create_relationships.sql`
-   - `supabase/migrations/003_create_merge_requests.sql`
-   - `supabase/migrations/004_rls_policies.sql`
-   - `supabase/migrations/005_create_invite_tokens.sql`
-3. Copy your **Supabase URL** and **anon key**
+### Setup Guides
 
-### 2. Backend Setup
+For detailed setup instructions, refer to these guides:
+
+1. **[Flutter Project Initialization](FLUTTER_INIT.md)** - Initialize the Flutter app with Android/iOS platforms
+2. **[Authentication Setup](AUTH_SETUP.md)** - Configure Google Sign-In and Email Magic Links
+3. **[How To Setup Development Environment](How-To-Setup-DevelopmentEnv.md)** - General development setup
+4. **[Deployment Guide](DEPLOYMENT.md)** - Deploy to production (Supabase, Railway, Play Store, App Store)
+
+### Quick Setup (Summary)
+
+#### 1. Database Setup
+```bash
+# Create a Supabase project at supabase.com
+# Run migrations in SQL Editor (in order):
+# - 001_create_persons.sql
+# - 002_create_relationships.sql
+# - 003_create_merge_requests.sql
+# - 004_rls_policies.sql
+# - 005_create_invite_tokens.sql
+```
+
+#### 2. Backend Setup
 ```bash
 cd backend
 npm install
 cp .env.example .env
 # Edit .env with your Supabase credentials
 npm run dev
+# API runs at http://localhost:3000
 ```
-API runs at `http://localhost:3000`
 
-### 3. Flutter App Setup
+#### 3. Flutter App Setup
 ```bash
 cd app
+
+# Initialize Flutter project (first time only)
+flutter create --platforms=android,ios .
+
+# Install dependencies
 flutter pub get
+
+# Configure environment
 cp .env.example .env
-# Edit .env with your Supabase credentials and API URL
-flutter run -d chrome
+# Edit .env with your Supabase & backend credentials
+
+# Run the app
+flutter run
 ```
+
+> **Note:** For complete configuration including Google Sign-In setup, see [AUTH_SETUP.md](AUTH_SETUP.md)
 
 📖 **Detailed setup instructions:** See [How-To-Setup-DevelopmentEnv.md](How-To-Setup-DevelopmentEnv.md)
 
