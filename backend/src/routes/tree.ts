@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { getFullTree, getPersonByAuthUser } from '../services/graphService';
+import { successResponse, errorResponse, ErrorCodes } from '../utils/response';
 
 export const treeRouter = Router();
 
@@ -16,22 +17,14 @@ treeRouter.get('/', async (req: AuthenticatedRequest, res: Response) => {
     const person = await getPersonByAuthUser(req.userId!);
 
     if (!person) {
-      // 🚧 TEMPORARY: Return empty tree instead of error during auth bypass
-      res.json({ nodes: [], rootPersonId: null });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Profile not found. Complete profile setup first.'));
       return;
-      
-      /* ORIGINAL CODE (commented out):
-      res.status(404).json({
-        error: 'Profile not found. Complete profile setup first.',
-      });
-      return;
-      */
     }
 
     const tree = await getFullTree(person.id);
-    res.json(tree);
+    res.json(successResponse(tree));
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });
 
@@ -43,12 +36,12 @@ treeRouter.get('/:personId', async (req: AuthenticatedRequest, res: Response) =>
     const tree = await getFullTree(req.params.personId);
 
     if (tree.nodes.length === 0) {
-      res.status(404).json({ error: 'Person not found or no tree data' });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Person not found or no tree data'));
       return;
     }
 
-    res.json(tree);
+    res.json(successResponse(tree));
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });

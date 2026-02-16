@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { supabaseAdmin } from '../config/supabase';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { env } from '../config/env';
+import { successResponse, errorResponse, ErrorCodes } from '../utils/response';
 
 export const inviteRouter = Router();
 
@@ -27,12 +28,12 @@ inviteRouter.post('/generate', async (req: AuthenticatedRequest, res: Response) 
       .single();
 
     if (pError || !person) {
-      res.status(404).json({ error: 'Person not found' });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Person not found'));
       return;
     }
 
     if (person.verified) {
-      res.status(400).json({ error: 'This person has already claimed their profile' });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'This person has already claimed their profile'));
       return;
     }
 
@@ -47,12 +48,12 @@ inviteRouter.post('/generate', async (req: AuthenticatedRequest, res: Response) 
 
     if (existingInvite) {
       const inviteUrl = `${env.INVITE_BASE_URL}?token=${existingInvite.token}`;
-      res.json({
+      res.json(successResponse({
         invite_url: inviteUrl,
         token: existingInvite.token,
         person_name: person.name,
         expires_at: existingInvite.expires_at,
-      });
+      }));
       return;
     }
 
@@ -70,20 +71,20 @@ inviteRouter.post('/generate', async (req: AuthenticatedRequest, res: Response) 
 
     const inviteUrl = `${env.INVITE_BASE_URL}?token=${invite.token}`;
 
-    res.status(201).json({
+    res.status(201).json(successResponse({
       invite_url: inviteUrl,
       token: invite.token,
       person_name: person.name,
       phone: person.phone,
       expires_at: invite.expires_at,
       message: `${person.name}, you've been added to a family tree on MyFamilyTree! Claim your profile: ${inviteUrl}`,
-    });
+    }));
   } catch (err: any) {
     if (err instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation failed', details: err.errors });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });
 
@@ -106,17 +107,17 @@ inviteRouter.post('/claim', async (req: AuthenticatedRequest, res: Response) => 
       .single();
 
     if (iError || !invite) {
-      res.status(404).json({ error: 'Invalid invite token' });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Invalid invite token'));
       return;
     }
 
     if (invite.used) {
-      res.status(400).json({ error: 'This invite has already been used' });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'This invite has already been used'));
       return;
     }
 
     if (new Date(invite.expires_at) < new Date()) {
-      res.status(400).json({ error: 'This invite has expired' });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'This invite has expired'));
       return;
     }
 
@@ -142,15 +143,15 @@ inviteRouter.post('/claim', async (req: AuthenticatedRequest, res: Response) => 
       })
       .eq('id', invite.id);
 
-    res.json({
+    res.json(successResponse({
       message: 'Profile claimed successfully!',
       person,
-    });
+    }));
   } catch (err: any) {
     if (err instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation failed', details: err.errors });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });

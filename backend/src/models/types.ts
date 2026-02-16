@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const GenderEnum = z.enum(['male', 'female', 'other']);
 export const MaritalStatusEnum = z.enum(['single', 'married', 'divorced', 'widowed']);
 export const RelationshipTypeEnum = z.enum([
-  'FATHER_OF', 'MOTHER_OF', 'CHILD_OF', 'SPOUSE_OF', 'SIBLING_OF'
+  'FATHER_OF', 'MOTHER_OF', 'PARENT_OF', 'CHILD_OF', 'SPOUSE_OF', 'SIBLING_OF'
 ]);
 
 export interface Person {
@@ -31,7 +31,7 @@ export interface Relationship {
   id: string;
   person_id: string;
   related_person_id: string;
-  type: 'FATHER_OF' | 'MOTHER_OF' | 'CHILD_OF' | 'SPOUSE_OF' | 'SIBLING_OF';
+  type: 'FATHER_OF' | 'MOTHER_OF' | 'PARENT_OF' | 'CHILD_OF' | 'SPOUSE_OF' | 'SIBLING_OF';
   created_by_user_id: string | null;
   created_at: string;
 }

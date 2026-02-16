@@ -2,7 +2,11 @@ import { supabaseAdmin } from '../config/supabase';
 import { Person, Relationship, TreeNode, TreeResponse, SearchResult } from '../models/types';
 
 /**
- * GraphService: handles family tree traversal using PostgreSQL recursive CTEs.
+ * GraphService: handles family tree traversal.
+ *
+ * Uses batch-loading to avoid N+1 query problems:
+ * - Each "hop" loads all persons and relationships in 2 queries
+ * - Typically finishes in 2-3 hops (6 queries) instead of 200+ sequential queries
  */
 
 /**
@@ -10,13 +14,13 @@ import { Person, Relationship, TreeNode, TreeResponse, SearchResult } from '../m
  * Returns all connected persons (unlimited depth) with their relationships.
  */
 export async function getFullTree(personId: string): Promise<TreeResponse> {
-  // Use a recursive CTE to find all connected persons
+  // Try the recursive CTE RPC first (most efficient)
   const { data, error } = await supabaseAdmin.rpc('get_full_tree', {
     root_person_id: personId,
   });
 
   if (error) {
-    // Fallback: use multiple queries if RPC not available
+    // Fallback: use batch-loaded BFS if RPC not available
     return getFullTreeFallback(personId);
   }
 
@@ -24,45 +28,69 @@ export async function getFullTree(personId: string): Promise<TreeResponse> {
 }
 
 /**
- * Fallback: build tree using iterative queries.
- * Works without a database function.
+ * Fallback: build tree using batch-loaded BFS traversal.
+ *
+ * Instead of querying one person at a time (N+1 problem),
+ * we batch-load all persons and relationships per hop level.
+ * A typical family tree completes in 2-4 hops = 4-8 DB queries total.
  */
 async function getFullTreeFallback(personId: string): Promise<TreeResponse> {
-  const visited = new Set<string>();
-  const nodes: TreeNode[] = [];
-  const queue: string[] = [personId];
+  const personMap = new Map<string, Person>();
+  const relMap = new Map<string, Relationship[]>();
+  let toLoad = new Set<string>([personId]);
+  const allLoaded = new Set<string>();
 
-  while (queue.length > 0) {
-    const currentId = queue.shift()!;
-    if (visited.has(currentId)) continue;
-    visited.add(currentId);
+  // Batch-load hop by hop until no new persons are discovered
+  while (toLoad.size > 0) {
+    const idsToLoad = Array.from(toLoad);
+    idsToLoad.forEach(id => allLoaded.add(id));
 
-    // Get person details
-    const { data: person, error: personError } = await supabaseAdmin
+    // Batch load persons for this hop
+    const { data: persons, error: personError } = await supabaseAdmin
       .from('persons')
       .select('*')
-      .eq('id', currentId)
-      .single();
+      .in('id', idsToLoad);
 
-    if (personError || !person) continue;
+    if (personError || !persons) break;
 
-    // Get all relationships for this person
+    for (const p of persons) {
+      personMap.set(p.id, p as Person);
+    }
+
+    // Batch load all relationships for these persons
     const { data: relationships, error: relError } = await supabaseAdmin
       .from('relationships')
       .select('*')
-      .eq('person_id', currentId);
+      .in('person_id', idsToLoad);
 
-    if (relError) continue;
+    if (relError) break;
 
-    const rels = (relationships || []) as Relationship[];
-    nodes.push({ person: person as Person, relationships: rels });
+    // Group relationships by person_id and discover new persons
+    const nextToLoad = new Set<string>();
 
-    // Add connected persons to queue
-    for (const rel of rels) {
-      if (!visited.has(rel.related_person_id)) {
-        queue.push(rel.related_person_id);
+    for (const rel of (relationships || [])) {
+      const r = rel as Relationship;
+      if (!relMap.has(r.person_id)) {
+        relMap.set(r.person_id, []);
+      }
+      relMap.get(r.person_id)!.push(r);
+
+      // Queue newly discovered persons for the next hop
+      if (!allLoaded.has(r.related_person_id)) {
+        nextToLoad.add(r.related_person_id);
       }
     }
+
+    toLoad = nextToLoad;
+  }
+
+  // Build TreeNode[] from collected data
+  const nodes: TreeNode[] = [];
+  for (const [id, person] of personMap) {
+    nodes.push({
+      person,
+      relationships: relMap.get(id) || [],
+    });
   }
 
   return { nodes, rootPersonId: personId };
@@ -71,6 +99,8 @@ async function getFullTreeFallback(personId: string): Promise<TreeResponse> {
 /**
  * Search for persons within N circles (hops) of a starting person.
  * Supports filtering by occupation, marital status, and name.
+ *
+ * Uses batch-loading: 2 queries per depth level instead of 1 per person.
  */
 export async function searchInCircles(params: {
   personId: string;
@@ -81,78 +111,100 @@ export async function searchInCircles(params: {
 }): Promise<SearchResult[]> {
   const { personId, maxDepth, query, occupation, maritalStatus } = params;
 
-  // Build a raw SQL query with recursive CTE for N-circle traversal
-  // We use supabaseAdmin.rpc or raw query
-  const visited = new Set<string>();
-  const results: SearchResult[] = [];
-  const queue: { id: string; depth: number; path: string[] }[] = [
-    { id: personId, depth: 0, path: [personId] },
-  ];
+  // Track depth and connection paths for each discovered person
+  const depthMap = new Map<string, number>();
+  const pathMap = new Map<string, string[]>();
+  const personMap = new Map<string, Person>();
 
-  while (queue.length > 0) {
-    const current = queue.shift()!;
-    if (visited.has(current.id) || current.depth > maxDepth) continue;
-    visited.add(current.id);
+  depthMap.set(personId, 0);
+  pathMap.set(personId, [personId]);
 
-    // Get person details
-    const { data: person } = await supabaseAdmin
+  let currentIds = new Set<string>([personId]);
+  const allVisited = new Set<string>([personId]);
+
+  // BFS hop by hop with batch loading
+  for (let depth = 0; depth <= maxDepth; depth++) {
+    if (currentIds.size === 0) break;
+
+    const idsToLoad = Array.from(currentIds);
+
+    // Batch load persons for current hop level
+    const { data: persons } = await supabaseAdmin
       .from('persons')
       .select('*')
-      .eq('id', current.id)
-      .single();
+      .in('id', idsToLoad);
 
-    if (!person) continue;
-
-    // Apply filters (skip the root person)
-    if (current.depth > 0) {
-      const p = person as Person;
-      let matches = true;
-
-      if (query) {
-        const q = query.toLowerCase();
-        matches = matches && (
-          p.name.toLowerCase().includes(q) ||
-          (p.occupation?.toLowerCase().includes(q) ?? false)
-        );
-      }
-
-      if (occupation) {
-        matches = matches && (p.occupation?.toLowerCase().includes(occupation.toLowerCase()) ?? false);
-      }
-
-      if (maritalStatus) {
-        matches = matches && p.marital_status === maritalStatus;
-      }
-
-      if (matches) {
-        results.push({
-          person: p,
-          depth: current.depth,
-          path: current.path,
-        });
+    if (persons) {
+      for (const p of persons) {
+        personMap.set(p.id, p as Person);
       }
     }
 
-    // If we haven't reached max depth, get connected persons
-    if (current.depth < maxDepth) {
+    // If we haven't reached max depth, load relationships to find next hop
+    if (depth < maxDepth) {
       const { data: relationships } = await supabaseAdmin
         .from('relationships')
-        .select('related_person_id')
-        .eq('person_id', current.id);
+        .select('person_id, related_person_id')
+        .in('person_id', idsToLoad);
+
+      const nextIds = new Set<string>();
 
       if (relationships) {
         for (const rel of relationships) {
-          if (!visited.has(rel.related_person_id)) {
-            queue.push({
-              id: rel.related_person_id,
-              depth: current.depth + 1,
-              path: [...current.path, rel.related_person_id],
-            });
+          if (!allVisited.has(rel.related_person_id)) {
+            allVisited.add(rel.related_person_id);
+            nextIds.add(rel.related_person_id);
+            depthMap.set(rel.related_person_id, depth + 1);
+            pathMap.set(rel.related_person_id, [
+              ...(pathMap.get(rel.person_id) || []),
+              rel.related_person_id,
+            ]);
           }
         }
       }
+
+      currentIds = nextIds;
+    } else {
+      currentIds = new Set(); // No more hops
     }
   }
+
+  // Apply filters and build results (skip root person)
+  const results: SearchResult[] = [];
+
+  for (const [id, person] of personMap) {
+    const personDepth = depthMap.get(id);
+    if (personDepth === undefined || personDepth === 0) continue; // Skip root
+
+    let matches = true;
+
+    if (query) {
+      const q = query.toLowerCase();
+      matches = matches && (
+        person.name.toLowerCase().includes(q) ||
+        (person.occupation?.toLowerCase().includes(q) ?? false)
+      );
+    }
+
+    if (occupation) {
+      matches = matches && (person.occupation?.toLowerCase().includes(occupation.toLowerCase()) ?? false);
+    }
+
+    if (maritalStatus) {
+      matches = matches && person.marital_status === maritalStatus;
+    }
+
+    if (matches) {
+      results.push({
+        person,
+        depth: personDepth,
+        path: pathMap.get(id) || [id],
+      });
+    }
+  }
+
+  // Sort by depth (closest connections first)
+  results.sort((a, b) => a.depth - b.depth);
 
   return results;
 }
@@ -175,6 +227,8 @@ export async function getPersonByAuthUser(authUserId: string): Promise<Person | 
  * Get the names for a path of person IDs (for displaying connection paths).
  */
 export async function getPathNames(personIds: string[]): Promise<string[]> {
+  if (personIds.length === 0) return [];
+
   const { data } = await supabaseAdmin
     .from('persons')
     .select('id, name')

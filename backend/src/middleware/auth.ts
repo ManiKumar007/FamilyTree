@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { supabaseAdmin } from '../config/supabase';
+import { env } from '../config/env';
 
 export interface AuthenticatedRequest extends Request {
   userId?: string;
@@ -9,20 +10,27 @@ export interface AuthenticatedRequest extends Request {
 /**
  * Middleware to verify Supabase JWT from Authorization header.
  * Extracts user ID and attaches it to the request.
+ *
+ * Set AUTH_BYPASS=true in .env for local development only.
+ * Never enable AUTH_BYPASS in production.
  */
 export async function authMiddleware(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  // 🚧 TEMPORARY: Auth bypass for testing
-  // Using admin user ID from user_metadata table
-  req.userId = '00000000-0000-0000-0000-000000000001';
-  req.userEmail = 'manich623@gmail.com';
-  next();
-  return;
-  
-  /* ORIGINAL AUTH CODE (commented out):
+  // Development-only auth bypass (controlled via AUTH_BYPASS env variable)
+  if (env.AUTH_BYPASS) {
+    if (env.NODE_ENV === 'production') {
+      console.error('CRITICAL: AUTH_BYPASS is enabled in production! Refusing to bypass.');
+    } else {
+      req.userId = env.AUTH_BYPASS_USER_ID;
+      req.userEmail = env.AUTH_BYPASS_EMAIL;
+      next();
+      return;
+    }
+  }
+
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -46,5 +54,4 @@ export async function authMiddleware(
   } catch (err) {
     res.status(401).json({ error: 'Authentication failed' });
   }
-  */
 }

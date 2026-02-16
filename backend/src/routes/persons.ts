@@ -5,6 +5,8 @@ import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { GenderEnum, MaritalStatusEnum } from '../models/types';
 import { normalizePhone, isValidPhone } from '../utils/phone';
 import { detectMergeByPhone, detectConflicts, createMergeRequest } from '../services/mergeService';
+import { successResponse, errorResponse, paginatedResponse, ErrorCodes } from '../utils/response';
+import { sanitizeObject, PERSON_SANITIZE_FIELDS } from '../utils/sanitize';
 
 export const personsRouter = Router();
 
@@ -38,12 +40,15 @@ personsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
     const phone = normalizePhone(parsed.phone);
 
     if (!isValidPhone(phone)) {
-      res.status(400).json({ error: 'Invalid phone number format' });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Invalid phone number format'));
       return;
     }
 
+    // Sanitize text fields to prevent XSS
+    const sanitized = sanitizeObject(parsed, [...PERSON_SANITIZE_FIELDS]);
+
     const personData = {
-      ...parsed,
+      ...sanitized,
       phone,
       created_by_user_id: req.userId,
       verified: false,
@@ -57,7 +62,7 @@ personsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
 
     if (error) {
       if (error.code === '23505') {
-        res.status(409).json({ error: 'A person with this phone number already exists' });
+        res.status(409).json(errorResponse(ErrorCodes.CONFLICT, 'A person with this phone number already exists'));
         return;
       }
       throw error;
@@ -77,16 +82,13 @@ personsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
       );
     }
 
-    res.status(201).json({
-      person: data,
-      mergeRequest,
-    });
+    res.status(201).json(successResponse({ person: data, mergeRequest }));
   } catch (err: any) {
     if (err instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation failed', details: err.errors });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });
 
@@ -102,13 +104,13 @@ personsRouter.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
       .single();
 
     if (error || !data) {
-      res.status(404).json({ error: 'Person not found' });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Person not found'));
       return;
     }
 
-    res.json(data);
+    res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });
 
@@ -123,10 +125,13 @@ personsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
     if (parsed.phone) {
       parsed.phone = normalizePhone(parsed.phone);
       if (!isValidPhone(parsed.phone)) {
-        res.status(400).json({ error: 'Invalid phone number format' });
+        res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Invalid phone number format'));
         return;
       }
     }
+
+    // Sanitize text fields to prevent XSS
+    const sanitized = sanitizeObject(parsed, [...PERSON_SANITIZE_FIELDS]);
 
     // Verify ownership
     const { data: existing } = await supabaseAdmin
@@ -136,31 +141,67 @@ personsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
       .single();
 
     if (!existing) {
-      res.status(404).json({ error: 'Person not found' });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Person not found'));
       return;
     }
 
     if (existing.created_by_user_id !== req.userId && existing.auth_user_id !== req.userId) {
-      res.status(403).json({ error: 'You can only edit persons you created or your own profile' });
+      res.status(403).json(errorResponse(ErrorCodes.FORBIDDEN, 'You can only edit persons you created or your own profile'));
       return;
     }
 
     const { data, error } = await supabaseAdmin
       .from('persons')
-      .update(parsed)
+      .update(sanitized)
       .eq('id', req.params.id)
       .select()
       .single();
 
     if (error) throw error;
 
-    res.json(data);
+    res.json(successResponse(data));
   } catch (err: any) {
     if (err instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation failed', details: err.errors });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+  }
+});
+
+/**
+ * DELETE /api/persons/:id — Delete a person (and cascade-delete relationships)
+ */
+personsRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    // Verify ownership before deletion
+    const { data: existing } = await supabaseAdmin
+      .from('persons')
+      .select('created_by_user_id, auth_user_id, name')
+      .eq('id', req.params.id)
+      .single();
+
+    if (!existing) {
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Person not found'));
+      return;
+    }
+
+    if (existing.created_by_user_id !== req.userId && existing.auth_user_id !== req.userId) {
+      res.status(403).json(errorResponse(ErrorCodes.FORBIDDEN, 'You can only delete persons you created or your own profile'));
+      return;
+    }
+
+    // Delete the person — relationships auto-cascade (ON DELETE CASCADE)
+    const { error } = await supabaseAdmin
+      .from('persons')
+      .delete()
+      .eq('id', req.params.id);
+
+    if (error) throw error;
+
+    res.json(successResponse({ message: `Person '${existing.name}' deleted successfully` }));
+  } catch (err: any) {
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });
 
@@ -178,18 +219,18 @@ personsRouter.get('/by-phone/:phone', async (req: AuthenticatedRequest, res: Res
       .single();
 
     if (error || !data) {
-      res.status(404).json({ error: 'Person not found' });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Person not found'));
       return;
     }
 
-    res.json(data);
+    res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });
 
 /**
- * GET /api/persons/me — Get the current user's person record
+ * GET /api/persons/me/profile — Get the current user's person record
  */
 personsRouter.get('/me/profile', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -200,12 +241,12 @@ personsRouter.get('/me/profile', async (req: AuthenticatedRequest, res: Response
       .single();
 
     if (error || !data) {
-      res.status(404).json({ error: 'Profile not found. Complete profile setup first.' });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Profile not found. Complete profile setup first.'));
       return;
     }
 
-    res.json(data);
+    res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });

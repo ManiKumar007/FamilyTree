@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { supabaseAdmin } from '../config/supabase';
 import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { RelationshipTypeEnum } from '../models/types';
+import { successResponse, errorResponse, paginatedResponse, ErrorCodes } from '../utils/response';
 
 export const relationshipsRouter = Router();
 
@@ -23,7 +24,7 @@ relationshipsRouter.post('/', async (req: AuthenticatedRequest, res: Response) =
     const parsed = createRelationshipSchema.parse(req.body);
 
     if (parsed.person_id === parsed.related_person_id) {
-      res.status(400).json({ error: 'Cannot create a relationship with oneself' });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Cannot create a relationship with oneself'));
       return;
     }
 
@@ -34,7 +35,7 @@ relationshipsRouter.post('/', async (req: AuthenticatedRequest, res: Response) =
       .in('id', [parsed.person_id, parsed.related_person_id]);
 
     if (pError || !persons || persons.length !== 2) {
-      res.status(404).json({ error: 'One or both persons not found' });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'One or both persons not found'));
       return;
     }
 
@@ -49,40 +50,48 @@ relationshipsRouter.post('/', async (req: AuthenticatedRequest, res: Response) =
 
     if (error) {
       if (error.code === '23505') {
-        res.status(409).json({ error: 'This relationship already exists' });
+        res.status(409).json(errorResponse(ErrorCodes.CONFLICT, 'This relationship already exists'));
         return;
       }
       throw error;
     }
 
-    res.status(201).json(data);
+    res.status(201).json(successResponse(data));
   } catch (err: any) {
     if (err instanceof z.ZodError) {
-      res.status(400).json({ error: 'Validation failed', details: err.errors });
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });
 
 /**
- * GET /api/relationships/:personId — Get all relationships for a person
+ * GET /api/relationships/:personId — Get all relationships for a person (paginated)
+ *
+ * Query params:
+ *   page     — Page number (default 1)
+ *   pageSize — Items per page (default 20, max 100)
  */
 relationshipsRouter.get('/:personId', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { data, error } = await supabaseAdmin
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize as string) || 20));
+
+    const { data, error, count } = await supabaseAdmin
       .from('relationships')
       .select(`
         *,
         related_person:persons!relationships_related_person_id_fkey(id, name, gender, photo_url, date_of_birth)
-      `)
-      .eq('person_id', req.params.personId);
+      `, { count: 'exact' })
+      .eq('person_id', req.params.personId)
+      .range((page - 1) * pageSize, page * pageSize - 1);
 
     if (error) throw error;
 
-    res.json(data || []);
+    res.json(paginatedResponse(data || [], page, pageSize, count || 0));
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });
 
@@ -99,13 +108,13 @@ relationshipsRouter.delete('/:id', async (req: AuthenticatedRequest, res: Respon
       .single();
 
     if (getError || !rel) {
-      res.status(404).json({ error: 'Relationship not found' });
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Relationship not found'));
       return;
     }
 
     // Verify ownership
     if (rel.created_by_user_id !== req.userId) {
-      res.status(403).json({ error: 'You can only delete relationships you created' });
+      res.status(403).json(errorResponse(ErrorCodes.FORBIDDEN, 'You can only delete relationships you created'));
       return;
     }
 
@@ -124,6 +133,6 @@ relationshipsRouter.delete('/:id', async (req: AuthenticatedRequest, res: Respon
 
     res.status(204).send();
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
 });
