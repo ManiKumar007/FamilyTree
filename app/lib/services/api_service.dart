@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,11 +20,16 @@ class ApiService {
 
   String get _baseUrl => AppConfig.apiBaseUrl;
 
-  Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
-    if (_authService.accessToken != null)
-      'Authorization': 'Bearer ${_authService.accessToken}',
-  };
+  Map<String, String> get _headers {
+    final token = _authService.accessToken;
+    if (token == null) {
+      print('⚠️ Warning: No access token available for API call');
+    }
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
   // ==================== PERSONS ====================
 
@@ -41,11 +47,24 @@ class ApiService {
 
   /// Create a new person
   Future<Map<String, dynamic>> createPerson(Map<String, dynamic> data) async {
+    print('\n📡 API Service - Creating person');
+    print('URL: $_baseUrl/persons');
+    print('Has Token: ${_authService.accessToken != null}');
+    if (_authService.accessToken != null) {
+      print('Token Length: ${_authService.accessToken!.length}');
+      print('Token Preview: ${_authService.accessToken!.substring(0, min(30, _authService.accessToken!.length))}...');
+    }
+    print('Data keys: ${data.keys.join(", ")}');
+    
     final response = await http.post(
       Uri.parse('$_baseUrl/persons'),
       headers: _headers,
       body: jsonEncode(data),
     );
+    
+    print('Response Status: ${response.statusCode}');
+    print('Response Body: ${response.body}');
+    
     if (response.statusCode != 201) throw _handleError(response);
     final wrapper = jsonDecode(response.body);
     return wrapper['data'] as Map<String, dynamic>;
@@ -188,6 +207,8 @@ class ApiService {
   Future<List<SearchResult>> search({
     String? query,
     String? occupation,
+    String? city,
+    String? state,
     String? maritalStatus,
     int depth = 3,
   }) async {
@@ -195,6 +216,8 @@ class ApiService {
       'depth': depth.toString(),
       if (query != null) 'query': query,
       if (occupation != null) 'occupation': occupation,
+      if (city != null) 'city': city,
+      if (state != null) 'state': state,
       if (maritalStatus != null) 'marital_status': maritalStatus,
     };
 

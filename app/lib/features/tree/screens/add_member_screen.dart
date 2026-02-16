@@ -93,11 +93,18 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
 
       // Get current user's profile to use as anchor if no relative specified
       final myProfile = await ref.read(myProfileProvider.future);
-      if (myProfile == null) {
-        throw Exception('Profile not found. Please complete profile setup first.');
+      
+      // Allow adding members without profile, but show warning
+      if (myProfile == null && widget.relativePersonId == null) {
+        // No profile and no relative specified - show warning
+        final shouldContinue = await _showNoProfileWarning();
+        if (!shouldContinue) {
+          setState(() { _isLoading = false; });
+          return;
+        }
       }
 
-      final anchorPersonId = widget.relativePersonId ?? myProfile.id;
+      final anchorPersonId = widget.relativePersonId ?? myProfile?.id;
 
       // 1. Create person
       final givenName = _givenNameController.text.trim();
@@ -119,8 +126,8 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
 
       final newPersonId = result['person']?['id'];
 
-      // 2. Create relationship - always create a relationship to anchor the person to the tree
-      if (newPersonId != null) {
+      // 2. Create relationship - only if we have an anchor person
+      if (newPersonId != null && anchorPersonId != null) {
         // Determine relationship direction
         String personId;
         String relatedPersonId;
@@ -133,12 +140,12 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
           relatedPersonId = newPersonId;
           // Determine parent type based on anchor's actual gender
           String anchorGender;
-          if (widget.relativePersonId != null && widget.relativePersonId != myProfile.id) {
+          if (widget.relativePersonId != null && widget.relativePersonId != myProfile?.id) {
             // Fetch the anchor person's gender
             final anchorPerson = await apiService.getPerson(anchorPersonId);
             anchorGender = anchorPerson.gender;
           } else {
-            anchorGender = myProfile.gender;
+            anchorGender = myProfile?.gender ?? 'male'; // Default to male if profile not set
           }
           type = anchorGender == 'male' ? 'FATHER_OF' : 'MOTHER_OF';
         } else {
@@ -180,6 +187,40 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     } finally {
       if (mounted) setState(() { _isLoading = false; });
     }
+  }
+
+  Future<bool> _showNoProfileWarning() async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.info_outline, color: Colors.orange),
+            SizedBox(width: 8),
+            Text('Profile Not Complete'),
+          ],
+        ),
+        content: const Text(
+          'You haven\'t completed your profile yet. You can add this family member, '
+          'but they won\'t be connected to you in the family tree until you complete your profile.\n\n'
+          'Do you want to continue adding this member?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => context.go('/profile-setup'),
+            child: const Text('Set Up Profile'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Continue Anyway'),
+          ),
+        ],
+      ),
+    ) ?? false;
   }
 
   void _showMergeDetectedDialog() {

@@ -98,7 +98,7 @@ async function getFullTreeFallback(personId: string): Promise<TreeResponse> {
 
 /**
  * Search for persons within N circles (hops) of a starting person.
- * Supports filtering by occupation, marital status, and name.
+ * Supports filtering by name, occupation, city, state, and marital status.
  *
  * Uses batch-loading: 2 queries per depth level instead of 1 per person.
  */
@@ -107,9 +107,11 @@ export async function searchInCircles(params: {
   maxDepth: number;
   query?: string;
   occupation?: string;
+  city?: string;
+  state?: string;
   maritalStatus?: string;
 }): Promise<SearchResult[]> {
-  const { personId, maxDepth, query, occupation, maritalStatus } = params;
+  const { personId, maxDepth, query, occupation, city, state, maritalStatus } = params;
 
   // Track depth and connection paths for each discovered person
   const depthMap = new Map<string, number>();
@@ -182,12 +184,22 @@ export async function searchInCircles(params: {
       const q = query.toLowerCase();
       matches = matches && (
         person.name.toLowerCase().includes(q) ||
-        (person.occupation?.toLowerCase().includes(q) ?? false)
+        (person.occupation?.toLowerCase().includes(q) ?? false) ||
+        (person.city?.toLowerCase().includes(q) ?? false) ||
+        (person.state?.toLowerCase().includes(q) ?? false)
       );
     }
 
     if (occupation) {
       matches = matches && (person.occupation?.toLowerCase().includes(occupation.toLowerCase()) ?? false);
+    }
+
+    if (city) {
+      matches = matches && (person.city?.toLowerCase().includes(city.toLowerCase()) ?? false);
+    }
+
+    if (state) {
+      matches = matches && (person.state?.toLowerCase().includes(state.toLowerCase()) ?? false);
     }
 
     if (maritalStatus) {

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../services/auth_service.dart';
 import '../../../services/api_service.dart';
 import '../../../config/theme.dart';
 
@@ -66,6 +67,32 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            tooltip: 'More options',
+            onSelected: (value) async {
+              if (value == 'logout') {
+                await ref.read(authServiceProvider).signOut();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, color: kErrorColor),
+                    SizedBox(width: 12),
+                    Text('Sign Out'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Center(
         child: Padding(

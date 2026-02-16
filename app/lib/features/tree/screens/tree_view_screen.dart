@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../models/models.dart';
 import '../../../providers/providers.dart';
+import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
 import '../widgets/person_card.dart';
 import '../widgets/tree_painter.dart';
@@ -28,10 +29,8 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
   Future<void> _checkProfileSetup() async {
     // Check if user has completed profile setup
     final profile = await ref.read(myProfileProvider.future);
-    if (profile == null && mounted) {
-      context.go('/profile-setup');
-      return;
-    }
+    // Don't automatically redirect - let user see tree view even if profile is not set up
+    // The empty tree view will show a prompt to set up profile
     if (mounted) {
       setState(() { _checkingProfile = false; });
     }
@@ -105,6 +104,30 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               });
             },
           ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            tooltip: 'More options',
+            onSelected: (value) async {
+              if (value == 'logout') {
+                await ref.read(authServiceProvider).signOut();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, color: kErrorColor),
+                    SizedBox(width: 12),
+                    Text('Sign Out'),
+                  ],
+                ),
+              ),
+            ],
+          ),
           const SizedBox(width: 8),
         ],
       ),
@@ -119,19 +142,32 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               return _buildTreeCanvas(tree, currentUserId);
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: kErrorColor),
-                  const SizedBox(height: 16),
-                  Text('Error loading tree: $err'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => ref.invalidate(familyTreeProvider),
-                    child: const Text('Retry'),
-                  ),
-                ],
+            error: (err, stack) => Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: kErrorColor),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error loading tree',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(color: kErrorColor),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      err.toString(),
+                      style: TextStyle(color: kTextSecondary, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () => ref.invalidate(familyTreeProvider),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -248,38 +284,76 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         children: [
           Icon(Icons.account_tree_outlined, size: 80, color: kTextDisabled),
           const SizedBox(height: 16),
-          Text(
-            'Your family tree is empty',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Start by adding your parents, siblings, or spouse.',
-            style: TextStyle(color: kTextSecondary),
-          ),
-          const SizedBox(height: 8),
-          // Debug info
           profileAsync.when(
-            data: (profile) => profile != null
-                ? Text(
-                    'Profile: ${profile.name}',
-                    style: TextStyle(color: kTextDisabled, fontSize: 12),
-                  )
-                : Text(
-                    'No profile found - please complete setup',
-                    style: TextStyle(color: kWarningColor, fontSize: 12),
+            data: (profile) {
+              if (profile == null) {
+                // No profile - show setup prompt
+                return Column(
+                  children: [
+                    Text(
+                      'Welcome to MyFamilyTree!',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Complete your profile to start building your family tree.',
+                      style: TextStyle(color: kTextSecondary),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () => context.push('/profile-setup'),
+                      icon: const Icon(Icons.person_add),
+                      label: const Text('Set Up My Profile'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      ),
+                    ),
+                  ],
+                );
+              }
+              // Has profile but tree is empty
+              return Column(
+                children: [
+                  Text(
+                    'Your family tree is empty',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-            loading: () => const SizedBox.shrink(),
-            error: (e, _) => Text(
-              'Profile error: $e',
-              style: TextStyle(color: kErrorColor, fontSize: 12),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Start by adding your parents, siblings, or spouse.',
+                    style: TextStyle(color: kTextSecondary),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => context.push('/tree/add-member'),
+                    icon: const Icon(Icons.person_add),
+                    label: const Text('Add Family Member'),
+                  ),
+                ],
+              );
+            },
+            loading: () => const CircularProgressIndicator(),
+            error: (e, _) => Column(
+              children: [
+                Text(
+                  'Error loading profile',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(color: kErrorColor),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  e.toString(),
+                  style: TextStyle(color: kTextSecondary, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  onPressed: () => context.push('/profile-setup'),
+                  icon: const Icon(Icons.person_add),
+                  label: const Text('Set Up Profile'),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () => context.push('/tree/add-member'),
-            icon: const Icon(Icons.person_add),
-            label: const Text('Add Family Member'),
           ),
         ],
       ),

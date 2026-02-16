@@ -11,6 +11,8 @@ searchRouter.use(authMiddleware);
 const searchQuerySchema = z.object({
   query: z.string().optional(),
   occupation: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
   marital_status: z.enum(['single', 'married', 'divorced', 'widowed']).optional(),
   depth: z.coerce.number().min(1).max(10).default(3),
   page: z.coerce.number().min(1).default(1),
@@ -21,8 +23,10 @@ const searchQuerySchema = z.object({
  * GET /api/search — Search for people within N circles.
  *
  * Query params:
- *   query        — Free text search (matches name or occupation)
+ *   query        — Free text search (matches name, occupation, city, or state)
  *   occupation   — Filter by occupation
+ *   city         — Filter by city
+ *   state        — Filter by state
  *   marital_status — Filter by marital status
  *   depth        — Max number of relationship hops (1-10, default 3)
  *   page         — Page number (default 1)
@@ -44,6 +48,8 @@ searchRouter.get('/', async (req: AuthenticatedRequest, res: Response) => {
       maxDepth: params.depth,
       query: params.query,
       occupation: params.occupation,
+      city: params.city,
+      state: params.state,
       maritalStatus: params.marital_status,
     });
 

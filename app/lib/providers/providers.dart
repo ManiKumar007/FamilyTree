@@ -23,12 +23,18 @@ final currentUserProvider = Provider<User?>((ref) {
 /// Current user's person profile
 final myProfileProvider = FutureProvider<Person?>((ref) async {
   final user = ref.watch(currentUserProvider);
-  if (user == null) return null;
+  if (user == null) {
+    print('⚠️ No user logged in, cannot fetch profile');
+    return null;
+  }
 
   final apiService = ref.watch(apiServiceProvider);
   try {
-    return await apiService.getMyProfile();
-  } catch (_) {
+    final profile = await apiService.getMyProfile();
+    print('✅ Profile fetched successfully: ${profile?.name}');
+    return profile;
+  } catch (e) {
+    print('❌ Error fetching profile: $e');
     return null;
   }
 });
@@ -37,11 +43,23 @@ final myProfileProvider = FutureProvider<Person?>((ref) async {
 
 /// Family tree data
 final familyTreeProvider = FutureProvider<TreeResponse?>((ref) async {
-  final profile = await ref.watch(myProfileProvider.future);
-  if (profile == null) return null;
+  final user = ref.watch(currentUserProvider);
+  if (user == null) {
+    print('⚠️ No user logged in, cannot fetch tree');
+    return null;
+  }
 
   final apiService = ref.watch(apiServiceProvider);
-  return await apiService.getMyTree();
+  try {
+    print('🌲 Fetching family tree...');
+    final tree = await apiService.getMyTree();
+    final totalRelationships = tree.nodes.fold<int>(0, (sum, node) => sum + node.relationships.length);
+    print('✅ Family tree fetched: ${tree.nodes.length} nodes, $totalRelationships relationships');
+    return tree;
+  } catch (e) {
+    print('❌ Error fetching family tree: $e');
+    return null;
+  }
 });
 
 // ==================== MERGE REQUESTS ====================
@@ -100,8 +118,9 @@ class SearchState {
 
 class SearchNotifier extends StateNotifier<SearchState> {
   final ApiService _apiService;
+  final AuthService _authService;
 
-  SearchNotifier(this._apiService) : super(const SearchState());
+  SearchNotifier(this._apiService, this._authService) : super(const SearchState());
 
   Future<void> search({
     String? query,
@@ -119,15 +138,31 @@ class SearchNotifier extends StateNotifier<SearchState> {
     );
 
     try {
+      // Optionally refresh session before searching (non-blocking)
+      print('🔍 Searching with query="${state.query}", occupation="${state.occupation}", depth=${state.depth}');
+      
       final results = await _apiService.search(
         query: state.query.isEmpty ? null : state.query,
         occupation: state.occupation,
         maritalStatus: state.maritalStatus,
         depth: state.depth,
       );
+      print('✅ Search returned ${results.length} results');
       state = state.copyWith(results: results, isLoading: false);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      print('❌ Search error: $e');
+      String errorMessage = e.toString().replaceAll('Exception: ', '');
+      
+      // Better error messages
+      if (errorMessage.contains('Invalid or expired token')) {
+        errorMessage = 'Your session has expired. Please sign in again to continue searching.';
+      } else if (errorMessage.contains('Profile not found')) {
+        errorMessage = 'Please complete your profile setup to search your family network.';
+      } else if (errorMessage.contains('Network') || errorMessage.contains('connection')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      state = state.copyWith(isLoading: false, error: errorMessage);
     }
   }
 
@@ -138,5 +173,6 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
 final searchProvider = StateNotifierProvider<SearchNotifier, SearchState>((ref) {
   final apiService = ref.watch(apiServiceProvider);
-  return SearchNotifier(apiService);
+  final authService = ref.watch(authServiceProvider);
+  return SearchNotifier(apiService, authService);
 });

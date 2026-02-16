@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../services/auth_service.dart';
 import '../config/theme.dart';
 
 /// Consistent app header with navigation
-class AppHeader extends StatelessWidget implements PreferredSizeWidget {
+class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
   final String? title;
   final bool showBackButton;
   final List<Widget>? actions;
@@ -19,7 +21,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -75,7 +77,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-              onSelected: (value) {
+              onSelected: (value) async {
                 switch (value) {
                   case 'tree':
                     context.go('/tree');
@@ -91,6 +93,12 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                     break;
                   case 'landing':
                     context.go('/landing');
+                    break;
+                  case 'logout':
+                    await ref.read(authServiceProvider).signOut();
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
                     break;
                 }
               },
@@ -143,6 +151,16 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                       Icon(Icons.login_rounded, color: kTextSecondary),
                       SizedBox(width: AppSpacing.sm),
                       Text('Sign In'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout_rounded, color: kErrorColor),
+                      SizedBox(width: AppSpacing.sm),
+                      Text('Sign Out'),
                     ],
                   ),
                 ),

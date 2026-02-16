@@ -74,12 +74,51 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       final authService = ref.read(authServiceProvider);
       final apiService = ref.read(apiServiceProvider);
 
+      // Check current session state
+      print('\n========================================');
+      print('🔍 Profile Setup - Initial State');
+      print('========================================');
+      final initialSession = authService.currentSession;
+      final initialUser = authService.currentUser;
+      print('User: ${initialUser?.email}');
+      print('User ID: ${initialUser?.id}');
+      print('Has Session: ${initialSession != null}');
+      print('Token Length: ${authService.accessToken?.length ?? 0}');
+      if (authService.accessToken != null) {
+        print('Token Preview: ${authService.accessToken!.substring(0, 20)}...');
+      }
+      print('========================================\n');
+
+      // Validate we have a user
+      if (initialUser == null) {
+        print('❌ No user found - redirecting to login');
+        setState(() { 
+          _error = 'No user session found. Please sign in.';
+          _isLoading = false;
+        });
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) context.go('/login');
+        return;
+      }
+
+      // Optionally refresh the session (non-blocking)
+      print('🔄 Checking session before profile creation...');
+      final refreshed = await authService.refreshSession();
+      if (refreshed) {
+        print('✅ Session refreshed successfully');
+      } else {
+        print('⚠️ Session refresh failed, but continuing with existing session');\n      }
+
       // Create person record linked to the auth user
       final givenName = _givenNameController.text.trim();
       final surname = _surnameController.text.trim();
       final fullName = surname.isEmpty ? givenName : '$givenName $surname';
 
-      await apiService.createPerson({
+      print('📝 Creating profile for: $fullName');
+      print('Phone: ${_countryCode}${_phoneController.text.trim()}');
+      print('Auth User ID: ${authService.currentUser!.id}');
+      
+      final profileData = {
         'name': fullName,
         'given_name': givenName,
         'surname': surname.isEmpty ? null : surname,
@@ -97,7 +136,15 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'email': authService.currentUser!.email,
         'auth_user_id': authService.currentUser!.id,
         'verified': true,
-      });
+      };
+      
+      print('Profile data prepared: ${profileData.keys.join(", ")}');
+      print('Making API call to create person...');
+      
+      await apiService.createPerson(profileData);
+      
+      print('✅ Profile created successfully!');
+
 
       // Refresh providers to load the new profile
       ref.invalidate(myProfileProvider);
@@ -109,8 +156,27 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         );
         context.go('/tree');
       }
-    } catch (e) {
-      setState(() { _error = e.toString().replaceAll('Exception: ', ''); });
+    } catch (e, stackTrace) {
+      print('\n❌ Error creating profile:');
+      print('Error: $e');
+      print('Stack trace: $stackTrace');
+      
+      String errorMessage = e.toString().replaceAll('Exception: ', '');
+      
+      // Check for specific error types
+      if (errorMessage.contains('Invalid or expired token')) {
+        errorMessage = 'Your session has expired. Please sign in again.';
+        // Auto redirect to login after showing error
+        Future.delayed(const Duration(seconds: 3), () {
+          if (mounted) context.go('/login');
+        });
+      } else if (errorMessage.contains('already exists')) {
+        errorMessage = 'A profile with this phone number already exists.';
+      } else if (errorMessage.contains('Network') || errorMessage.contains('connection')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      setState(() { _error = errorMessage; });
     } finally {
       if (mounted) setState(() { _isLoading = false; });
     }
@@ -120,7 +186,38 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/tree'),
+          tooltip: 'Back to Family Tree',
+        ),
         title: const Text('Complete Your Profile'),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            tooltip: 'More options',
+            onSelected: (value) async {
+              if (value == 'logout') {
+                await ref.read(authServiceProvider).signOut();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, color: kErrorColor),
+                    SizedBox(width: 12),
+                    Text('Sign Out'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/providers.dart';
+import '../../../services/auth_service.dart';
 import '../../../models/models.dart';
 import '../../../config/theme.dart';
 
@@ -22,16 +23,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkProfileSetup();
-    });
-  }
-
-  Future<void> _checkProfileSetup() async {
-    final profile = await ref.read(myProfileProvider.future);
-    if (profile == null && mounted) {
-      context.go('/profile-setup');
-    }
+    // Remove automatic redirect - let user use search even if profile setup is incomplete
   }
 
   @override
@@ -66,6 +58,32 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            tooltip: 'More options',
+            onSelected: (value) async {
+              if (value == 'logout') {
+                await ref.read(authServiceProvider).signOut();
+                if (context.mounted) {
+                  context.go('/login');
+                }
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'logout',
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, color: kErrorColor),
+                    SizedBox(width: 12),
+                    Text('Sign Out'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -79,9 +97,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     Expanded(
                       child: TextField(
                         controller: _searchController,
+                        onSubmitted: (_) => _doSearch(),
                         decoration: InputDecoration(
-                          hintText: 'Search by name, occupation...',
-                          prefixIcon: const Icon(Icons.search),
+                          hintText: 'Search by name, occupation, city, state...',
+                          hintStyle: TextStyle(color: kTextDisabled, fontSize: 14),
+                          prefixIcon: Icon(Icons.search, color: kTextSecondary),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _showFilters ? Icons.filter_list_off : Icons.filter_list,
@@ -89,7 +109,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             onPressed: () => setState(() { _showFilters = !_showFilters; }),
                           ),
                         ),
-                        onSubmitted: (_) => _doSearch(),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -183,8 +202,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               Icon(Icons.error_outline, size: 64, color: kWarningColor),
                               const SizedBox(height: 16),
                               Text(
-                                searchState.error!.contains('Profile not found')
+                                searchState.error!.contains('Profile not found') || searchState.error!.contains('profile setup')
                                     ? 'Profile Setup Required'
+                                    : searchState.error!.contains('Session expired')
+                                    ? 'Session Expired'
                                     : 'Search Error',
                                 style: const TextStyle(
                                   fontSize: 18,
@@ -192,39 +213,85 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Text(
-                                searchState.error!.contains('Profile not found')
-                                    ? 'Please complete your profile setup to search the network.'
-                                    : searchState.error!,
-                                style: TextStyle(color: kTextSecondary),
-                                textAlign: TextAlign.center,
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 24),
+                                child: Text(
+                                  searchState.error!,
+                                  style: TextStyle(color: kTextSecondary),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
-                              if (searchState.error!.contains('Profile not found')) ...[
-                                const SizedBox(height: 24),
+                              const SizedBox(height: 24),
+                              if (searchState.error!.contains('Profile not found') || searchState.error!.contains('profile setup'))
                                 ElevatedButton.icon(
                                   onPressed: () => context.go('/profile-setup'),
                                   icon: const Icon(Icons.person_add),
                                   label: const Text('Set Up Profile'),
+                                )
+                              else if (searchState.error!.contains('Session expired'))
+                                ElevatedButton.icon(
+                                  onPressed: () async {
+                                    await ref.read(authServiceProvider).signOut();
+                                    if (context.mounted) context.go('/login');
+                                  },
+                                  icon: const Icon(Icons.logout),
+                                  label: const Text('Sign In Again'),
+                                )
+                              else
+                                ElevatedButton.icon(
+                                  onPressed: _doSearch,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Try Again'),
                                 ),
-                              ],
                             ],
                           ),
                         ),
                       )
                     : searchState.results.isEmpty
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.search, size: 64, color: kTextDisabled),
-                                const SizedBox(height: 8),
-                                Text(
-                                  searchState.query.isEmpty
-                                      ? 'Search your extended family network'
-                                      : 'No results found',
-                                  style: TextStyle(color: kTextDisabled),
-                                ),
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.search, size: 64, color: kTextDisabled),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    searchState.query.isEmpty
+                                        ? 'Search Your Family Network'
+                                        : 'No results found',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    searchState.query.isEmpty
+                                        ? 'Find family members by any of the following:'
+                                        : 'Try adjusting your search or filters',
+                                    style: TextStyle(color: kTextSecondary),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (searchState.query.isEmpty) ...[
+                                    const SizedBox(height: 24),
+                                    _SearchHintChip(icon: Icons.person, label: 'Name'),
+                                    _SearchHintChip(icon: Icons.work, label: 'Occupation (e.g., "Engineer", "Doctor")'),
+                                    _SearchHintChip(icon: Icons.location_city, label: 'City (e.g., "Bangalore", "Delhi")'),
+                                    _SearchHintChip(icon: Icons.map, label: 'State (e.g., "Karnataka", "Maharashtra")'),
+                                    _SearchHintChip(icon: Icons.business, label: 'Company name'),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Or use filters above to narrow your search',
+                                      style: TextStyle(
+                                        color: kTextSecondary,
+                                        fontSize: 12,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
                           )
                         : ListView.builder(
@@ -304,6 +371,35 @@ class _SearchResultCard extends StatelessWidget {
         isThreeLine: true,
         trailing: const Icon(Icons.chevron_right),
         onTap: () => context.push('/person/${p.id}'),
+      ),
+    );
+  }
+}
+
+class _SearchHintChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _SearchHintChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: kPrimaryColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: kTextSecondary,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

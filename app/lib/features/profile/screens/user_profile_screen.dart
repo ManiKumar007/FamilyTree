@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../models/models.dart';
 import '../../../providers/providers.dart';
+import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
 import '../../../widgets/common_widgets.dart';
 import 'package:share_plus/share_plus.dart';
@@ -100,6 +101,30 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           icon: const Icon(Icons.share),
           onPressed: () => _shareProfile(profile),
           tooltip: 'Share Profile',
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert_rounded),
+          tooltip: 'More options',
+          onSelected: (value) async {
+            if (value == 'logout') {
+              await ref.read(authServiceProvider).signOut();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  Icon(Icons.logout_rounded, color: kErrorColor),
+                  SizedBox(width: 12),
+                  Text('Sign Out'),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
