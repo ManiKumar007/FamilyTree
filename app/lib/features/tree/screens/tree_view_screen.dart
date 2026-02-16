@@ -363,9 +363,9 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-              
-              // Parents Row
-              Row(
+                
+                // Parents Row
+                Row(
                 children: [
                   Expanded(
                     child: _relationshipButton(
@@ -397,11 +397,11 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 10),
-              
-              // Siblings Row
-              Row(
+                ),
+                const SizedBox(height: 10),
+                
+                // Siblings Row
+                Row(
                 children: [
                   Expanded(
                     child: _relationshipButton(
@@ -435,11 +435,11 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 10),
-              
-              // Spouse Row
-              Row(
+                ),
+                const SizedBox(height: 10),
+                
+                // Spouse Row
+                Row(
                 children: [
                   Expanded(
                     child: _relationshipButton(
@@ -473,11 +473,11 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 10),
-              
-              // Children Row
-              Row(
+                ),
+                const SizedBox(height: 10),
+                
+                // Children Row
+                Row(
                 children: [
                   Expanded(
                     child: _relationshipButton(
@@ -511,18 +511,19 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 16),
-              
-              // Cancel Button
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
                 ),
-                child: const Text('Cancel', style: TextStyle(fontSize: 16)),
-              ),
-            ],
+                const SizedBox(height: 16),
+                
+                // Cancel Button
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
+                  ),
+                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                ),
+              ],
+            ),
           ),
         ),
       ),
