@@ -46,12 +46,38 @@ export async function authMiddleware(
     console.log('Token preview:', token.substring(0, 30) + '...');
     console.log('Supabase URL:', env.SUPABASE_URL);
     
+    // Check if Supabase is configured
+    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('❌ Supabase configuration missing!');
+      console.error('   SUPABASE_URL:', env.SUPABASE_URL ? 'Set' : 'Missing');
+      console.error('   SUPABASE_SERVICE_ROLE_KEY:', env.SUPABASE_SERVICE_ROLE_KEY ? 'Set' : 'Missing');
+      res.status(500).json({ 
+        error: 'Server configuration error', 
+        details: 'Supabase credentials not configured' 
+      });
+      return;
+    }
+    
     const { data, error } = await supabaseAdmin.auth.getUser(token);
 
     if (error) {
       console.error('❌ Token validation error:', error.message);
       console.error('Error details:', JSON.stringify(error, null, 2));
-      res.status(401).json({ error: 'Invalid or expired token', details: error.message });
+      
+      // Check if it's a connection error
+      if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
+        console.error('❌ CRITICAL: Cannot connect to Supabase!');
+        console.error('   Check SUPABASE_URL and network connectivity');
+        res.status(503).json({ 
+          error: 'Service unavailable', 
+          details: 'Cannot connect to authentication service. Please contact administrator.' 
+        });
+      } else {
+        res.status(401).json({ 
+          error: 'Invalid or expired token', 
+          details: error.message 
+        });
+      }
       return;
     }
     
@@ -65,8 +91,24 @@ export async function authMiddleware(
     req.userId = data.user.id;
     req.userEmail = data.user.email;
     next();
-  } catch (err) {
+  } catch (err: any) {
     console.error('❌ Authentication exception:', err);
-    res.status(401).json({ error: 'Authentication failed', exception: String(err) });
+    console.error('Exception type:', err.constructor.name);
+    console.error('Exception message:', err.message);
+    
+    // Check for network/connection errors
+    if (err.message && (err.message.includes('fetch') || err.message.includes('ECONNREFUSED') || err.message.includes('ETIMEDOUT'))) {
+      console.error('❌ CRITICAL: Network error connecting to Supabase');
+      console.error('   Verify SUPABASE_URL is correct and accessible');
+      res.status(503).json({ 
+        error: 'Service unavailable', 
+        details: 'Cannot reach authentication service. Please check server configuration.' 
+      });
+    } else {
+      res.status(401).json({ 
+        error: 'Authentication failed', 
+        exception: String(err) 
+      });
+    }
   }
 }

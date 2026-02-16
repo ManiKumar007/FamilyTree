@@ -154,7 +154,9 @@ class SearchNotifier extends StateNotifier<SearchState> {
       String errorMessage = e.toString().replaceAll('Exception: ', '');
       
       // Better error messages
-      if (errorMessage.contains('Invalid or expired token')) {
+      if (errorMessage.contains('Service unavailable') || errorMessage.contains('Cannot connect') || errorMessage.contains('503')) {
+        errorMessage = 'Server is temporarily unavailable. Please try again in a moment or contact support.';
+      } else if (errorMessage.contains('Invalid or expired token') && !errorMessage.contains('Service unavailable')) {
         errorMessage = 'Your session has expired. Please sign in again to continue searching.';
       } else if (errorMessage.contains('Profile not found')) {
         errorMessage = 'Please complete your profile setup to search your family network.';

@@ -425,6 +425,7 @@ Future<void> search({
 Getting `401 Invalid or expired token` error when creating profile, despite user being logged in with an active session. The error occurred after successful login when attempting to create profile data.
 
 **Error Message**:
+
 ```
 Response Status: 401
 Response Body: {"error":"Invalid or expired token"}
@@ -452,9 +453,9 @@ Future<bool> refreshSession() async {
     developer.log('🔄 Refreshing session', name: 'AuthService');
     final oldToken = currentSession?.accessToken;
     print('Old token length: ${oldToken?.length ?? 0}');
-    
+
     final response = await _supabase.auth.refreshSession();
-    
+
     if (response.session != null) {
       final newToken = response.session!.accessToken;
       print('New token length: ${newToken.length}');
@@ -520,7 +521,7 @@ if (user != null) {
   print('User Email: ${user.email}');
   print('Email Confirmed: ${user.confirmedAt != null}');
   print('User Created: ${user.createdAt}');
-  
+
   // If email is not confirmed, show warning
   if (user.confirmedAt == null) {
     print('⚠️ WARNING: Email not confirmed. This may cause token issues.');
@@ -535,41 +536,41 @@ if (user != null) {
 Added comprehensive error logging to identify token rejection reasons:
 
 ```typescript
-const token = authHeader.split(' ')[1];
+const token = authHeader.split(" ")[1];
 
 try {
-  console.log('🔐 Validating token...');
-  console.log('Token length:', token.length);
-  console.log('Token preview:', token.substring(0, 30) + '...');
-  console.log('Supabase URL:', env.SUPABASE_URL);
-  
+  console.log("🔐 Validating token...");
+  console.log("Token length:", token.length);
+  console.log("Token preview:", token.substring(0, 30) + "...");
+  console.log("Supabase URL:", env.SUPABASE_URL);
+
   const { data, error } = await supabaseAdmin.auth.getUser(token);
 
   if (error) {
-    console.error('❌ Token validation error:', error.message);
-    console.error('Error details:', JSON.stringify(error, null, 2));
-    res.status(401).json({ 
-      error: 'Invalid or expired token', 
-      details: error.message 
+    console.error("❌ Token validation error:", error.message);
+    console.error("Error details:", JSON.stringify(error, null, 2));
+    res.status(401).json({
+      error: "Invalid or expired token",
+      details: error.message,
     });
     return;
   }
-  
+
   if (!data.user) {
-    console.error('❌ No user data returned for token');
-    res.status(401).json({ error: 'Invalid or expired token' });
+    console.error("❌ No user data returned for token");
+    res.status(401).json({ error: "Invalid or expired token" });
     return;
   }
 
-  console.log('✅ Token validated for user:', data.user.email);
+  console.log("✅ Token validated for user:", data.user.email);
   req.userId = data.user.id;
   req.userEmail = data.user.email;
   next();
 } catch (err) {
-  console.error('❌ Authentication exception:', err);
-  res.status(401).json({ 
-    error: 'Authentication failed', 
-    exception: String(err) 
+  console.error("❌ Authentication exception:", err);
+  res.status(401).json({
+    error: "Authentication failed",
+    exception: String(err),
   });
 }
 ```
@@ -600,11 +601,13 @@ Check email inbox for Supabase confirmation link and click it.
 ### Diagnostic Tools
 
 Created `diagnose-token.ps1` script to check:
+
 - Environment variables are set correctly
 - Backend is running
 - Provides instructions for checking logs
 
 **Usage**:
+
 ```powershell
 .\diagnose-token.ps1
 ```
@@ -612,6 +615,7 @@ Created `diagnose-token.ps1` script to check:
 ### Expected Log Output (Success)
 
 **Frontend Console**:
+
 ```
 🔄 Refreshing session before profile creation...
 Token BEFORE refresh: eyJhbGciOiJFUzI1NiIsImtpZCI6Im...
@@ -626,6 +630,7 @@ Email Confirmed: true
 ```
 
 **Backend Console**:
+
 ```
 🔐 Validating token...
 Token length: 984

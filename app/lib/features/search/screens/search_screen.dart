@@ -206,6 +206,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                     ? 'Profile Setup Required'
                                     : searchState.error!.contains('Session expired')
                                     ? 'Session Expired'
+                                    : searchState.error!.contains('Service unavailable') || searchState.error!.contains('temporarily unavailable')
+                                    ? 'Service Unavailable'
                                     : 'Search Error',
                                 style: const TextStyle(
                                   fontSize: 18,
@@ -227,6 +229,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                   onPressed: () => context.go('/profile-setup'),
                                   icon: const Icon(Icons.person_add),
                                   label: const Text('Set Up Profile'),
+                                )
+                              else if (searchState.error!.contains('Service unavailable') || searchState.error!.contains('temporarily unavailable'))
+                                ElevatedButton.icon(
+                                  onPressed: _doSearch,
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text('Retry'),
                                 )
                               else if (searchState.error!.contains('Session expired'))
                                 ElevatedButton.icon(
