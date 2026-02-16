@@ -20,6 +20,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
   Person? _person;
   List<Relationship>? _relationships;
   bool _isLoading = true;
+  String? _loadError;
   TabController? _tabController;
 
   @override
@@ -36,7 +37,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
   }
 
   Future<void> _loadPerson() async {
-    setState(() { _isLoading = true; });
+    setState(() { _isLoading = true; _loadError = null; });
     try {
       final api = ref.read(apiServiceProvider);
       final person = await api.getPerson(widget.personId);
@@ -46,6 +47,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
         _relationships = rels; 
       });
     } catch (e) {
+      setState(() { _loadError = e.toString().replaceAll('Exception: ', ''); });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading person: $e')),
@@ -68,10 +70,34 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
     if (_person == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Person Details')),
-        body: const EmptyState(
-          icon: Icons.person_off,
-          title: 'Person Not Found',
-          subtitle: 'This person could not be found',
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const EmptyState(
+                icon: Icons.person_off,
+                title: 'Person Not Found',
+                subtitle: 'This person could not be loaded',
+              ),
+              if (_loadError != null) ...[
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    _loadError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _loadPerson,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Retry'),
+              ),
+            ],
+          ),
         ),
       );
     }

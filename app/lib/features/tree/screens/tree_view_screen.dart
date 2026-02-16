@@ -329,14 +329,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               child: AddPersonButton(
                 label: btn.label,
                 onTap: () {
-                  if (btn.relationshipType == '_PARENTS_') {
-                    _showAddParentChoice(btn.relativePersonId);
-                  } else {
-                    context.push('/tree/add-member', extra: {
-                      'relativePersonId': btn.relativePersonId,
-                      'relationshipType': btn.relationshipType,
-                    });
-                  }
+                  _showRelationshipPicker(btn.relativePersonId);
                 },
               ),
             )),
@@ -347,40 +340,219 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
   }
 
   void _showAddParentChoice(String relativePersonId) {
+    _showRelationshipPicker(relativePersonId);
+  }
+
+  void _showRelationshipPicker(String relativePersonId) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.grey[100],
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Add Parent', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: Icon(Icons.person, color: kMaleColor),
-                title: const Text('Add Father'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/tree/add-member', extra: {
-                    'relativePersonId': relativePersonId,
-                    'relationshipType': 'FATHER_OF',
-                  });
-                },
+              const Text(
+                'Add Family Member',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              ListTile(
-                leading: Icon(Icons.person_2, color: kFemaleColor),
-                title: const Text('Add Mother'),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/tree/add-member', extra: {
-                    'relativePersonId': relativePersonId,
-                    'relationshipType': 'MOTHER_OF',
-                  });
-                },
+              const SizedBox(height: 20),
+              
+              // Parents Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Father',
+                      Icons.person,
+                      kMaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'FATHER_OF',
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Mother',
+                      Icons.person,
+                      kFemaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'MOTHER_OF',
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Siblings Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Brother',
+                      Icons.person,
+                      kMaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'SIBLING_OF',
+                          'gender': 'male',
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Sister',
+                      Icons.person,
+                      kFemaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'SIBLING_OF',
+                          'gender': 'female',
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Spouse Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Husband',
+                      Icons.person,
+                      kMaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'SPOUSE_OF',
+                          'gender': 'male',
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Wife',
+                      Icons.person,
+                      kFemaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'SPOUSE_OF',
+                          'gender': 'female',
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Children Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Son',
+                      Icons.person,
+                      kMaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'CHILD_OF',
+                          'gender': 'male',
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Daughter',
+                      Icons.person,
+                      kFemaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'CHILD_OF',
+                          'gender': 'female',
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              
+              // Cancel Button
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                ),
+                child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _relationshipButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(12),
+      color: color.withOpacity(0.1),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withOpacity(0.3)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),

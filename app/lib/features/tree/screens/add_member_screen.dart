@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io' if (dart.library.html) 'dart:html';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../services/api_service.dart';
 import '../../../providers/providers.dart';
 import '../../../config/constants.dart';
@@ -38,6 +41,8 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic>? _mergeResult;
+  XFile? _imageFile;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -229,6 +234,10 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Photo Picker
+                  _buildPhotoPicker(),
+                  const SizedBox(height: AppSpacing.lg),
+                  
                   // Relationship type (if not pre-set)
                   if (widget.relationshipType == null) ...[
                     DropdownButtonFormField<String>(
@@ -393,5 +402,78 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildPhotoPicker() {
+    return Center(
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey[200],
+                border: Border.all(color: kDividerColor, width: 2),
+              ),
+              child: _imageFile != null
+                  ? ClipOval(
+                      child: kIsWeb
+                          ? Image.network(
+                              _imageFile!.path,
+                              fit: BoxFit.cover,
+                              width: 120,
+                              height: 120,
+                            )
+                          : Image.file(
+                              File(_imageFile!.path),
+                              fit: BoxFit.cover,
+                              width: 120,
+                              height: 120,
+                            ),
+                    )
+                  : Icon(
+                      Icons.add_a_photo,
+                      size: 40,
+                      color: Colors.grey[400],
+                    ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: _pickImage,
+            icon: const Icon(Icons.photo_camera),
+            label: Text(_imageFile != null ? 'Change Photo' : 'Add Photo'),
+          ),
+          if (_imageFile != null)
+            TextButton(
+              onPressed: () => setState(() => _imageFile = null),
+              child: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        setState(() => _imageFile = image);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+    }
   }
 }
