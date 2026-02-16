@@ -54,7 +54,7 @@ class Person {
       dateOfBirth: json['date_of_birth'] as String?,
       gender: json['gender'] as String,
       photoUrl: json['photo_url'] as String?,
-      phone: json['phone'] as String,
+      phone: json['phone'] as String? ?? '',
       email: json['email'] as String?,
       occupation: json['occupation'] as String?,
       community: json['community'] as String?,
