@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/auth/screens/login_screen.dart';
+import '../features/auth/screens/signup_screen.dart';
 import '../features/auth/screens/profile_setup_screen.dart';
 import '../features/landing/screens/landing_screen.dart';
 import '../features/tree/screens/tree_view_screen.dart';
@@ -22,31 +23,22 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/landing',
     redirect: (context, state) {
-      // 🚧 TEMPORARY: Auth bypass for testing
-      // Skip profile setup screen during auth bypass
-      if (state.matchedLocation == '/profile-setup') {
-        return '/';
-      }
-      
-      return null;
-      
-      /* ORIGINAL AUTH CODE (commented out):
       final session = Supabase.instance.client.auth.currentSession;
       final isLoggedIn = session != null;
-      final isLoginRoute = state.matchedLocation == '/login';
+      final isLoginRoute = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+      final isLandingRoute = state.matchedLocation == '/landing';
       final isInviteRoute = state.matchedLocation.startsWith('/invite');
 
-      // Allow invite route without auth
-      if (isInviteRoute) return null;
+      // Allow landing, login, signup, and invite routes without auth
+      if (isLandingRoute || isLoginRoute || isInviteRoute) return null;
 
-      // If not logged in, redirect to login
-      if (!isLoggedIn && !isLoginRoute) return '/login';
+      // If not logged in and trying to access protected route, redirect to login
+      if (!isLoggedIn) return '/login';
 
-      // If logged in and on login page, redirect to home
-      if (isLoggedIn && isLoginRoute) return '/';
+      // If logged in and on login page, redirect to tree
+      if (isLoggedIn && isLoginRoute) return '/tree';
 
       return null;
-      */
     },
     routes: [
       // Landing Page
@@ -59,6 +51,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+
+      // Sign up
+      GoRoute(
+        path: '/signup',
+        builder: (context, state) => const SignupScreen(),
       ),
 
       // Profile setup (first-time)

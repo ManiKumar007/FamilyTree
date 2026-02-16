@@ -5,61 +5,73 @@ import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
 import 'dart:developer' as developer;
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends ConsumerStatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   String? _error;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
-  Future<void> _signIn() async {
+  Future<void> _signUp() async {
     if (!_formKey.currentState!.validate()) {
-      developer.log('❌ Form validation failed', name: 'LoginScreen');
+      developer.log('❌ Form validation failed', name: 'SignupScreen');
       return;
     }
 
     final email = _emailController.text.trim();
-    developer.log('🔐 Sign in attempt started', name: 'LoginScreen', error: {'email': email});
+    final name = _nameController.text.trim();
+    developer.log('📝 Sign up attempt started', name: 'SignupScreen', error: {'email': email, 'name': name});
     
     setState(() { _isLoading = true; _error = null; });
     try {
       final authService = ref.read(authServiceProvider);
-      developer.log('📞 Calling authService.signInWithPassword', name: 'LoginScreen');
+      developer.log('📞 Calling authService.signUpWithPassword', name: 'SignupScreen');
       
-      final response = await authService.signInWithPassword(
+      final response = await authService.signUpWithPassword(
         email: email,
         password: _passwordController.text,
+        metadata: {'name': name},
       );
       
-      developer.log('✅ Sign in successful', name: 'LoginScreen', error: {
+      developer.log('✅ Sign up successful', name: 'SignupScreen', error: {
         'user_id': response.user?.id,
         'email': response.user?.email,
-        'session': response.session != null ? 'present' : 'null'
       });
       
       if (mounted) {
-        developer.log('🚀 Navigating to home screen', name: 'LoginScreen');
-        context.go('/');
+        developer.log('✉️ Showing success message', name: 'SignupScreen');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created! Please sign in.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        context.go('/login');
       }
     } catch (e, stackTrace) {
       developer.log(
-        '❌ Sign in failed',
-        name: 'LoginScreen',
+        '❌ Sign up failed',
+        name: 'SignupScreen',
         error: e,
         stackTrace: stackTrace,
       );
@@ -69,8 +81,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _goToSignUp() {
-    context.push('/signup');
+  void _goToLogin() {
+    context.go('/login');
   }
 
   @override
@@ -96,7 +108,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'MyFamilyTree',
+                      'Create Account',
                       style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: kPrimaryColor,
@@ -105,13 +117,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Welcome back!\nSign in to continue',
+                      'Join MyFamilyTree today',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.grey[600],
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 48),
+
+                    // Name input
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Full Name',
+                        prefixIcon: Icon(Icons.person_outline),
+                        hintText: 'John Doe',
+                        border: OutlineInputBorder(),
+                      ),
+                      enabled: !_isLoading,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
 
                     // Email input
                     TextFormField(
@@ -156,7 +187,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       enabled: !_isLoading,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
+                          return 'Please enter a password';
                         }
                         if (value.length < 6) {
                           return 'Password must be at least 6 characters';
@@ -164,11 +195,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 16),
+
+                    // Confirm Password input
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      decoration: InputDecoration(
+                        labelText: 'Confirm Password',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() { _obscureConfirmPassword = !_obscureConfirmPassword; });
+                          },
+                        ),
+                      ),
+                      obscureText: _obscureConfirmPassword,
+                      enabled: !_isLoading,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please confirm your password';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: 24),
 
-                    // Sign in button
+                    // Sign up button
                     ElevatedButton(
-                      onPressed: _isLoading ? null : _signIn,
+                      onPressed: _isLoading ? null : _signUp,
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 52),
                       ),
@@ -177,7 +238,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               height: 20, width: 20,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                             )
-                          : const Text('Sign In', style: TextStyle(fontSize: 16)),
+                          : const Text('Sign Up', style: TextStyle(fontSize: 16)),
                     ),
 
                     // Error display
@@ -199,17 +260,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Sign up link
+                    // Sign in link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Don't have an account? ",
+                          "Already have an account? ",
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                         TextButton(
-                          onPressed: _isLoading ? null : _goToSignUp,
-                          child: const Text('Sign Up'),
+                          onPressed: _isLoading ? null : _goToLogin,
+                          child: const Text('Sign In'),
                         ),
                       ],
                     ),

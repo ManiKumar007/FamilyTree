@@ -1,24 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import '../config/constants.dart';
+import 'dart:developer' as developer;
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
-  GoogleSignIn? _googleSignIn;
-
-  /// Get or create GoogleSignIn instance
-  GoogleSignIn get googleSignIn {
-    _googleSignIn ??= GoogleSignIn(
-      scopes: ['email', 'profile'],
-      serverClientId: AppConfig.googleWebClientId.isNotEmpty 
-        ? AppConfig.googleWebClientId 
-        : null,
-    );
-    return _googleSignIn!;
-  }
 
   /// Current session
   Session? get currentSession => _supabase.auth.currentSession;
@@ -32,52 +19,126 @@ class AuthService {
   /// Auth state stream
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
-  /// Sign in with Google
-  Future<AuthResponse> signInWithGoogle() async {
-    // Sign out from previous session to avoid account picker issues
-    await googleSignIn.signOut();
+  /// Sign up with email and password
+  Future<AuthResponse> signUpWithPassword({
+    required String email,
+    required String password,
+    Map<String, dynamic>? metadata,
+  }) async {
+    developer.log('📝 Attempting sign up', name: 'AuthService', error: {'email': email, 'metadata': metadata});
+    
+    try {
+      // Validate inputs
+      if (email.isEmpty) {
+        developer.log('❌ Email is empty', name: 'AuthService');
+        throw Exception('Email cannot be empty');
+      }
+      if (password.isEmpty) {
+        developer.log('❌ Password is empty', name: 'AuthService');
+        throw Exception('Password cannot be empty');
+      }
+      if (!email.contains('@')) {
+        developer.log('❌ Invalid email format', name: 'AuthService', error: {'email': email});
+        throw Exception('Invalid email format');
+      }
+      if (password.length < 6) {
+        developer.log('❌ Password too short', name: 'AuthService');
+        throw Exception('Password must be at least 6 characters');
+      }
 
-    final googleUser = await googleSignIn.signIn();
-    if (googleUser == null) {
-      throw Exception('Google sign-in cancelled');
+      developer.log('📡 Calling Supabase auth.signUp', name: 'AuthService');
+      final response = await _supabase.auth.signUp(
+        email: email,
+        password: password,
+        data: metadata,
+      );
+      
+      developer.log('✅ Supabase sign up successful', name: 'AuthService', error: {
+        'user_id': response.user?.id,
+        'email': response.user?.email,
+        'has_session': response.session != null,
+      });
+      
+      return response;
+    } on AuthException catch (e) {
+      developer.log(
+        '🚫 Supabase AuthException',
+        name: 'AuthService',
+        error: {'message': e.message, 'statusCode': e.statusCode},
+      );
+      throw Exception('Sign up failed: ${e.message}');
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Unexpected error during sign up',
+        name: 'AuthService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
     }
-
-    final googleAuth = await googleUser.authentication;
-    final idToken = googleAuth.idToken;
-    final accessToken = googleAuth.accessToken;
-
-    if (idToken == null) {
-      throw Exception('No ID token received from Google');
-    }
-
-    final response = await _supabase.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: idToken,
-      accessToken: accessToken,
-    );
-
-    return response;
   }
 
-  /// Sign in with email magic link
-  Future<void> signInWithEmail(String email) async {
-    await _supabase.auth.signInWithOtp(
-      email: email,
-      emailRedirectTo: 'com.myfamilytree://login-callback',
-    );
-  }
+  /// Sign in with email and password
+  Future<AuthResponse> signInWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    developer.log('🔑 Attempting password sign in', name: 'AuthService', error: {'email': email});
+    
+    try {
+      // Validate inputs
+      if (email.isEmpty) {
+        developer.log('❌ Email is empty', name: 'AuthService');
+        throw Exception('Email cannot be empty');
+      }
+      if (password.isEmpty) {
+        developer.log('❌ Password is empty', name: 'AuthService');
+        throw Exception('Password cannot be empty');
+      }
+      if (!email.contains('@')) {
+        developer.log('❌ Invalid email format', name: 'AuthService', error: {'email': email});
+        throw Exception('Invalid email format');
+      }
+      if (password.length < 6) {
+        developer.log('❌ Password too short', name: 'AuthService');
+        throw Exception('Password must be at least 6 characters');
+      }
 
-  /// Verify OTP (for email)
-  Future<AuthResponse> verifyOtp(String email, String token) async {
-    return await _supabase.auth.verifyOTP(
-      email: email,
-      token: token,
-      type: OtpType.email,
-    );
+      developer.log('📡 Calling Supabase auth.signInWithPassword', name: 'AuthService');
+      final response = await _supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      
+      developer.log('✅ Supabase sign in successful', name: 'AuthService', error: {
+        'user_id': response.user?.id,
+        'email': response.user?.email,
+        'has_session': response.session != null,
+        'access_token_length': response.session?.accessToken.length ?? 0,
+      });
+      
+      return response;
+    } on AuthException catch (e) {
+      developer.log(
+        '🚫 Supabase AuthException',
+        name: 'AuthService',
+        error: {'message': e.message, 'statusCode': e.statusCode},
+      );
+      throw Exception('Authentication failed: ${e.message}');
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Unexpected error during sign in',
+        name: 'AuthService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   /// Sign out
   Future<void> signOut() async {
+    developer.log('👋 Signing out', name: 'AuthService');
     await _supabase.auth.signOut();
   }
 
