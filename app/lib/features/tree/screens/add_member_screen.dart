@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io' if (dart.library.html) 'dart:html';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../services/api_service.dart';
 import '../../../providers/providers.dart';
 import '../../../config/constants.dart';
@@ -23,7 +26,8 @@ class AddMemberScreen extends ConsumerStatefulWidget {
 
 class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _givenNameController = TextEditingController();
+  final _surnameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
@@ -37,6 +41,8 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic>? _mergeResult;
+  XFile? _imageFile;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -57,7 +63,8 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _givenNameController.dispose();
+    _surnameController.dispose();
     _phoneController.dispose();
     _cityController.dispose();
     _stateController.dispose();
@@ -93,9 +100,15 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
       final anchorPersonId = widget.relativePersonId ?? myProfile.id;
 
       // 1. Create person
+      final givenName = _givenNameController.text.trim();
+      final surname = _surnameController.text.trim();
+      final fullName = surname.isEmpty ? givenName : '$givenName $surname';
+
       final result = await apiService.createPerson({
-        'name': _nameController.text.trim(),
-        'phone': '${_countryCode}${_phoneController.text.trim()}',
+        'name': fullName,
+        'given_name': givenName,
+        'surname': surname.isEmpty ? null : surname,
+        'phone': '$_countryCode${_phoneController.text.trim()}',
         'gender': _gender,
         'date_of_birth': _dateOfBirth?.toIso8601String().split('T')[0],
         'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
@@ -158,7 +171,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         } else {
           context.pop();
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${_nameController.text} added to your tree!')),
+            SnackBar(content: Text('$fullName added to your tree!')),
           );
         }
       }
@@ -221,6 +234,10 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Photo Picker
+                  _buildPhotoPicker(),
+                  const SizedBox(height: AppSpacing.lg),
+                  
                   // Relationship type (if not pre-set)
                   if (widget.relationshipType == null) ...[
                     DropdownButtonFormField<String>(
@@ -247,15 +264,33 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     const SizedBox(height: AppSpacing.md),
                   ],
 
-                  // Name
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name *',
-                      prefixIcon: Icon(Icons.person),
-                      helperText: 'Required',
-                    ),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Please enter the full name' : null,
+                  // Name fields
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _givenNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Given Name *',
+                            prefixIcon: Icon(Icons.person),
+                            helperText: 'Required',
+                          ),
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _surnameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Surname',
+                            helperText: 'Family name',
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.md),
 
@@ -367,5 +402,78 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildPhotoPicker() {
+    return Center(
+      child: Column(
+        children: [
+          GestureDetector(
+            onTap: _pickImage,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey[200],
+                border: Border.all(color: kDividerColor, width: 2),
+              ),
+              child: _imageFile != null
+                  ? ClipOval(
+                      child: kIsWeb
+                          ? Image.network(
+                              _imageFile!.path,
+                              fit: BoxFit.cover,
+                              width: 120,
+                              height: 120,
+                            )
+                          : Image.file(
+                              File(_imageFile!.path),
+                              fit: BoxFit.cover,
+                              width: 120,
+                              height: 120,
+                            ),
+                    )
+                  : Icon(
+                      Icons.add_a_photo,
+                      size: 40,
+                      color: Colors.grey[400],
+                    ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: _pickImage,
+            icon: const Icon(Icons.photo_camera),
+            label: Text(_imageFile != null ? 'Change Photo' : 'Add Photo'),
+          ),
+          if (_imageFile != null)
+            TextButton(
+              onPressed: () => setState(() => _imageFile = null),
+              child: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        setState(() => _imageFile = image);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+    }
   }
 }

@@ -9,6 +9,8 @@ export const RelationshipTypeEnum = z.enum([
 export interface Person {
   id: string;
   name: string;
+  given_name: string;
+  surname: string | null;
   date_of_birth: string | null;
   gender: 'male' | 'female' | 'other';
   photo_url: string | null;

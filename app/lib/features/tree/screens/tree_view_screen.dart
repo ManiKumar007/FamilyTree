@@ -328,13 +328,234 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               top: btn.y,
               child: AddPersonButton(
                 label: btn.label,
-                onTap: () => context.push('/tree/add-member', extra: {
-                  'relativePersonId': btn.relativePersonId,
-                  'relationshipType': btn.relationshipType,
-                }),
+                onTap: () {
+                  _showRelationshipPicker(btn.relativePersonId);
+                },
               ),
             )),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddParentChoice(String relativePersonId) {
+    _showRelationshipPicker(relativePersonId);
+  }
+
+  void _showRelationshipPicker(String relativePersonId) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[100],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Add Family Member',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              
+              // Parents Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Father',
+                      Icons.person,
+                      kMaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'FATHER_OF',
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Mother',
+                      Icons.person,
+                      kFemaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'MOTHER_OF',
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Siblings Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Brother',
+                      Icons.person,
+                      kMaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'SIBLING_OF',
+                          'gender': 'male',
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Sister',
+                      Icons.person,
+                      kFemaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'SIBLING_OF',
+                          'gender': 'female',
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Spouse Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Husband',
+                      Icons.person,
+                      kMaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'SPOUSE_OF',
+                          'gender': 'male',
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Wife',
+                      Icons.person,
+                      kFemaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'SPOUSE_OF',
+                          'gender': 'female',
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              
+              // Children Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Son',
+                      Icons.person,
+                      kMaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'CHILD_OF',
+                          'gender': 'male',
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _relationshipButton(
+                      'Add Daughter',
+                      Icons.person,
+                      kFemaleColor,
+                      () {
+                        Navigator.pop(ctx);
+                        context.push('/tree/add-member', extra: {
+                          'relativePersonId': relativePersonId,
+                          'relationshipType': 'CHILD_OF',
+                          'gender': 'female',
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              
+              // Cancel Button
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                ),
+                child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _relationshipButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      elevation: 2,
+      borderRadius: BorderRadius.circular(12),
+      color: color.withOpacity(0.1),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withOpacity(0.3)),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -520,66 +741,112 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
       }
     }
 
-    // Add buttons for missing relatives
+    // Add buttons for missing relatives — for EVERY node, not just root
     final addButtons = <_AddButton>[];
-    final rootPerson = personMap[rootId];
-    if (rootPerson != null) {
-      final rootPos = nodePositions[rootId];
-      if (rootPos != null) {
-        // Check for missing parents — only show buttons for missing parent types
-        final rootParents = parentOf[rootId] ?? [];
-        final hasParents = rootParents.isNotEmpty;
-        
-        // Determine which parent types already exist
-        bool hasFather = false;
-        bool hasMother = false;
-        if (hasParents) {
-          for (final parentId in rootParents) {
-            final parent = personMap[parentId];
-            if (parent != null) {
-              if (parent.gender == 'male') hasFather = true;
-              if (parent.gender == 'female') hasMother = true;
-            }
-          }
+    
+    for (final node in nodes) {
+      final personId = node.person.id;
+      final pos = nodePositions[personId];
+      if (pos == null) continue;
+
+      final parents = parentOf[personId] ?? [];
+      final children = childrenOf[personId] ?? [];
+      
+      // Determine which parent types exist
+      bool hasFather = false;
+      bool hasMother = false;
+      for (final parentId in parents) {
+        final parent = personMap[parentId];
+        if (parent != null) {
+          if (parent.gender == 'male') hasFather = true;
+          if (parent.gender == 'female') hasMother = true;
         }
-        
+      }
+      
+      // Only show parent buttons if no parents yet (avoids overlapping)
+      if (!hasFather && !hasMother) {
+        // Show a single "Add Parents" button above
+        addButtons.add(_AddButton(
+          x: pos.dx - cardWidth / 2,
+          y: pos.dy - cardHeight / 2 - cardHeight - vGap + 20,
+          label: 'Add Parents',
+          relativePersonId: personId,
+          relationshipType: '_PARENTS_',  // special sentinel
+        ));
+      } else {
+        // Show individual missing parent
         if (!hasFather) {
+          // Place to the left of existing mother
+          final motherPos = parents
+              .where((p) => personMap[p]?.gender == 'female')
+              .map((p) => nodePositions[p])
+              .firstOrNull;
+          final fx = motherPos != null
+              ? motherPos.dx - cardWidth - hGap
+              : pos.dx - cardWidth / 2 - cardWidth / 2 - hGap;
+          final fy = motherPos != null
+              ? motherPos.dy - cardHeight / 2
+              : pos.dy - cardHeight / 2 - cardHeight - vGap;
           addButtons.add(_AddButton(
-            x: rootPos.dx - cardWidth / 2 - cardWidth - hGap,
-            y: rootPos.dy - cardHeight / 2 - cardHeight - vGap,
+            x: fx,
+            y: fy,
             label: 'Add Father',
-            relativePersonId: rootId,
+            relativePersonId: personId,
             relationshipType: 'FATHER_OF',
           ));
         }
         if (!hasMother) {
+          final fatherPos = parents
+              .where((p) => personMap[p]?.gender == 'male')
+              .map((p) => nodePositions[p])
+              .firstOrNull;
+          final mx = fatherPos != null
+              ? fatherPos.dx + cardWidth + hGap
+              : pos.dx + cardWidth / 2 + hGap;
+          final my = fatherPos != null
+              ? fatherPos.dy - cardHeight / 2
+              : pos.dy - cardHeight / 2 - cardHeight - vGap;
           addButtons.add(_AddButton(
-            x: rootPos.dx - cardWidth / 2 + cardWidth + hGap,
-            y: rootPos.dy - cardHeight / 2 - cardHeight - vGap,
+            x: mx,
+            y: my,
             label: 'Add Mother',
-            relativePersonId: rootId,
+            relativePersonId: personId,
             relationshipType: 'MOTHER_OF',
           ));
         }
+      }
 
-        // Check for missing spouse
-        if (spouseOf[rootId] == null) {
-          addButtons.add(_AddButton(
-            x: rootPos.dx + cardWidth / 2 + hGap,
-            y: rootPos.dy - cardHeight / 2,
-            label: 'Add Spouse',
-            relativePersonId: rootId,
-            relationshipType: 'SPOUSE_OF',
-          ));
-        }
-
-        // Add child button
+      // Spouse — only show if no spouse yet
+      if (spouseOf[personId] == null) {
         addButtons.add(_AddButton(
-          x: rootPos.dx - cardWidth / 2,
-          y: rootPos.dy + cardHeight / 2 + vGap,
+          x: pos.dx + cardWidth / 2 + hGap,
+          y: pos.dy - cardHeight / 2,
+          label: 'Add Spouse',
+          relativePersonId: personId,
+          relationshipType: 'SPOUSE_OF',
+        ));
+      }
+
+      // Sibling — show a small "Add Sibling" to the right of this person
+      // (only if they have at least one parent, so the sibling connects correctly)
+      if (parents.isNotEmpty) {
+        addButtons.add(_AddButton(
+          x: pos.dx + cardWidth / 2 + hGap + (spouseOf[personId] != null ? cardWidth + hGap : 0),
+          y: pos.dy - cardHeight / 2,
+          label: 'Add Sibling',
+          relativePersonId: personId,
+          relationshipType: 'SIBLING_OF',
+        ));
+      }
+
+      // Child — show below
+      if (children.isEmpty) {
+        addButtons.add(_AddButton(
+          x: pos.dx - cardWidth / 2 + (cardWidth - 120) / 2,
+          y: pos.dy + cardHeight / 2 + vGap,
           label: 'Add Child',
-          relativePersonId: rootId,
-          relationshipType: 'CHILD_OF', // The new person is CHILD_OF root
+          relativePersonId: personId,
+          relationshipType: 'CHILD_OF',
         ));
       }
     }

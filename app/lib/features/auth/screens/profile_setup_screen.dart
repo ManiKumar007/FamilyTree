@@ -17,7 +17,8 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _givenNameController = TextEditingController();
+  final _surnameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
@@ -39,14 +40,19 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     if (user != null) {
       final metaName = user.userMetadata?['name'] as String?;
       if (metaName != null && metaName.isNotEmpty) {
-        _nameController.text = metaName;
+        final parts = metaName.trim().split(RegExp(r'\s+'));
+        _givenNameController.text = parts.first;
+        if (parts.length > 1) {
+          _surnameController.text = parts.sublist(1).join(' ');
+        }
       }
     }
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _givenNameController.dispose();
+    _surnameController.dispose();
     _phoneController.dispose();
     _cityController.dispose();
     _stateController.dispose();
@@ -69,8 +75,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       final apiService = ref.read(apiServiceProvider);
 
       // Create person record linked to the auth user
+      final givenName = _givenNameController.text.trim();
+      final surname = _surnameController.text.trim();
+      final fullName = surname.isEmpty ? givenName : '$givenName $surname';
+
       await apiService.createPerson({
-        'name': _nameController.text.trim(),
+        'name': fullName,
+        'given_name': givenName,
+        'surname': surname.isEmpty ? null : surname,
         'phone': '${_countryCode}${_phoneController.text.trim()}',
         'gender': _gender,
         'date_of_birth': _dateOfBirth!.toIso8601String().split('T')[0],
@@ -131,15 +143,33 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
 
-                  // Name
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name *',
-                      prefixIcon: Icon(Icons.person),
-                      helperText: 'Required',
-                    ),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Please enter your full name' : null,
+                  // Name fields
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _givenNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Given Name *',
+                            prefixIcon: Icon(Icons.person),
+                            helperText: 'Required',
+                          ),
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _surnameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Surname',
+                            helperText: 'Family name',
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.md),
 

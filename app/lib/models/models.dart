@@ -3,6 +3,8 @@
 class Person {
   final String id;
   final String name;
+  final String? givenName;
+  final String? surname;
   final String? dateOfBirth;
   final String gender; // 'male', 'female', 'other'
   final String? photoUrl;
@@ -23,6 +25,8 @@ class Person {
   const Person({
     required this.id,
     required this.name,
+    this.givenName,
+    this.surname,
     this.dateOfBirth,
     required this.gender,
     this.photoUrl,
@@ -45,6 +49,8 @@ class Person {
     return Person(
       id: json['id'] as String,
       name: json['name'] as String,
+      givenName: json['given_name'] as String?,
+      surname: json['surname'] as String?,
       dateOfBirth: json['date_of_birth'] as String?,
       gender: json['gender'] as String,
       photoUrl: json['photo_url'] as String?,
@@ -68,6 +74,8 @@ class Person {
     return {
       'id': id,
       'name': name,
+      'given_name': givenName,
+      'surname': surname,
       'date_of_birth': dateOfBirth,
       'gender': gender,
       'photo_url': photoUrl,
@@ -107,6 +115,8 @@ class Person {
 
   Person copyWith({
     String? name,
+    String? givenName,
+    String? surname,
     String? dateOfBirth,
     String? gender,
     String? photoUrl,
@@ -123,6 +133,8 @@ class Person {
     return Person(
       id: id,
       name: name ?? this.name,
+      givenName: givenName ?? this.givenName,
+      surname: surname ?? this.surname,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       gender: gender ?? this.gender,
       photoUrl: photoUrl ?? this.photoUrl,
