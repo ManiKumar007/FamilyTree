@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../providers/admin_providers.dart';
+import '../../../config/theme.dart';
 
 class UserManagementScreen extends ConsumerWidget {
   const UserManagementScreen({super.key});
@@ -63,7 +64,7 @@ class UserManagementScreen extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.people_outline, size: 64, color: Colors.grey),
+                            Icon(Icons.people_outline, size: 64, color: kTextDisabled),
                             SizedBox(height: 16),
                             Text('No users found', style: TextStyle(fontSize: 18)),
                           ],
@@ -147,13 +148,13 @@ class _UserCard extends StatelessWidget {
   Color _getRoleColor(String role) {
     switch (role) {
       case 'super_admin':
-        return Colors.red;
+        return kErrorColor;
       case 'admin':
-        return Colors.orange;
+        return kWarningColor;
       case 'user':
-        return Colors.blue;
+        return kInfoColor;
       default:
-        return Colors.grey;
+        return kTextDisabled;
     }
   }
 
@@ -194,7 +195,7 @@ class _UserCard extends StatelessWidget {
             if (!user.isActive)
               Chip(
                 label: const Text('DISABLED'),
-                backgroundColor: Colors.grey.shade300,
+                backgroundColor: kDividerColor,
                 labelStyle: const TextStyle(fontSize: 10),
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 padding: EdgeInsets.zero,

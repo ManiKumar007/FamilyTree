@@ -3,48 +3,55 @@ import 'package:flutter/services.dart';
 
 // ==================== COLOR PALETTE ====================
 
-/// Primary brand colors - inspired by family tree and nature
-const Color kPrimaryColor = Color(0xFF2E7D32);        // Forest Green
-const Color kPrimaryLight = Color(0xFF60AD5E);        // Light Green
-const Color kPrimaryDark = Color(0xFF005005);         // Dark Green
+/// Primary brand colors - sophisticated muted green family
+const Color kPrimaryColor = Color(0xFF2D6A4F);        // Deep Sage Green
+const Color kPrimaryLight = Color(0xFF52B788);        // Fresh Mint
+const Color kPrimaryDark = Color(0xFF1B4332);         // Deep Forest
 
-/// Secondary colors
-const Color kSecondaryColor = Color(0xFF1565C0);      // Ocean Blue
-const Color kSecondaryLight = Color(0xFF5E92F3);      // Light Blue
-const Color kSecondaryDark = Color(0xFF003C8F);       // Dark Blue
+/// Secondary colors - warm slate
+const Color kSecondaryColor = Color(0xFF3D5A80);      // Slate Blue
+const Color kSecondaryLight = Color(0xFF98C1D9);      // Light Slate Blue
+const Color kSecondaryDark = Color(0xFF293241);       // Dark Navy
 
 /// Accent colors for highlights and CTAs
-const Color kAccentColor = Color(0xFFFF8F00);         // Amber
-const Color kAccentLight = Color(0xFFFFC046);         // Light Amber
-const Color kAccentDark = Color(0xFFC56000);          // Dark Amber
+const Color kAccentColor = Color(0xFFE76F51);         // Warm Coral
+const Color kAccentLight = Color(0xFFF4A261);         // Sandy Gold
+const Color kAccentDark = Color(0xFFD4440F);          // Deep Coral
 
-/// Gender-based colors
-const Color kMaleColor = Color(0xFF64B5F6);           // Blue
-const Color kMaleColorLight = Color(0xFFBBDEFB);      // Light Blue
-const Color kFemaleColor = Color(0xFFF06292);         // Pink
-const Color kFemaleColorLight = Color(0xFFF8BBD0);    // Light Pink
-const Color kOtherColor = Color(0xFF9575CD);          // Purple
-const Color kOtherColorLight = Color(0xFFD1C4E9);     // Light Purple
+/// Gender-based colors (softer, more modern)
+const Color kMaleColor = Color(0xFF5B9BD5);           // Soft Blue
+const Color kMaleColorLight = Color(0xFFD6E9F8);      // Pale Blue
+const Color kFemaleColor = Color(0xFFE8799A);         // Soft Rose
+const Color kFemaleColorLight = Color(0xFFFCE4EC);    // Pale Rose
+const Color kOtherColor = Color(0xFF9575CD);          // Soft Violet
+const Color kOtherColorLight = Color(0xFFEDE7F6);     // Pale Violet
 
-/// Neutral colors
-const Color kBackgroundColor = Color(0xFFF5F7FA);     // Light Gray Background
+/// Neutral colors - warmer tones
+const Color kBackgroundColor = Color(0xFFF8F9FA);     // Warm Off-White
 const Color kSurfaceColor = Color(0xFFFFFFFF);        // White
-const Color kDividerColor = Color(0xFFE0E0E0);        // Gray Divider
-const Color kTextPrimary = Color(0xFF212121);          // Dark Gray
-const Color kTextSecondary = Color(0xFF757575);        // Medium Gray
-const Color kTextDisabled = Color(0xFFBDBDBD);         // Light Gray
+const Color kSurfaceSecondary = Color(0xFFF0F2F5);   // Secondary Surface
+const Color kDividerColor = Color(0xFFE8ECF0);        // Soft Divider
+const Color kTextPrimary = Color(0xFF1A1D21);         // Near Black
+const Color kTextSecondary = Color(0xFF6C757D);       // Warm Gray
+const Color kTextDisabled = Color(0xFFADB5BD);        // Muted Gray
 
-/// Status colors
-const Color kSuccessColor = Color(0xFF4CAF50);        // Green
-const Color kWarningColor = Color(0xFFFFA726);        // Orange
-const Color kErrorColor = Color(0xFFEF5350);          // Red
-const Color kInfoColor = Color(0xFF29B6F6);           // Light Blue
+/// Status colors (refined)
+const Color kSuccessColor = Color(0xFF40C057);        // Fresh Green
+const Color kWarningColor = Color(0xFFFFB020);        // Warm Amber
+const Color kErrorColor = Color(0xFFE03E3E);          // Clean Red
+const Color kInfoColor = Color(0xFF339AF0);           // Clear Blue
 
 /// Relationship type colors
-const Color kRelationshipParent = Color(0xFF7E57C2);  // Purple
-const Color kRelationshipChild = Color(0xFF26A69A);   // Teal
-const Color kRelationshipSpouse = Color(0xFFEC407A);  // Deep Pink
-const Color kRelationshipSibling = Color(0xFF5C6BC0); // Indigo
+const Color kRelationshipParent = Color(0xFF7C5CFC);  // Vivid Purple
+const Color kRelationshipChild = Color(0xFF20C997);   // Teal Mint
+const Color kRelationshipSpouse = Color(0xFFE8549A);  // Deep Rose
+const Color kRelationshipSibling = Color(0xFF5C7CFA); // Periwinkle
+
+/// Sidebar colors
+const Color kSidebarBg = Color(0xFF1B4332);           // Deep Forest (sidebar bg)
+const Color kSidebarBgLight = Color(0xFF2D6A4F);      // Sage (sidebar hover)
+const Color kSidebarText = Color(0xFFE8F5E9);         // Pale Green Text
+const Color kSidebarActive = Color(0xFF52B788);       // Active indicator
 
 // ==================== SPACING & SIZING ====================
 
@@ -74,12 +81,68 @@ class AppSizing {
   static const double borderRadius = 12.0;
   static const double borderRadiusSm = 8.0;
   static const double borderRadiusLg = 16.0;
+  static const double borderRadiusXl = 20.0;
   
-  static const double cardElevation = 2.0;
-  static const double cardElevationHovered = 8.0;
+  static const double cardElevation = 0.0;
+  static const double cardElevationHovered = 4.0;
   
   static const double maxContentWidth = 1200.0;
   static const double maxFormWidth = 600.0;
+
+  // Sidebar
+  static const double sidebarWidth = 260.0;
+  static const double sidebarCollapsedWidth = 72.0;
+  
+  // Responsive breakpoints
+  static const double breakpointMobile = 480.0;
+  static const double breakpointTablet = 768.0;
+  static const double breakpointDesktop = 1024.0;
+}
+
+// ==================== GRADIENTS ====================
+
+class AppGradients {
+  /// Sidebar gradient — deep forest to sage green
+  static const LinearGradient sidebar = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [kSidebarBg, Color(0xFF264E3C)],
+  );
+
+  /// Header accent gradient
+  static const LinearGradient headerAccent = LinearGradient(
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+    colors: [kPrimaryDark, kPrimaryColor],
+  );
+
+  /// Primary button gradient
+  static const LinearGradient primaryButton = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [kPrimaryColor, Color(0xFF3A7D5C)],
+  );
+
+  /// Card header gradient (subtle)
+  static const LinearGradient cardHeader = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFF0F7F4), Color(0xFFFFFFFF)],
+  );
+
+  /// Hero section gradient for landing
+  static const LinearGradient hero = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [kPrimaryDark, kPrimaryColor, Color(0xFF40916C)],
+  );
+
+  /// Warm accent gradient (for CTAs)
+  static const LinearGradient warmAccent = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [kAccentColor, kAccentLight],
+  );
 }
 
 // ==================== TYPOGRAPHY ====================
@@ -89,14 +152,14 @@ class AppTextStyles {
   
   static const TextStyle displayLarge = TextStyle(
     fontSize: 57,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w300,
     letterSpacing: -0.25,
     height: 1.12,
   );
   
   static const TextStyle displayMedium = TextStyle(
     fontSize: 45,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w300,
     height: 1.16,
   );
   
@@ -108,38 +171,40 @@ class AppTextStyles {
   
   static const TextStyle headlineLarge = TextStyle(
     fontSize: 32,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w600,
     height: 1.25,
+    letterSpacing: -0.5,
   );
   
   static const TextStyle headlineMedium = TextStyle(
     fontSize: 28,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w600,
     height: 1.29,
+    letterSpacing: -0.3,
   );
   
   static const TextStyle headlineSmall = TextStyle(
     fontSize: 24,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w600,
     height: 1.33,
   );
   
   static const TextStyle titleLarge = TextStyle(
     fontSize: 22,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     height: 1.27,
   );
   
   static const TextStyle titleMedium = TextStyle(
     fontSize: 16,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     letterSpacing: 0.15,
     height: 1.50,
   );
   
   static const TextStyle titleSmall = TextStyle(
     fontSize: 14,
-    fontWeight: FontWeight.w500,
+    fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
     height: 1.43,
   );
@@ -215,16 +280,16 @@ final ThemeData appTheme = ThemeData(
     onBackground: kTextPrimary,
     surface: kSurfaceColor,
     onSurface: kTextPrimary,
-    surfaceVariant: Color(0xFFF3F3F3),
+    surfaceVariant: kSurfaceSecondary,
     onSurfaceVariant: kTextSecondary,
     outline: kDividerColor,
-    outlineVariant: Color(0xFFE8E8E8),
-    shadow: Colors.black26,
+    outlineVariant: Color(0xFFF0F2F5),
+    shadow: Color(0x1A000000),
     scrim: Colors.black54,
-    inverseSurface: Color(0xFF313033),
-    onInverseSurface: Color(0xFFF4EFF4),
+    inverseSurface: Color(0xFF2D3136),
+    onInverseSurface: Color(0xFFF4F5F7),
     inversePrimary: kPrimaryLight,
-    surfaceTint: kPrimaryColor,
+    surfaceTint: Colors.transparent,
   ),
   
   // Typography
@@ -246,29 +311,32 @@ final ThemeData appTheme = ThemeData(
     labelSmall: AppTextStyles.labelSmall,
   ),
   
-  // AppBar Theme
+  // AppBar Theme — Modern white with subtle border
   appBarTheme: const AppBarTheme(
     centerTitle: false,
     elevation: 0,
-    scrolledUnderElevation: 2,
-    backgroundColor: kPrimaryColor,
-    foregroundColor: Colors.white,
-    systemOverlayStyle: SystemUiOverlayStyle.light,
+    scrolledUnderElevation: 0,
+    backgroundColor: kSurfaceColor,
+    foregroundColor: kTextPrimary,
+    surfaceTintColor: Colors.transparent,
+    systemOverlayStyle: SystemUiOverlayStyle.dark,
     titleTextStyle: TextStyle(
       fontSize: 20,
-      fontWeight: FontWeight.w500,
-      color: Colors.white,
-      letterSpacing: 0.15,
+      fontWeight: FontWeight.w600,
+      color: kTextPrimary,
+      letterSpacing: -0.3,
     ),
-    iconTheme: IconThemeData(color: Colors.white, size: 24),
-    actionsIconTheme: IconThemeData(color: Colors.white, size: 24),
+    iconTheme: IconThemeData(color: kTextSecondary, size: 22),
+    actionsIconTheme: IconThemeData(color: kTextSecondary, size: 22),
   ),
   
-  // Card Theme
+  // Card Theme — Flat with subtle border, modern feel
   cardTheme: CardThemeData(
     elevation: AppSizing.cardElevation,
+    surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppSizing.borderRadius),
+      borderRadius: BorderRadius.circular(AppSizing.borderRadiusLg),
+      side: const BorderSide(color: kDividerColor, width: 1),
     ),
     color: kSurfaceColor,
     margin: const EdgeInsets.symmetric(
@@ -278,28 +346,29 @@ final ThemeData appTheme = ThemeData(
     clipBehavior: Clip.antiAlias,
   ),
   
-  // Button Themes
+  // Button Themes — No longer full-width by default
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
       backgroundColor: kPrimaryColor,
       foregroundColor: Colors.white,
-      minimumSize: const Size(double.infinity, AppSizing.buttonHeight),
+      minimumSize: const Size(160, AppSizing.buttonHeight),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.md,
       ),
-      elevation: 2,
+      elevation: 0,
+      shadowColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizing.borderRadius),
       ),
-      textStyle: AppTextStyles.labelLarge,
+      textStyle: AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.w600),
     ),
   ),
   
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
       foregroundColor: kPrimaryColor,
-      minimumSize: const Size(double.infinity, AppSizing.buttonHeight),
+      minimumSize: const Size(160, AppSizing.buttonHeight),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.md,
@@ -308,7 +377,7 @@ final ThemeData appTheme = ThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizing.borderRadius),
       ),
-      textStyle: AppTextStyles.labelLarge,
+      textStyle: AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.w600),
     ),
   ),
   
@@ -326,37 +395,37 @@ final ThemeData appTheme = ThemeData(
     ),
   ),
   
-  // Input Decoration Theme
+  // Input Decoration Theme — softer, modern
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
-    fillColor: kSurfaceColor,
+    fillColor: const Color(0xFFF9FAFB),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppSizing.borderRadius),
-      borderSide: const BorderSide(color: kDividerColor, width: 1),
+      borderRadius: BorderRadius.circular(10),
+      borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 1),
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppSizing.borderRadius),
-      borderSide: const BorderSide(color: kDividerColor, width: 1),
+      borderRadius: BorderRadius.circular(10),
+      borderSide: const BorderSide(color: Color(0xFFD0D5DD), width: 1),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppSizing.borderRadius),
+      borderRadius: BorderRadius.circular(10),
       borderSide: const BorderSide(color: kPrimaryColor, width: 2),
     ),
     errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppSizing.borderRadius),
+      borderRadius: BorderRadius.circular(10),
       borderSide: const BorderSide(color: kErrorColor, width: 1),
     ),
     focusedErrorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(AppSizing.borderRadius),
+      borderRadius: BorderRadius.circular(10),
       borderSide: const BorderSide(color: kErrorColor, width: 2),
     ),
     contentPadding: const EdgeInsets.symmetric(
       horizontal: AppSpacing.md,
-      vertical: AppSpacing.md,
+      vertical: 14,
     ),
-    hintStyle: const TextStyle(color: kTextDisabled),
-    labelStyle: const TextStyle(color: kTextSecondary),
-    floatingLabelStyle: const TextStyle(color: kPrimaryColor),
+    hintStyle: const TextStyle(color: kTextDisabled, fontSize: 14),
+    labelStyle: const TextStyle(color: kTextSecondary, fontSize: 14),
+    floatingLabelStyle: const TextStyle(color: kPrimaryColor, fontWeight: FontWeight.w500),
   ),
   
   // Chip Theme
@@ -400,30 +469,46 @@ final ThemeData appTheme = ThemeData(
   bottomNavigationBarTheme: const BottomNavigationBarThemeData(
     backgroundColor: kSurfaceColor,
     selectedItemColor: kPrimaryColor,
-    unselectedItemColor: kTextSecondary,
+    unselectedItemColor: kTextDisabled,
     type: BottomNavigationBarType.fixed,
-    elevation: 8,
+    elevation: 0,
     selectedLabelStyle: AppTextStyles.labelSmall,
     unselectedLabelStyle: AppTextStyles.labelSmall,
   ),
   
   // Floating Action Button Theme
-  floatingActionButtonTheme: const FloatingActionButtonThemeData(
+  floatingActionButtonTheme: FloatingActionButtonThemeData(
     backgroundColor: kAccentColor,
     foregroundColor: Colors.white,
-    elevation: 6,
-    shape: CircleBorder(),
+    elevation: 2,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
   ),
   
   // Scaffold Background
   scaffoldBackgroundColor: kBackgroundColor,
   
+  // Tab Bar Theme
+  tabBarTheme: TabBarThemeData(
+    labelColor: kPrimaryColor,
+    unselectedLabelColor: kTextSecondary,
+    indicatorColor: kPrimaryColor,
+    labelStyle: AppTextStyles.labelLarge.copyWith(fontWeight: FontWeight.w600),
+    unselectedLabelStyle: AppTextStyles.labelLarge,
+    indicator: BoxDecoration(
+      borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
+      color: kPrimaryColor.withOpacity(0.1),
+    ),
+  ),
+
   // Dialog Theme
   dialogTheme: DialogThemeData(
     backgroundColor: kSurfaceColor,
-    elevation: 24,
+    elevation: 8,
+    surfaceTintColor: Colors.transparent,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppSizing.borderRadiusLg),
+      borderRadius: BorderRadius.circular(AppSizing.borderRadiusXl),
     ),
     titleTextStyle: AppTextStyles.headlineSmall.copyWith(color: kTextPrimary),
     contentTextStyle: AppTextStyles.bodyMedium.copyWith(color: kTextSecondary),
@@ -431,19 +516,30 @@ final ThemeData appTheme = ThemeData(
   
   // Snackbar Theme
   snackBarTheme: SnackBarThemeData(
-    backgroundColor: Color(0xFF323232),
+    backgroundColor: const Color(0xFF2D3136),
     contentTextStyle: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
+      borderRadius: BorderRadius.circular(AppSizing.borderRadius),
     ),
     behavior: SnackBarBehavior.floating,
+    elevation: 4,
   ),
   
   // Progress Indicator Theme
   progressIndicatorTheme: const ProgressIndicatorThemeData(
     color: kPrimaryColor,
-    linearTrackColor: kDividerColor,
-    circularTrackColor: kDividerColor,
+    linearTrackColor: Color(0xFFE8ECF0),
+    circularTrackColor: Color(0xFFE8ECF0),
+  ),
+
+  // Tooltip Theme
+  tooltipTheme: TooltipThemeData(
+    decoration: BoxDecoration(
+      color: const Color(0xFF2D3136),
+      borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
+    ),
+    textStyle: AppTextStyles.bodySmall.copyWith(color: Colors.white),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
   ),
 );
 

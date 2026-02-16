@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../services/api_service.dart';
+import '../../../providers/providers.dart';
 import '../../../models/models.dart';
 import '../../../config/theme.dart';
+import '../../../config/constants.dart';
 import '../../../widgets/common_widgets.dart';
 import '../../../widgets/image_upload_widget.dart';
+import '../../../widgets/form_fields.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   final String personId;
@@ -32,11 +35,28 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   DateTime? _weddingDate;
   Person? _currentPerson;
   XFile? _selectedImage;
+  String _countryCode = '+91';
   String? _uploadedImageUrl;
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isUploadingImage = false;
   String? _error;
+
+  /// Extract country code from a full phone number
+  String _extractCountryCode(String phone) {
+    for (final code in FormConstants.countryCodeValues) {
+      if (phone.startsWith(code)) return code;
+    }
+    return '+91'; // default
+  }
+
+  /// Strip country code from a full phone number
+  String _stripCountryCode(String phone) {
+    for (final code in FormConstants.countryCodeValues) {
+      if (phone.startsWith(code)) return phone.substring(code.length);
+    }
+    return phone;
+  }
 
   @override
   void initState() {
@@ -50,7 +70,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final person = await api.getPerson(widget.personId);
       _currentPerson = person;
       _nameController.text = person.name;
-      _phoneController.text = person.phone.replaceFirst('+91', '');
+      _phoneController.text = _stripCountryCode(person.phone);
+      _countryCode = _extractCountryCode(person.phone);
       _emailController.text = person.email ?? '';
       _cityController.text = person.city ?? '';
       _stateController.text = person.state ?? '';
@@ -115,7 +136,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       
       final updateData = {
         'name': _nameController.text.trim(),
-        'phone': '+91${_phoneController.text.trim()}',
+        'phone': '${_countryCode}${_phoneController.text.trim()}',
         'gender': _gender,
         'date_of_birth': _dateOfBirth?.toIso8601String().split('T')[0],
         'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
@@ -126,10 +147,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'wedding_date': _weddingDate?.toIso8601String().split('T')[0],
       };
 
-      // Add email if provided
-      if (_emailController.text.trim().isNotEmpty) {
-        updateData['email'] = _emailController.text.trim();
-      }
+      // Add email — send even if empty to allow clearing
+      updateData['email'] = _emailController.text.trim().isEmpty ? null : _emailController.text.trim();
 
       // Add uploaded image URL if available
       if (_uploadedImageUrl != null) {
@@ -141,6 +160,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
       await api.updatePerson(widget.personId, updateData);
 
+      // Refresh providers so tree and profile show updated data
+      ref.invalidate(myProfileProvider);
+      ref.invalidate(familyTreeProvider);
+
       if (mounted) {
         context.pop();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -148,7 +171,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         );
       }
     } catch (e) {
-      setState(() { _error = e.toString(); });
+      setState(() { _error = e.toString().replaceAll('Exception: ', ''); });
     } finally {
       if (mounted) setState(() { _isSaving = false; });
     }
@@ -262,21 +285,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     
-                    TextFormField(
+                    PhoneInputField(
                       controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone *',
-                        prefixIcon: Icon(Icons.phone),
-                        prefixText: '+91 ',
-                        helperText: 'Required - 10 digits',
-                      ),
-                      keyboardType: TextInputType.phone,
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Please enter phone number';
-                        if (v.trim().length != 10) return 'Must be exactly 10 digits';
-                        if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) return 'Only numbers allowed';
-                        return null;
-                      },
+                      countryCode: _countryCode,
+                      onCountryCodeChanged: (v) => setState(() => _countryCode = v),
+                      helperText: 'Required - 10 digits',
                     ),
                     const SizedBox(height: AppSpacing.md),
                     
@@ -297,84 +310,46 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     const SizedBox(height: AppSpacing.md),
                     
                     DropdownButtonFormField<String>(
-                      value: _gender,
+                      initialValue: _gender,
                       decoration: const InputDecoration(
                         labelText: 'Gender',
                         prefixIcon: Icon(Icons.wc),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'male', child: Text('Male')),
-                        DropdownMenuItem(value: 'female', child: Text('Female')),
-                        DropdownMenuItem(value: 'other', child: Text('Other')),
-                      ],
+                      items: FormConstants.genderOptions
+                          .map((o) => o.toMenuItem())
+                          .toList(),
                       onChanged: (v) => setState(() { _gender = v!; }),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     
-                    InkWell(
-                      onTap: () async {
-                        final d = await showDatePicker(
-                          context: context,
-                          initialDate: _dateOfBirth ?? DateTime(1990),
-                          firstDate: DateTime(1920),
-                          lastDate: DateTime.now(),
-                        );
-                        if (d != null) setState(() { _dateOfBirth = d; });
-                      },
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Date of Birth',
-                          prefixIcon: Icon(Icons.cake),
-                          suffixIcon: Icon(Icons.calendar_today),
-                        ),
-                        child: Text(
-                          _dateOfBirth == null
-                              ? 'Select date'
-                              : '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}',
-                        ),
-                      ),
+                    DatePickerField(
+                      label: 'Date of Birth',
+                      selectedDate: _dateOfBirth,
+                      onDateSelected: (d) => setState(() { _dateOfBirth = d; }),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     
                     DropdownButtonFormField<String>(
-                      value: _maritalStatus,
+                      initialValue: _maritalStatus,
                       decoration: const InputDecoration(
                         labelText: 'Marital Status',
                         prefixIcon: Icon(Icons.favorite),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'single', child: Text('Single')),
-                        DropdownMenuItem(value: 'married', child: Text('Married')),
-                        DropdownMenuItem(value: 'divorced', child: Text('Divorced')),
-                        DropdownMenuItem(value: 'widowed', child: Text('Widowed')),
-                      ],
+                      items: FormConstants.maritalStatusOptions
+                          .map((o) => o.toMenuItem())
+                          .toList(),
                       onChanged: (v) => setState(() { _maritalStatus = v!; }),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     
                     if (_maritalStatus == 'married')
-                      InkWell(
-                        onTap: () async {
-                          final d = await showDatePicker(
-                            context: context,
-                            initialDate: _weddingDate ?? DateTime.now(),
-                            firstDate: DateTime(1920),
-                            lastDate: DateTime.now(),
-                          );
-                          if (d != null) setState(() { _weddingDate = d; });
-                        },
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Wedding Date (Optional)',
-                            prefixIcon: Icon(Icons.celebration),
-                            suffixIcon: Icon(Icons.calendar_today),
-                          ),
-                          child: Text(
-                            _weddingDate == null
-                                ? 'Select date'
-                                : '${_weddingDate!.day}/${_weddingDate!.month}/${_weddingDate!.year}',
-                          ),
-                        ),
+                      DatePickerField(
+                        label: 'Wedding Date',
+                        selectedDate: _weddingDate,
+                        onDateSelected: (d) => setState(() { _weddingDate = d; }),
+                        icon: Icons.celebration,
+                        helperText: 'Optional',
+                        initialDate: DateTime.now(),
                       ),
                     if (_maritalStatus == 'married')
                       const SizedBox(height: AppSpacing.md),
@@ -422,13 +397,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         ),
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
-                          child: TextFormField(
+                          child: StateAutocompleteField(
                             controller: _stateController,
-                            decoration: const InputDecoration(
-                              labelText: 'State',
-                              prefixIcon: Icon(Icons.map),
-                              helperText: 'Optional',
-                            ),
                           ),
                         ),
                       ],
@@ -438,26 +408,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     
                     // Error Message
                     if (_error != null) ...[
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        decoration: BoxDecoration(
-                          color: kErrorColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
-                          border: Border.all(color: kErrorColor.withOpacity(0.3)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.error_outline, color: kErrorColor),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Text(
-                                _error!,
-                                style: TextStyle(color: kErrorColor),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      ErrorBanner(message: _error!),
                       const SizedBox(height: AppSpacing.md),
                     ],
                     

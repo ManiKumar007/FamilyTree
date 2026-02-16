@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../config/theme.dart';
 import '../../../models/models.dart';
 
-/// A person card widget styled like Geni.com — colored border based on gender,
-/// showing photo, name, birth year, and action buttons.
-class PersonCard extends StatelessWidget {
+/// A person card widget styled with modern rounded corners, soft shadows,
+/// and gender-colored accent strip.
+class PersonCard extends StatefulWidget {
   final Person person;
   final bool isCurrentUser;
   final VoidCallback? onTap;
@@ -21,97 +21,121 @@ class PersonCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isMale = person.gender == 'male';
-    final borderColor = isMale ? kMaleColor : kFemaleColor;
-    final bgColor = isMale ? kMaleColor.withOpacity(0.3) : kFemaleColor.withOpacity(0.3);
+  State<PersonCard> createState() => _PersonCardState();
+}
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 140,
-        decoration: BoxDecoration(
-          color: bgColor,
-          border: Border.all(
-            color: isCurrentUser ? kAccentColor : borderColor,
-            width: isCurrentUser ? 3 : 2,
-          ),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+class _PersonCardState extends State<PersonCard> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isMale = widget.person.gender == 'male';
+    final genderColor = getGenderColor(widget.person.gender ?? 'other');
+    final genderColorLight = getGenderColor(widget.person.gender ?? 'other', light: true);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 148,
+          decoration: BoxDecoration(
+            color: kSurfaceColor,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: widget.isCurrentUser
+                  ? kAccentColor
+                  : _isHovered
+                      ? genderColor.withOpacity(0.6)
+                      : kDividerColor,
+              width: widget.isCurrentUser ? 2.5 : 1.5,
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Photo area
-            Container(
-              height: 60,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: borderColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(6),
-                  topRight: Radius.circular(6),
+            boxShadow: [
+              BoxShadow(
+                color: _isHovered
+                    ? genderColor.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.04),
+                blurRadius: _isHovered ? 12 : 6,
+                offset: Offset(0, _isHovered ? 4 : 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Gender accent strip + photo area
+              Container(
+                height: 60,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [genderColor, genderColor.withOpacity(0.7)],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: widget.person.photoUrl != null
+                    ? ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                        child: Image.network(
+                          widget.person.photoUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _defaultAvatar(isMale),
+                        ),
+                      )
+                    : _defaultAvatar(isMale),
+              ),
+
+              // Info area
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Column(
+                  children: [
+                    Text(
+                      widget.person.name,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: kTextPrimary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    if (widget.person.birthYear != null)
+                      Text(
+                        '(${widget.person.birthYear} -)',
+                        style: const TextStyle(fontSize: 10, color: kTextSecondary),
+                      ),
+                  ],
                 ),
               ),
-              child: person.photoUrl != null
-                  ? ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(6),
-                        topRight: Radius.circular(6),
-                      ),
-                      child: Image.network(
-                        person.photoUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _defaultAvatar(isMale),
-                      ),
-                    )
-                  : _defaultAvatar(isMale),
-            ),
 
-            // Info area
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-              child: Column(
-                children: [
-                  Text(
-                    person.name,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+              // Action buttons
+              if (widget.onEdit != null || (!widget.person.verified && widget.onInvite != null))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6, left: 6, right: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (widget.onEdit != null)
+                        _actionIcon(Icons.edit_outlined, widget.onEdit!, 'Edit'),
+                      if (!widget.person.verified && widget.onInvite != null)
+                        _actionIcon(Icons.send_outlined, widget.onInvite!, 'Invite'),
+                    ],
                   ),
-                  if (person.birthYear != null)
-                    Text(
-                      '(${person.birthYear} -)',
-                      style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                    ),
-                ],
-              ),
-            ),
-
-            // Action buttons
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4, left: 4, right: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (onEdit != null)
-                    _actionIcon(Icons.edit, onEdit!, 'Edit'),
-                  if (!person.verified && onInvite != null)
-                    _actionIcon(Icons.send, onInvite!, 'Invite'),
-                ],
-              ),
-            ),
-          ],
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -120,9 +144,9 @@ class PersonCard extends StatelessWidget {
   Widget _defaultAvatar(bool isMale) {
     return Center(
       child: Icon(
-        isMale ? Icons.person : Icons.person_2,
-        size: 36,
-        color: Colors.grey[400],
+        isMale ? Icons.person_rounded : Icons.person_2_rounded,
+        size: 32,
+        color: Colors.white.withOpacity(0.8),
       ),
     );
   }
@@ -132,10 +156,14 @@ class PersonCard extends StatelessWidget {
       message: tooltip,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Icon(icon, size: 14, color: Colors.grey[700]),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: kSurfaceSecondary,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 14, color: kTextSecondary),
         ),
       ),
     );
@@ -143,8 +171,8 @@ class PersonCard extends StatelessWidget {
 }
 
 /// Ghost button for adding a family member at an empty position in the tree.
-class AddPersonButton extends StatelessWidget {
-  final String label; // e.g., 'Add Father', 'Add Child'
+class AddPersonButton extends StatefulWidget {
+  final String label;
   final VoidCallback onTap;
 
   const AddPersonButton({
@@ -154,28 +182,60 @@ class AddPersonButton extends StatelessWidget {
   });
 
   @override
+  State<AddPersonButton> createState() => _AddPersonButtonState();
+}
+
+class _AddPersonButtonState extends State<AddPersonButton> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 120,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey[50],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.add_circle_outline, color: Colors.grey[400], size: 28),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
-              textAlign: TextAlign.center,
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 120,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: _isHovered ? kPrimaryColor.withOpacity(0.5) : kDividerColor,
+              width: 1.5,
             ),
-          ],
+            borderRadius: BorderRadius.circular(14),
+            color: _isHovered ? kPrimaryColor.withOpacity(0.04) : kSurfaceColor,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: _isHovered
+                      ? kPrimaryColor.withOpacity(0.1)
+                      : kSurfaceSecondary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.add_rounded,
+                  color: _isHovered ? kPrimaryColor : kTextDisabled,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: _isHovered ? kPrimaryColor : kTextSecondary,
+                  fontWeight: _isHovered ? FontWeight.w500 : FontWeight.w400,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -198,10 +258,17 @@ class CollapseBadge extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: kPrimaryColor,
           borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: kPrimaryColor.withOpacity(0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Text(
           '+$count',

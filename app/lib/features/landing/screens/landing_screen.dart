@@ -82,16 +82,8 @@ class _LandingScreenState extends State<LandingScreen>
   /// Hero section with main headline and CTA
   Widget _buildHeroSection(bool isMobile) {
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            kPrimaryColor,
-            kPrimaryDark,
-            kSecondaryDark,
-          ],
-        ),
+      decoration: const BoxDecoration(
+        gradient: AppGradients.hero,
       ),
       child: SafeArea(
         bottom: false,
@@ -178,9 +170,9 @@ class _LandingScreenState extends State<LandingScreen>
                         ),
                       ),
                       OutlinedButton.icon(
-                        onPressed: () => context.go('/tree'),
+                        onPressed: () => context.go('/login'),
                         icon: const Icon(Icons.preview),
-                        label: const Text('View Demo'),
+                        label: const Text('Sign Up Free'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white, width: 2),
@@ -404,16 +396,8 @@ class _LandingScreenState extends State<LandingScreen>
   /// Final CTA section
   Widget _buildCTASection(bool isMobile) {
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [
-            kSecondaryColor,
-            kSecondaryDark,
-            kPrimaryDark,
-          ],
-        ),
+      decoration: const BoxDecoration(
+        gradient: AppGradients.hero,
       ),
       padding: EdgeInsets.symmetric(
         horizontal: isMobile ? AppSpacing.lg : AppSpacing.xxl,

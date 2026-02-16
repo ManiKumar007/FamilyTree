@@ -16,19 +16,19 @@ personsRouter.use(authMiddleware);
 // Validation schemas
 const createPersonSchema = z.object({
   name: z.string().min(1).max(200),
-  date_of_birth: z.string().optional(),
+  date_of_birth: z.string().nullish(),
   gender: GenderEnum,
   phone: z.string().min(5),
-  email: z.string().email().optional(),
-  photo_url: z.string().url().optional(),
-  occupation: z.string().max(200).optional(),
-  community: z.string().max(200).optional(),
-  city: z.string().max(200).optional(),
-  state: z.string().max(200).optional(),
-  marital_status: MaritalStatusEnum.optional().default('single'),
-  wedding_date: z.string().optional(),
-  auth_user_id: z.string().uuid().optional(), // Allow linking to auth user for profile setup
-  verified: z.boolean().optional(), // Allow setting verified status
+  email: z.string().email().nullish(),
+  photo_url: z.string().url().nullish(),
+  occupation: z.string().max(200).nullish(),
+  community: z.string().max(200).nullish(),
+  city: z.string().max(200).nullish(),
+  state: z.string().max(200).nullish(),
+  marital_status: MaritalStatusEnum.nullish().default('single'),
+  wedding_date: z.string().nullish(),
+  auth_user_id: z.string().uuid().nullish(), // Allow linking to auth user for profile setup
+  verified: z.boolean().nullish(), // Allow setting verified status
 });
 
 const updatePersonSchema = createPersonSchema.partial();

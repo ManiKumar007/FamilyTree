@@ -55,14 +55,17 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search Network'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.account_tree),
-            tooltip: 'View Family Tree',
-            onPressed: () => context.go('/tree'),
-          ),
-        ],
+        title: Row(
+          children: [
+            Icon(Icons.search_rounded, size: 22, color: kPrimaryColor),
+            const SizedBox(width: 8),
+            const Text('Search Network'),
+          ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+        ),
       ),
       body: Column(
         children: [
@@ -177,7 +180,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.error_outline, size: 64, color: Colors.orange[300]),
+                              Icon(Icons.error_outline, size: 64, color: kWarningColor),
                               const SizedBox(height: 16),
                               Text(
                                 searchState.error!.contains('Profile not found')
@@ -193,7 +196,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                 searchState.error!.contains('Profile not found')
                                     ? 'Please complete your profile setup to search the network.'
                                     : searchState.error!,
-                                style: TextStyle(color: Colors.grey[600]),
+                                style: TextStyle(color: kTextSecondary),
                                 textAlign: TextAlign.center,
                               ),
                               if (searchState.error!.contains('Profile not found')) ...[
@@ -213,13 +216,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.search, size: 64, color: Colors.grey[300]),
+                                Icon(Icons.search, size: 64, color: kTextDisabled),
                                 const SizedBox(height: 8),
                                 Text(
                                   searchState.query.isEmpty
                                       ? 'Search your extended family network'
                                       : 'No results found',
-                                  style: TextStyle(color: Colors.grey[500]),
+                                  style: TextStyle(color: kTextDisabled),
                                 ),
                               ],
                             ),
@@ -231,36 +234,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               return _SearchResultCard(result: result);
                             },
                           ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              context.go('/tree');
-              break;
-            case 1:
-              // Already on search
-              break;
-            case 2:
-              context.go('/invite');
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_tree),
-            label: 'Tree',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_add),
-            label: 'Invite',
           ),
         ],
       ),
@@ -285,7 +258,7 @@ class _SearchResultCard extends StatelessWidget {
           backgroundColor: isMale ? kMaleColor : kFemaleColor,
           child: Icon(
             isMale ? Icons.person : Icons.person_2,
-            color: Colors.grey[600],
+            color: Colors.white,
           ),
         ),
         title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -293,9 +266,9 @@ class _SearchResultCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (p.occupation != null)
-              Text(p.occupation!, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              Text(p.occupation!, style: TextStyle(fontSize: 12, color: kTextSecondary)),
             if (p.city != null || p.state != null)
-              Text('${p.city ?? ''}, ${p.state ?? ''}', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+              Text('${p.city ?? ''}, ${p.state ?? ''}', style: TextStyle(fontSize: 12, color: kTextSecondary)),
             Row(
               children: [
                 Container(
@@ -312,7 +285,7 @@ class _SearchResultCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   p.maritalStatus,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 11, color: kTextDisabled),
                 ),
               ],
             ),
@@ -321,7 +294,7 @@ class _SearchResultCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   'Via: ${result.connectionPath}',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[400], fontStyle: FontStyle.italic),
+                  style: TextStyle(fontSize: 11, color: kTextDisabled, fontStyle: FontStyle.italic),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -330,10 +303,7 @@ class _SearchResultCard extends StatelessWidget {
         ),
         isThreeLine: true,
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          // Navigate to person detail
-          // context.push('/person/${p.id}');
-        },
+        onTap: () => context.push('/person/${p.id}'),
       ),
     );
   }

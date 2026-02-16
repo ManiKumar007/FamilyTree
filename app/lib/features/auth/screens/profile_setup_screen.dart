@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../providers/providers.dart';
+import '../../../config/constants.dart';
+import '../../../config/theme.dart';
+import '../../../widgets/form_fields.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -22,9 +25,24 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _communityController = TextEditingController();
   
   String _gender = 'male';
+  String _countryCode = '+91';
   DateTime? _dateOfBirth;
   bool _isLoading = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-populate name from auth metadata
+    final authService = ref.read(authServiceProvider);
+    final user = authService.currentUser;
+    if (user != null) {
+      final metaName = user.userMetadata?['name'] as String?;
+      if (metaName != null && metaName.isNotEmpty) {
+        _nameController.text = metaName;
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -35,18 +53,6 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     _occupationController.dispose();
     _communityController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickDateOfBirth() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(1990, 1, 1),
-      firstDate: DateTime(1920),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() { _dateOfBirth = picked; });
-    }
   }
 
   Future<void> _submitProfile() async {
@@ -65,7 +71,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       // Create person record linked to the auth user
       await apiService.createPerson({
         'name': _nameController.text.trim(),
-        'phone': '+91${_phoneController.text.trim()}',
+        'phone': '${_countryCode}${_phoneController.text.trim()}',
         'gender': _gender,
         'date_of_birth': _dateOfBirth!.toIso8601String().split('T')[0],
         'city': _cityController.text.trim(),
@@ -76,6 +82,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'community': _communityController.text.trim().isEmpty 
             ? null 
             : _communityController.text.trim(),
+        'email': authService.currentUser!.email,
         'auth_user_id': authService.currentUser!.id,
         'verified': true,
       });
@@ -91,7 +98,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         context.go('/tree');
       }
     } catch (e) {
-      setState(() { _error = e.toString(); });
+      setState(() { _error = e.toString().replaceAll('Exception: ', ''); });
     } finally {
       if (mounted) setState(() { _isLoading = false; });
     }
@@ -104,10 +111,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         title: const Text('Complete Your Profile'),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
+            constraints: const BoxConstraints(maxWidth: AppSizing.maxFormWidth),
             child: Form(
               key: _formKey,
               child: Column(
@@ -117,12 +124,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     'Tell us about yourself',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     'This information helps your family find and connect with you.',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: kTextSecondary),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.lg),
 
                   // Name
                   TextFormField(
@@ -134,18 +141,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     ),
                     validator: (v) => v == null || v.trim().isEmpty ? 'Please enter your full name' : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Phone
-                  TextFormField(
+                  PhoneInputField(
                     controller: _phoneController,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number *',
-                      prefixIcon: Icon(Icons.phone),
-                      prefixText: '+91 ',
-                      helperText: 'Required - 10 digits',
-                    ),
-                    keyboardType: TextInputType.phone,
+                    countryCode: _countryCode,
+                    onCountryCodeChanged: (v) => setState(() => _countryCode = v),
+                    helperText: 'Required - 10 digits',
                     validator: (v) {
                       if (v == null || v.trim().isEmpty) return 'Please enter your phone number';
                       if (v.trim().length != 10) return 'Must be exactly 10 digits';
@@ -153,41 +156,30 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Date of Birth
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.cake),
-                    title: Text(
-                      _dateOfBirth == null
-                          ? 'Date of Birth *'
-                          : '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}',
-                    ),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: _pickDateOfBirth,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Colors.grey[400]!),
-                    ),
+                  DatePickerField(
+                    label: 'Date of Birth',
+                    selectedDate: _dateOfBirth,
+                    onDateSelected: (d) => setState(() { _dateOfBirth = d; }),
+                    required: true,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Gender
                   DropdownButtonFormField<String>(
-                    value: _gender,
+                    initialValue: _gender,
                     decoration: const InputDecoration(
                       labelText: 'Gender *',
                       prefixIcon: Icon(Icons.wc),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'male', child: Text('Male')),
-                      DropdownMenuItem(value: 'female', child: Text('Female')),
-                      DropdownMenuItem(value: 'other', child: Text('Other')),
-                    ],
+                    items: FormConstants.genderOptions
+                        .map((o) => o.toMenuItem())
+                        .toList(),
                     onChanged: (v) => setState(() { _gender = v!; }),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // City
                   TextFormField(
@@ -198,18 +190,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       helperText: 'Optional',
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // State
-                  TextFormField(
+                  StateAutocompleteField(
                     controller: _stateController,
-                    decoration: const InputDecoration(
-                      labelText: 'State',
-                      prefixIcon: Icon(Icons.map),
-                      helperText: 'Optional',
-                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Occupation (optional)
                   TextFormField(
@@ -220,7 +207,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       helperText: 'Optional',
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Community (optional)
                   TextFormField(
@@ -231,19 +218,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       helperText: 'Optional',
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.lg),
 
                   // Error
                   if (_error != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(_error!, style: TextStyle(color: Colors.red[700])),
-                    ),
-                    const SizedBox(height: 16),
+                    ErrorBanner(message: _error!),
+                    const SizedBox(height: AppSpacing.md),
                   ],
 
                   // Submit

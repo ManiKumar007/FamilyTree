@@ -14,12 +14,15 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : 1,
   reporter: 'html',
+  timeout: 120000, // 2 minutes per test (Flutter web is slow on first load)
   
   use: {
     baseURL: 'http://localhost:5500',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    navigationTimeout: 60000, // 1 minute for navigation
+    actionTimeout: 30000, // 30 seconds for actions
   },
 
   projects: [

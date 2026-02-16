@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../providers/admin_providers.dart';
+import '../../../config/theme.dart';
 
 class AdminAnalyticsScreen extends ConsumerStatefulWidget {
   const AdminAnalyticsScreen({super.key});
@@ -95,12 +96,12 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                                 return FlSpot(entry.key.toDouble(), entry.value.count.toDouble());
                               }).toList(),
                               isCurved: true,
-                              color: Colors.blue,
+                              color: kSecondaryColor,
                               barWidth: 3,
                               dotData: const FlDotData(show: false),
                               belowBarData: BarAreaData(
                                 show: true,
-                                color: Colors.blue.withOpacity(0.1),
+                                color: kSecondaryColor.withOpacity(0.1),
                               ),
                             ),
                           ],
@@ -179,7 +180,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                               barRods: [
                                 BarChartRodData(
                                   toY: entry.value.userCount.toDouble(),
-                                  color: Colors.purple,
+                                  color: kOtherColor,
                                   width: 20,
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(6),

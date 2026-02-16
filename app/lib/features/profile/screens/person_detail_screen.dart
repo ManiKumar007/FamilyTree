@@ -121,23 +121,21 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
   }
 
   Widget _buildAppBar(Person person) {
+    final genderColor = getGenderColor(person.gender);
     return SliverAppBar(
       expandedHeight: 280,
       pinned: true,
-      backgroundColor: getGenderColor(person.gender),
+      backgroundColor: kSurfaceColor,
+      foregroundColor: kTextPrimary,
+      surfaceTintColor: Colors.transparent,
       actions: [
         IconButton(
-          icon: const Icon(Icons.account_tree),
-          onPressed: () => context.go('/tree'),
-          tooltip: 'View Family Tree',
-        ),
-        IconButton(
-          icon: const Icon(Icons.edit),
+          icon: const Icon(Icons.edit_outlined, size: 20),
           onPressed: () => context.push('/edit-profile/${person.id}'),
           tooltip: 'Edit',
         ),
         IconButton(
-          icon: const Icon(Icons.share),
+          icon: const Icon(Icons.share_outlined, size: 20),
           onPressed: () => _sharePerson(person),
           tooltip: 'Share',
         ),
@@ -146,11 +144,12 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
               colors: [
-                getGenderColor(person.gender),
-                getGenderColor(person.gender).withOpacity(0.8),
+                genderColor,
+                genderColor.withOpacity(0.7),
+                kPrimaryColor.withOpacity(0.6),
               ],
             ),
           ),
@@ -410,10 +409,10 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
 
     for (final rel in _relationships!) {
       final type = rel.type.toUpperCase();
-      if (type.contains('FATHER') || type.contains('MOTHER') || type == 'CHILD_OF') {
-        parents.add(rel);
-      } else if (type == 'FATHER_OF' || type == 'MOTHER_OF') {
+      if (type == 'FATHER_OF' || type == 'MOTHER_OF') {
         children.add(rel);
+      } else if (type == 'CHILD_OF') {
+        parents.add(rel);
       } else if (type.contains('SPOUSE')) {
         spouses.add(rel);
       } else if (type.contains('SIBLING')) {
@@ -455,11 +454,11 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
     return Card(
       child: ListTile(
         leading: AppAvatar(
-          imageUrl: null,
-          gender: 'other',
+          imageUrl: rel.relatedPerson?.photoUrl,
+          gender: rel.relatedPerson?.gender ?? 'other',
           size: AppSizing.avatarSm,
         ),
-        title: Text(rel.relatedPersonId),
+        title: Text(rel.relatedPerson?.name ?? 'Family Member'),
         subtitle: RelationshipChip(relationshipType: rel.type),
         onTap: () => context.push('/person/${rel.relatedPersonId}'),
       ),
