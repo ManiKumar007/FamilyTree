@@ -21,7 +21,8 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _givenNameController = TextEditingController();
+  final _surnameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _cityController = TextEditingController();
@@ -69,7 +70,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final api = ref.read(apiServiceProvider);
       final person = await api.getPerson(widget.personId);
       _currentPerson = person;
-      _nameController.text = person.name;
+      // Populate given_name / surname if available, else split name
+      if (person.givenName != null && person.givenName!.isNotEmpty) {
+        _givenNameController.text = person.givenName!;
+        _surnameController.text = person.surname ?? '';
+      } else {
+        final parts = person.name.trim().split(RegExp(r'\s+'));
+        _givenNameController.text = parts.first;
+        if (parts.length > 1) {
+          _surnameController.text = parts.sublist(1).join(' ');
+        }
+      }
       _phoneController.text = _stripCountryCode(person.phone);
       _countryCode = _extractCountryCode(person.phone);
       _emailController.text = person.email ?? '';
@@ -134,9 +145,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     try {
       final api = ref.read(apiServiceProvider);
       
+      final givenName = _givenNameController.text.trim();
+      final surname = _surnameController.text.trim();
+      final fullName = surname.isEmpty ? givenName : '$givenName $surname';
+
       final updateData = {
-        'name': _nameController.text.trim(),
-        'phone': '${_countryCode}${_phoneController.text.trim()}',
+        'name': fullName,
+        'given_name': givenName,
+        'surname': surname.isEmpty ? null : surname,
+        'phone': '$_countryCode${_phoneController.text.trim()}',
         'gender': _gender,
         'date_of_birth': _dateOfBirth?.toIso8601String().split('T')[0],
         'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
@@ -179,7 +196,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _givenNameController.dispose();
+    _surnameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _cityController.dispose();
@@ -274,14 +292,32 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name *',
-                        prefixIcon: Icon(Icons.person),
-                        helperText: 'Required',
-                      ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Please enter your full name' : null,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _givenNameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Given Name *',
+                              prefixIcon: Icon(Icons.person),
+                              helperText: 'Required',
+                            ),
+                            validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                            textCapitalization: TextCapitalization.words,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _surnameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Surname',
+                              helperText: 'Family name',
+                            ),
+                            textCapitalization: TextCapitalization.words,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppSpacing.md),
                     

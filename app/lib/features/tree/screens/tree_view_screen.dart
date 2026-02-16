@@ -328,13 +328,62 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               top: btn.y,
               child: AddPersonButton(
                 label: btn.label,
-                onTap: () => context.push('/tree/add-member', extra: {
-                  'relativePersonId': btn.relativePersonId,
-                  'relationshipType': btn.relationshipType,
-                }),
+                onTap: () {
+                  if (btn.relationshipType == '_PARENTS_') {
+                    _showAddParentChoice(btn.relativePersonId);
+                  } else {
+                    context.push('/tree/add-member', extra: {
+                      'relativePersonId': btn.relativePersonId,
+                      'relationshipType': btn.relationshipType,
+                    });
+                  }
+                },
               ),
             )),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddParentChoice(String relativePersonId) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Add Parent', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Icon(Icons.person, color: kMaleColor),
+                title: const Text('Add Father'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.push('/tree/add-member', extra: {
+                    'relativePersonId': relativePersonId,
+                    'relationshipType': 'FATHER_OF',
+                  });
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.person_2, color: kFemaleColor),
+                title: const Text('Add Mother'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  context.push('/tree/add-member', extra: {
+                    'relativePersonId': relativePersonId,
+                    'relationshipType': 'MOTHER_OF',
+                  });
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -520,66 +569,112 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
       }
     }
 
-    // Add buttons for missing relatives
+    // Add buttons for missing relatives — for EVERY node, not just root
     final addButtons = <_AddButton>[];
-    final rootPerson = personMap[rootId];
-    if (rootPerson != null) {
-      final rootPos = nodePositions[rootId];
-      if (rootPos != null) {
-        // Check for missing parents — only show buttons for missing parent types
-        final rootParents = parentOf[rootId] ?? [];
-        final hasParents = rootParents.isNotEmpty;
-        
-        // Determine which parent types already exist
-        bool hasFather = false;
-        bool hasMother = false;
-        if (hasParents) {
-          for (final parentId in rootParents) {
-            final parent = personMap[parentId];
-            if (parent != null) {
-              if (parent.gender == 'male') hasFather = true;
-              if (parent.gender == 'female') hasMother = true;
-            }
-          }
+    
+    for (final node in nodes) {
+      final personId = node.person.id;
+      final pos = nodePositions[personId];
+      if (pos == null) continue;
+
+      final parents = parentOf[personId] ?? [];
+      final children = childrenOf[personId] ?? [];
+      
+      // Determine which parent types exist
+      bool hasFather = false;
+      bool hasMother = false;
+      for (final parentId in parents) {
+        final parent = personMap[parentId];
+        if (parent != null) {
+          if (parent.gender == 'male') hasFather = true;
+          if (parent.gender == 'female') hasMother = true;
         }
-        
+      }
+      
+      // Only show parent buttons if no parents yet (avoids overlapping)
+      if (!hasFather && !hasMother) {
+        // Show a single "Add Parents" button above
+        addButtons.add(_AddButton(
+          x: pos.dx - cardWidth / 2,
+          y: pos.dy - cardHeight / 2 - cardHeight - vGap + 20,
+          label: 'Add Parents',
+          relativePersonId: personId,
+          relationshipType: '_PARENTS_',  // special sentinel
+        ));
+      } else {
+        // Show individual missing parent
         if (!hasFather) {
+          // Place to the left of existing mother
+          final motherPos = parents
+              .where((p) => personMap[p]?.gender == 'female')
+              .map((p) => nodePositions[p])
+              .firstOrNull;
+          final fx = motherPos != null
+              ? motherPos.dx - cardWidth - hGap
+              : pos.dx - cardWidth / 2 - cardWidth / 2 - hGap;
+          final fy = motherPos != null
+              ? motherPos.dy - cardHeight / 2
+              : pos.dy - cardHeight / 2 - cardHeight - vGap;
           addButtons.add(_AddButton(
-            x: rootPos.dx - cardWidth / 2 - cardWidth - hGap,
-            y: rootPos.dy - cardHeight / 2 - cardHeight - vGap,
+            x: fx,
+            y: fy,
             label: 'Add Father',
-            relativePersonId: rootId,
+            relativePersonId: personId,
             relationshipType: 'FATHER_OF',
           ));
         }
         if (!hasMother) {
+          final fatherPos = parents
+              .where((p) => personMap[p]?.gender == 'male')
+              .map((p) => nodePositions[p])
+              .firstOrNull;
+          final mx = fatherPos != null
+              ? fatherPos.dx + cardWidth + hGap
+              : pos.dx + cardWidth / 2 + hGap;
+          final my = fatherPos != null
+              ? fatherPos.dy - cardHeight / 2
+              : pos.dy - cardHeight / 2 - cardHeight - vGap;
           addButtons.add(_AddButton(
-            x: rootPos.dx - cardWidth / 2 + cardWidth + hGap,
-            y: rootPos.dy - cardHeight / 2 - cardHeight - vGap,
+            x: mx,
+            y: my,
             label: 'Add Mother',
-            relativePersonId: rootId,
+            relativePersonId: personId,
             relationshipType: 'MOTHER_OF',
           ));
         }
+      }
 
-        // Check for missing spouse
-        if (spouseOf[rootId] == null) {
-          addButtons.add(_AddButton(
-            x: rootPos.dx + cardWidth / 2 + hGap,
-            y: rootPos.dy - cardHeight / 2,
-            label: 'Add Spouse',
-            relativePersonId: rootId,
-            relationshipType: 'SPOUSE_OF',
-          ));
-        }
-
-        // Add child button
+      // Spouse — only show if no spouse yet
+      if (spouseOf[personId] == null) {
         addButtons.add(_AddButton(
-          x: rootPos.dx - cardWidth / 2,
-          y: rootPos.dy + cardHeight / 2 + vGap,
+          x: pos.dx + cardWidth / 2 + hGap,
+          y: pos.dy - cardHeight / 2,
+          label: 'Add Spouse',
+          relativePersonId: personId,
+          relationshipType: 'SPOUSE_OF',
+        ));
+      }
+
+      // Sibling — show a small "Add Sibling" to the right of this person
+      // (only if they have at least one parent, so the sibling connects correctly)
+      if (parents.isNotEmpty) {
+        addButtons.add(_AddButton(
+          x: pos.dx + cardWidth / 2 + hGap + (spouseOf[personId] != null ? cardWidth + hGap : 0),
+          y: pos.dy - cardHeight / 2,
+          label: 'Add Sibling',
+          relativePersonId: personId,
+          relationshipType: 'SIBLING_OF',
+        ));
+      }
+
+      // Child — show below
+      if (children.isEmpty) {
+        addButtons.add(_AddButton(
+          x: pos.dx - cardWidth / 2 + (cardWidth - 120) / 2,
+          y: pos.dy + cardHeight / 2 + vGap,
           label: 'Add Child',
-          relativePersonId: rootId,
-          relationshipType: 'CHILD_OF', // The new person is CHILD_OF root
+          relativePersonId: personId,
+          relationshipType: 'CHILD_OF',
         ));
       }
     }

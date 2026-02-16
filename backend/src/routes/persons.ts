@@ -16,6 +16,8 @@ personsRouter.use(authMiddleware);
 // Validation schemas
 const createPersonSchema = z.object({
   name: z.string().min(1).max(200),
+  given_name: z.string().min(1).max(100).optional(),
+  surname: z.string().max(100).nullish(),
   date_of_birth: z.string().nullish(),
   gender: GenderEnum,
   phone: z.string().min(5),
@@ -55,8 +57,27 @@ personsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
     // Sanitize text fields to prevent XSS
     const sanitized = sanitizeObject(parsed, [...PERSON_SANITIZE_FIELDS]);
 
+    // Derive name ↔ given_name/surname:
+    // If given_name provided, compute name; otherwise split name into parts.
+    let givenName = sanitized.given_name as string | undefined;
+    let surname = sanitized.surname as string | null | undefined;
+    let fullName = sanitized.name as string;
+
+    if (givenName) {
+      // Build full name from parts
+      fullName = surname ? `${givenName} ${surname}` : givenName;
+    } else {
+      // Split full name into parts
+      const parts = fullName.trim().split(/\s+/);
+      givenName = parts[0];
+      surname = parts.length > 1 ? parts.slice(1).join(' ') : null;
+    }
+
     const personData = {
       ...sanitized,
+      name: fullName,
+      given_name: givenName,
+      surname: surname ?? null,
       phone,
       created_by_user_id: req.userId,
       // If auth_user_id is provided (profile setup), use it; otherwise leave null
@@ -143,6 +164,19 @@ personsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 
     // Sanitize text fields to prevent XSS
     const sanitized = sanitizeObject(parsed, [...PERSON_SANITIZE_FIELDS]);
+
+    // Keep name ↔ given_name/surname in sync on updates
+    if (sanitized.given_name || sanitized.surname !== undefined) {
+      const gn = sanitized.given_name as string | undefined;
+      const sn = sanitized.surname as string | null | undefined;
+      if (gn) {
+        sanitized.name = sn ? `${gn} ${sn}` : gn;
+      }
+    } else if (sanitized.name) {
+      const parts = (sanitized.name as string).trim().split(/\s+/);
+      sanitized.given_name = parts[0];
+      sanitized.surname = parts.length > 1 ? parts.slice(1).join(' ') : null;
+    }
 
     // Verify ownership
     const { data: existing } = await supabaseAdmin

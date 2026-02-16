@@ -23,7 +23,8 @@ class AddMemberScreen extends ConsumerStatefulWidget {
 
 class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _givenNameController = TextEditingController();
+  final _surnameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
@@ -57,7 +58,8 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _givenNameController.dispose();
+    _surnameController.dispose();
     _phoneController.dispose();
     _cityController.dispose();
     _stateController.dispose();
@@ -93,9 +95,15 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
       final anchorPersonId = widget.relativePersonId ?? myProfile.id;
 
       // 1. Create person
+      final givenName = _givenNameController.text.trim();
+      final surname = _surnameController.text.trim();
+      final fullName = surname.isEmpty ? givenName : '$givenName $surname';
+
       final result = await apiService.createPerson({
-        'name': _nameController.text.trim(),
-        'phone': '${_countryCode}${_phoneController.text.trim()}',
+        'name': fullName,
+        'given_name': givenName,
+        'surname': surname.isEmpty ? null : surname,
+        'phone': '$_countryCode${_phoneController.text.trim()}',
         'gender': _gender,
         'date_of_birth': _dateOfBirth?.toIso8601String().split('T')[0],
         'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
@@ -158,7 +166,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         } else {
           context.pop();
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${_nameController.text} added to your tree!')),
+            SnackBar(content: Text('$fullName added to your tree!')),
           );
         }
       }
@@ -247,15 +255,33 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     const SizedBox(height: AppSpacing.md),
                   ],
 
-                  // Name
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name *',
-                      prefixIcon: Icon(Icons.person),
-                      helperText: 'Required',
-                    ),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Please enter the full name' : null,
+                  // Name fields
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _givenNameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Given Name *',
+                            prefixIcon: Icon(Icons.person),
+                            helperText: 'Required',
+                          ),
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _surnameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Surname',
+                            helperText: 'Family name',
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: AppSpacing.md),
 
