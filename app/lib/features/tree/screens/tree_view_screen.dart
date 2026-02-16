@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../models/models.dart';
 import '../../../providers/providers.dart';
-import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
 import '../widgets/person_card.dart';
 import '../widgets/tree_painter.dart';
@@ -18,6 +17,7 @@ class TreeViewScreen extends ConsumerStatefulWidget {
 
 class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
   final TransformationController _transformController = TransformationController();
+  bool _checkingProfile = true;
   
   @override
   void initState() {
@@ -30,6 +30,10 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
     final profile = await ref.read(myProfileProvider.future);
     if (profile == null && mounted) {
       context.go('/profile-setup');
+      return;
+    }
+    if (mounted) {
+      setState(() { _checkingProfile = false; });
     }
   }
 
@@ -45,15 +49,34 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading while checking if profile is set up
+    if (_checkingProfile) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     final treeAsync = ref.watch(familyTreeProvider);
     final pendingMerges = ref.watch(pendingMergesProvider);
+    final currentUser = ref.watch(currentUserProvider);
+    final currentUserId = currentUser?.id;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MyFamilyTree'),
+        title: Row(
+          children: [
+            Icon(Icons.account_tree_rounded, size: 22, color: kPrimaryColor),
+            const SizedBox(width: 8),
+            const Text('Family Tree'),
+          ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh Tree',
             onPressed: () {
               ref.invalidate(familyTreeProvider);
@@ -61,12 +84,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.admin_panel_settings),
-            tooltip: 'Admin Panel',
-            onPressed: () => context.push('/admin'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.person_outline_rounded),
             tooltip: 'Profile',
             onPressed: () {
               // Navigate to profile using provider that handles async
@@ -87,14 +105,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               });
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign Out',
-            onPressed: () async {
-              await ref.read(authServiceProvider).signOut();
-              if (context.mounted) context.go('/login');
-            },
-          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Stack(
@@ -105,14 +116,14 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               if (tree == null || tree.nodes.isEmpty) {
                 return _emptyTreeView();
               }
-              return _buildTreeCanvas(tree);
+              return _buildTreeCanvas(tree, currentUserId);
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (err, _) => Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const Icon(Icons.error_outline, size: 48, color: kErrorColor),
                   const SizedBox(height: 16),
                   Text('Error loading tree: $err'),
                   const SizedBox(height: 16),
@@ -222,38 +233,8 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/tree/add-member'),
-        backgroundColor: kPrimaryColor,
-        child: const Icon(Icons.person_add, color: Colors.white),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              // Already on tree view
-              break;
-            case 1:
-              context.go('/search');
-              break;
-            case 2:
-              context.go('/invite');
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_tree),
-            label: 'Tree',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_add),
-            label: 'Invite',
-          ),
-        ],
+        tooltip: 'Add Family Member',
+        child: const Icon(Icons.person_add_rounded, color: Colors.white),
       ),
     );
   }
@@ -265,7 +246,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.account_tree_outlined, size: 80, color: Colors.grey[300]),
+          Icon(Icons.account_tree_outlined, size: 80, color: kTextDisabled),
           const SizedBox(height: 16),
           Text(
             'Your family tree is empty',
@@ -274,7 +255,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
           const SizedBox(height: 8),
           Text(
             'Start by adding your parents, siblings, or spouse.',
-            style: TextStyle(color: Colors.grey[600]),
+            style: TextStyle(color: kTextSecondary),
           ),
           const SizedBox(height: 8),
           // Debug info
@@ -282,16 +263,16 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
             data: (profile) => profile != null
                 ? Text(
                     'Profile: ${profile.name}',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    style: TextStyle(color: kTextDisabled, fontSize: 12),
                   )
                 : Text(
                     'No profile found - please complete setup',
-                    style: TextStyle(color: Colors.orange[700], fontSize: 12),
+                    style: TextStyle(color: kWarningColor, fontSize: 12),
                   ),
             loading: () => const SizedBox.shrink(),
             error: (e, _) => Text(
               'Profile error: $e',
-              style: TextStyle(color: Colors.red[700], fontSize: 12),
+              style: TextStyle(color: kErrorColor, fontSize: 12),
             ),
           ),
           const SizedBox(height: 24),
@@ -305,9 +286,9 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
     );
   }
 
-  Widget _buildTreeCanvas(TreeResponse tree) {
+  Widget _buildTreeCanvas(TreeResponse tree, String? userId) {
     // Build layout: organize nodes by generation (depth from root)
-    final layout = _calculateLayout(tree);
+    final layout = _calculateLayout(tree, userId);
 
     return InteractiveViewer(
       transformationController: _transformController,
@@ -397,9 +378,9 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: kDividerColor),
           ),
-          child: Icon(icon, size: 20, color: Colors.grey[700]),
+          child: Icon(icon, size: 20, color: kTextSecondary),
         ),
       ),
     );
@@ -407,7 +388,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
 
   /// Calculate positions for all nodes in the tree.
   /// Uses a simple generation-based layout algorithm.
-  _TreeLayout _calculateLayout(TreeResponse tree) {
+  _TreeLayout _calculateLayout(TreeResponse tree, String? userId) {
     final nodes = tree.nodes;
     final rootId = tree.rootPersonId;
     
@@ -506,7 +487,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
             person: person,
             x: x,
             y: y,
-            canEdit: true, // Simplified — in production check created_by
+            canEdit: person.createdByUserId == userId || person.authUserId == userId,
           ));
         }
       }
@@ -545,9 +526,24 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
     if (rootPerson != null) {
       final rootPos = nodePositions[rootId];
       if (rootPos != null) {
-        // Check for missing parents
+        // Check for missing parents — only show buttons for missing parent types
         final rootParents = parentOf[rootId] ?? [];
-        if (rootParents.isEmpty || rootParents.length < 2) {
+        final hasParents = rootParents.isNotEmpty;
+        
+        // Determine which parent types already exist
+        bool hasFather = false;
+        bool hasMother = false;
+        if (hasParents) {
+          for (final parentId in rootParents) {
+            final parent = personMap[parentId];
+            if (parent != null) {
+              if (parent.gender == 'male') hasFather = true;
+              if (parent.gender == 'female') hasMother = true;
+            }
+          }
+        }
+        
+        if (!hasFather) {
           addButtons.add(_AddButton(
             x: rootPos.dx - cardWidth / 2 - cardWidth - hGap,
             y: rootPos.dy - cardHeight / 2 - cardHeight - vGap,
@@ -555,6 +551,8 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
             relativePersonId: rootId,
             relationshipType: 'FATHER_OF',
           ));
+        }
+        if (!hasMother) {
           addButtons.add(_AddButton(
             x: rootPos.dx - cardWidth / 2 + cardWidth + hGap,
             y: rootPos.dy - cardHeight / 2 - cardHeight - vGap,

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -36,7 +35,8 @@ class ApiService {
     );
     if (response.statusCode == 404) return null;
     if (response.statusCode != 200) throw _handleError(response);
-    return Person.fromJson(jsonDecode(response.body));
+    final wrapper = jsonDecode(response.body);
+    return Person.fromJson(wrapper['data']);
   }
 
   /// Create a new person
@@ -47,7 +47,8 @@ class ApiService {
       body: jsonEncode(data),
     );
     if (response.statusCode != 201) throw _handleError(response);
-    return jsonDecode(response.body);
+    final wrapper = jsonDecode(response.body);
+    return wrapper['data'] as Map<String, dynamic>;
   }
 
   /// Get person by ID
@@ -57,7 +58,8 @@ class ApiService {
       headers: _headers,
     );
     if (response.statusCode != 200) throw _handleError(response);
-    return Person.fromJson(jsonDecode(response.body));
+    final wrapper = jsonDecode(response.body);
+    return Person.fromJson(wrapper['data']);
   }
 
   /// Update person
@@ -68,7 +70,8 @@ class ApiService {
       body: jsonEncode(data),
     );
     if (response.statusCode != 200) throw _handleError(response);
-    return Person.fromJson(jsonDecode(response.body));
+    final wrapper = jsonDecode(response.body);
+    return Person.fromJson(wrapper['data']);
   }
 
   // ==================== IMAGE UPLOAD ====================
@@ -130,7 +133,8 @@ class ApiService {
       headers: _headers,
     );
     if (response.statusCode != 200) throw _handleError(response);
-    return TreeResponse.fromJson(jsonDecode(response.body));
+    final wrapper = jsonDecode(response.body);
+    return TreeResponse.fromJson(wrapper['data']);
   }
 
   /// Get tree centered on a specific person
@@ -140,7 +144,8 @@ class ApiService {
       headers: _headers,
     );
     if (response.statusCode != 200) throw _handleError(response);
-    return TreeResponse.fromJson(jsonDecode(response.body));
+    final wrapper = jsonDecode(response.body);
+    return TreeResponse.fromJson(wrapper['data']);
   }
 
   // ==================== RELATIONSHIPS ====================
@@ -161,7 +166,8 @@ class ApiService {
       }),
     );
     if (response.statusCode != 201) throw _handleError(response);
-    return Relationship.fromJson(jsonDecode(response.body));
+    final wrapper = jsonDecode(response.body);
+    return Relationship.fromJson(wrapper['data']);
   }
 
   /// Get relationships for a person
@@ -171,7 +177,8 @@ class ApiService {
       headers: _headers,
     );
     if (response.statusCode != 200) throw _handleError(response);
-    final list = jsonDecode(response.body) as List;
+    final wrapper = jsonDecode(response.body);
+    final list = wrapper['data'] as List;
     return list.map((r) => Relationship.fromJson(r)).toList();
   }
 
@@ -196,7 +203,7 @@ class ApiService {
     if (response.statusCode != 200) throw _handleError(response);
 
     final body = jsonDecode(response.body);
-    final results = body['results'] as List;
+    final results = body['data'] as List;
     return results.map((r) => SearchResult.fromJson(r)).toList();
   }
 
@@ -209,7 +216,8 @@ class ApiService {
       headers: _headers,
     );
     if (response.statusCode != 200) throw _handleError(response);
-    final list = jsonDecode(response.body) as List;
+    final wrapper = jsonDecode(response.body);
+    final list = wrapper['data'] as List;
     return list.map((r) => MergeRequest.fromJson(r)).toList();
   }
 
@@ -244,7 +252,8 @@ class ApiService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw _handleError(response);
     }
-    return jsonDecode(response.body);
+    final wrapper = jsonDecode(response.body);
+    return wrapper['data'] as Map<String, dynamic>;
   }
 
   /// Claim invite
@@ -255,7 +264,8 @@ class ApiService {
       body: jsonEncode({'token': token}),
     );
     if (response.statusCode != 200) throw _handleError(response);
-    return jsonDecode(response.body);
+    final wrapper = jsonDecode(response.body);
+    return wrapper['data'] as Map<String, dynamic>;
   }
 
   // ==================== ERROR HANDLING ====================
@@ -263,7 +273,11 @@ class ApiService {
   Exception _handleError(http.Response response) {
     try {
       final body = jsonDecode(response.body);
-      return Exception(body['error'] ?? 'Unknown error (${response.statusCode})');
+      final error = body['error'];
+      if (error is Map) {
+        return Exception(error['message'] ?? 'Unknown error (${response.statusCode})');
+      }
+      return Exception(error?.toString() ?? 'Unknown error (${response.statusCode})');
     } catch (_) {
       return Exception('Request failed with status ${response.statusCode}');
     }

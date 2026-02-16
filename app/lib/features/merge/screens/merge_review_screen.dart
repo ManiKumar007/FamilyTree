@@ -59,7 +59,7 @@ class _MergeReviewScreenState extends ConsumerState<MergeReviewScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Trees merged successfully!')),
         );
-        context.go('/');
+        context.go('/tree');
       }
     } catch (e) {
       setState(() { _error = e.toString(); _isLoading = false; });
@@ -76,7 +76,7 @@ class _MergeReviewScreenState extends ConsumerState<MergeReviewScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Merge request rejected')),
         );
-        context.go('/');
+        context.go('/tree');
       }
     } catch (e) {
       setState(() { _error = e.toString(); _isLoading = false; });
@@ -158,8 +158,8 @@ class _MergeReviewScreenState extends ConsumerState<MergeReviewScreen> {
                 if (_error != null) ...[
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: Colors.red[50], borderRadius: BorderRadius.circular(8)),
-                    child: Text(_error!, style: TextStyle(color: Colors.red[700])),
+                    decoration: BoxDecoration(color: kErrorColor.withOpacity(0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: kErrorColor.withOpacity(0.2))),
+                    child: Text(_error!, style: TextStyle(color: kErrorColor)),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -170,7 +170,7 @@ class _MergeReviewScreenState extends ConsumerState<MergeReviewScreen> {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: _isLoading ? null : _reject,
-                        style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                        style: OutlinedButton.styleFrom(foregroundColor: kErrorColor),
                         child: const Text('Not the Same Person'),
                       ),
                     ),

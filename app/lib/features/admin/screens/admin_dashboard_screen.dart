@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/admin_providers.dart';
+import '../../../config/theme.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -28,7 +29,7 @@ class AdminDashboardScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const Icon(Icons.error_outline, size: 64, color: kErrorColor),
               const SizedBox(height: 16),
               Text('Error: $error', style: theme.textTheme.bodyLarge),
               const SizedBox(height: 16),
@@ -58,28 +59,28 @@ class AdminDashboardScreen extends ConsumerWidget {
                     title: 'Total Users',
                     value: stats.totalUsers.toString(),
                     icon: Icons.people,
-                    color: Colors.blue,
+                    color: kInfoColor,
                     subtitle: '${stats.newUsersThisWeek} this week',
                   ),
                   _StatCard(
                     title: 'Active Users',
                     value: stats.activeUsers.toString(),
                     icon: Icons.person_outline,
-                    color: Colors.green,
+                    color: kSuccessColor,
                     subtitle: 'Last 30 days',
                   ),
                   _StatCard(
                     title: 'Total People',
                     value: stats.totalPeople.toString(),
                     icon: Icons.account_tree,
-                    color: Colors.purple,
+                    color: kOtherColor,
                     subtitle: 'Avg ${stats.avgPeoplePerUser} per user',
                   ),
                   _StatCard(
                     title: 'Relationships',
                     value: stats.totalRelationships.toString(),
                     icon: Icons.link,
-                    color: Colors.orange,
+                    color: kAccentColor,
                   ),
                 ],
               ),
@@ -99,19 +100,19 @@ class AdminDashboardScreen extends ConsumerWidget {
                     title: 'Total Errors',
                     value: stats.totalErrors.toString(),
                     icon: Icons.bug_report,
-                    color: Colors.red,
+                    color: kErrorColor,
                   ),
                   _StatCard(
                     title: 'Unresolved',
                     value: stats.unresolvedErrors.toString(),
                     icon: Icons.warning,
-                    color: Colors.amber,
+                    color: kWarningColor,
                   ),
                   _StatCard(
                     title: 'Error Rate (24h)',
                     value: stats.errorRate24h.toStringAsFixed(2),
                     icon: Icons.speed,
-                    color: stats.errorRate24h > 5 ? Colors.red : Colors.green,
+                    color: stats.errorRate24h > 5 ? kErrorColor : kSuccessColor,
                   ),
                 ],
               ),

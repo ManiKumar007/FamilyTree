@@ -19,6 +19,7 @@ import '../features/admin/screens/admin_dashboard_screen.dart';
 import '../features/admin/screens/error_logs_screen.dart';
 import '../features/admin/screens/user_management_screen.dart';
 import '../features/admin/screens/admin_analytics_screen.dart';
+import '../widgets/app_shell.dart';
 
 // Auth change notifier for GoRouter
 class AuthNotifier extends ChangeNotifier {
@@ -72,45 +73,73 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      // Landing Page
+      // Landing Page (no shell)
       GoRoute(
         path: '/landing',
         builder: (context, state) => const LandingScreen(),
       ),
 
-      // Login
+      // Auth routes (no shell)
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
       ),
-
-      // Sign up
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
       ),
-
-      // Profile setup (first-time)
       GoRoute(
         path: '/profile-setup',
         builder: (context, state) => const ProfileSetupScreen(),
       ),
 
-      // Home - Tree View
-      GoRoute(
-        path: '/tree',
-        builder: (context, state) => const TreeViewScreen(),
-        routes: [
-          // Add family member
-          GoRoute(
-            path: 'add-member',
-            builder: (context, state) {
-              final extra = state.extra as Map<String, dynamic>?;
-              return AddMemberScreen(
-                relativePersonId: extra?['relativePersonId'] as String?,
-                relationshipType: extra?['relationshipType'] as String?,
-              );
-            },
+      // Main app shell with sidebar navigation
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return AppShell(navigationShell: navigationShell);
+        },
+        branches: [
+          // Branch 0: Tree
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/tree',
+                builder: (context, state) => const TreeViewScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'add-member',
+                    builder: (context, state) {
+                      final extra = state.extra as Map<String, dynamic>?;
+                      return AddMemberScreen(
+                        relativePersonId: extra?['relativePersonId'] as String?,
+                        relationshipType: extra?['relationshipType'] as String?,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 1: Search
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/search',
+                builder: (context, state) => const SearchScreen(),
+              ),
+            ],
+          ),
+          // Branch 2: Invite
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/invite',
+                builder: (context, state) {
+                  final token = state.uri.queryParameters['token'];
+                  return InviteScreen(token: token);
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -121,38 +150,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         redirect: (context, state) => '/tree',
       ),
 
-      // Person detail
+      // Detail routes (shown inside the shell context)
       GoRoute(
         path: '/person/:id',
         builder: (context, state) => PersonDetailScreen(
           personId: state.pathParameters['id']!,
         ),
       ),
-
-      // Edit profile
       GoRoute(
         path: '/edit-profile/:id',
         builder: (context, state) => EditProfileScreen(
           personId: state.pathParameters['id']!,
         ),
       ),
-
-      // Search
-      GoRoute(
-        path: '/search',
-        builder: (context, state) => const SearchScreen(),
-      ),
-
-      // Invite
-      GoRoute(
-        path: '/invite',
-        builder: (context, state) {
-          final token = state.uri.queryParameters['token'];
-          return InviteScreen(token: token);
-        },
-      ),
-
-      // Merge review
       GoRoute(
         path: '/merge/:id',
         builder: (context, state) => MergeReviewScreen(

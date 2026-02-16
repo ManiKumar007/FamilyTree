@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/theme.dart';
 
 /// Custom painter that draws family tree connection lines:
 /// - Horizontal lines for spouse connections
@@ -12,7 +13,7 @@ class TreeLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey[400]!
+      ..color = kDividerColor
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 

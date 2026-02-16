@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../providers/admin_providers.dart';
 import '../../../services/admin_service.dart';
+import '../../../config/theme.dart';
 
 class ErrorLogsScreen extends ConsumerStatefulWidget {
   const ErrorLogsScreen({super.key});
@@ -104,7 +105,7 @@ class _ErrorLogsScreenState extends ConsumerState<ErrorLogsScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.check_circle, size: 64, color: Colors.green),
+                            Icon(Icons.check_circle, size: 64, color: kSuccessColor),
                             SizedBox(height: 16),
                             Text('No errors found', style: TextStyle(fontSize: 18)),
                           ],
@@ -176,15 +177,15 @@ class _ErrorLogCard extends StatelessWidget {
   Color _getSeverityColor(String severity) {
     switch (severity.toLowerCase()) {
       case 'critical':
-        return Colors.red;
+        return kErrorColor;
       case 'error':
-        return Colors.orange;
+        return kAccentColor;
       case 'warning':
-        return Colors.amber;
+        return kWarningColor;
       case 'info':
-        return Colors.blue;
+        return kInfoColor;
       default:
-        return Colors.grey;
+        return kTextDisabled;
     }
   }
 
@@ -256,7 +257,7 @@ class _ErrorLogCard extends StatelessWidget {
                 if (error.resolved)
                   const Chip(
                     label: Text('RESOLVED'),
-                    backgroundColor: Colors.green,
+                    backgroundColor: kSuccessColor,
                     labelStyle: TextStyle(color: Colors.white, fontSize: 11),
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     padding: EdgeInsets.zero,
@@ -289,7 +290,7 @@ class _ErrorLogCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.check_circle, size: 16, color: Colors.green),
+                      const Icon(Icons.check_circle, size: 16, color: kSuccessColor),
                       const SizedBox(width: 4),
                       Text('Resolved: ${dateFormat.format(error.resolvedAt!)}'),
                     ],
@@ -302,7 +303,7 @@ class _ErrorLogCard extends StatelessWidget {
                     icon: const Icon(Icons.check),
                     label: const Text('Mark as Resolved'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: kSuccessColor,
                       foregroundColor: Colors.white,
                     ),
                   ),

@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/api_service.dart';
 import '../../../providers/providers.dart';
+import '../../../config/constants.dart';
+import '../../../config/theme.dart';
+import '../../../widgets/form_fields.dart';
 
 class AddMemberScreen extends ConsumerStatefulWidget {
   final String? relativePersonId;
@@ -27,6 +30,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   final _occupationController = TextEditingController();
 
   String _gender = 'male';
+  String _countryCode = '+91';
   String _relationshipType = 'FATHER_OF';
   DateTime? _dateOfBirth;
   String _maritalStatus = 'single';
@@ -42,6 +46,12 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
       // Auto-set gender based on relationship type
       if (_relationshipType == 'FATHER_OF') _gender = 'male';
       if (_relationshipType == 'MOTHER_OF') _gender = 'female';
+      // Auto-set marital status based on relationship type
+      if (_relationshipType == 'FATHER_OF' ||
+          _relationshipType == 'MOTHER_OF' ||
+          _relationshipType == 'SPOUSE_OF') {
+        _maritalStatus = 'married';
+      }
     }
   }
 
@@ -53,16 +63,6 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     _stateController.dispose();
     _occupationController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickDateOfBirth() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(1970, 1, 1),
-      firstDate: DateTime(1920),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) setState(() { _dateOfBirth = picked; });
   }
 
   String get _relationshipLabel {
@@ -95,7 +95,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
       // 1. Create person
       final result = await apiService.createPerson({
         'name': _nameController.text.trim(),
-        'phone': '+91${_phoneController.text.trim()}',
+        'phone': '${_countryCode}${_phoneController.text.trim()}',
         'gender': _gender,
         'date_of_birth': _dateOfBirth?.toIso8601String().split('T')[0],
         'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
@@ -118,8 +118,15 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
           // Store as: anchor is FATHER_OF/MOTHER_OF new person
           personId = anchorPersonId;
           relatedPersonId = newPersonId;
-          // Determine parent type based on anchor's gender (the parent)
-          final anchorGender = myProfile.gender;
+          // Determine parent type based on anchor's actual gender
+          String anchorGender;
+          if (widget.relativePersonId != null && widget.relativePersonId != myProfile.id) {
+            // Fetch the anchor person's gender
+            final anchorPerson = await apiService.getPerson(anchorPersonId);
+            anchorGender = anchorPerson.gender;
+          } else {
+            anchorGender = myProfile.gender;
+          }
           type = anchorGender == 'male' ? 'FATHER_OF' : 'MOTHER_OF';
         } else {
           // New person IS the relationship type TO the anchor
@@ -156,7 +163,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         }
       }
     } catch (e) {
-      setState(() { _error = e.toString(); });
+      setState(() { _error = e.toString().replaceAll('Exception: ', ''); });
     } finally {
       if (mounted) setState(() { _isLoading = false; });
     }
@@ -199,19 +206,16 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Add ${_relationshipLabel}'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.account_tree),
-            tooltip: 'View Family Tree',
-            onPressed: () => context.go('/tree'),
-          ),
-        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: kDividerColor.withValues(alpha: 0.5)),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
+            constraints: const BoxConstraints(maxWidth: AppSizing.maxFormWidth),
             child: Form(
               key: _formKey,
               child: Column(
@@ -220,27 +224,27 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                   // Relationship type (if not pre-set)
                   if (widget.relationshipType == null) ...[
                     DropdownButtonFormField<String>(
-                      value: _relationshipType,
+                      initialValue: _relationshipType,
                       decoration: const InputDecoration(
                         labelText: 'Relationship',
                         prefixIcon: Icon(Icons.family_restroom),
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'FATHER_OF', child: Text('Father')),
-                        DropdownMenuItem(value: 'MOTHER_OF', child: Text('Mother')),
-                        DropdownMenuItem(value: 'SPOUSE_OF', child: Text('Spouse')),
-                        DropdownMenuItem(value: 'SIBLING_OF', child: Text('Sibling')),
-                        DropdownMenuItem(value: 'CHILD_OF', child: Text('Child')),
-                      ],
+                      items: FormConstants.relationshipOptions
+                          .map((o) => o.toMenuItem())
+                          .toList(),
                       onChanged: (v) {
                         setState(() {
                           _relationshipType = v!;
                           if (v == 'FATHER_OF') _gender = 'male';
                           if (v == 'MOTHER_OF') _gender = 'female';
+                          // Parents and spouses are presumably married
+                          if (v == 'FATHER_OF' || v == 'MOTHER_OF' || v == 'SPOUSE_OF') {
+                            _maritalStatus = 'married';
+                          }
                         });
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.md),
                   ],
 
                   // Name
@@ -253,106 +257,70 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     ),
                     validator: (v) => v == null || v.trim().isEmpty ? 'Please enter the full name' : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Phone (mandatory — for invite + merge)
-                  TextFormField(
+                  PhoneInputField(
                     controller: _phoneController,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number *',
-                      prefixIcon: Icon(Icons.phone),
-                      prefixText: '+91 ',
-                      helperText: 'Required — 10 digits',
-                    ),
-                    keyboardType: TextInputType.phone,
-                    validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Please enter phone number';
-                      if (v.trim().length != 10) return 'Must be exactly 10 digits';
-                      if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) return 'Only numbers allowed';
-                      return null;
-                    },
+                    countryCode: _countryCode,
+                    onCountryCodeChanged: (v) => setState(() => _countryCode = v),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Gender
                   DropdownButtonFormField<String>(
-                    value: _gender,
+                    initialValue: _gender,
                     decoration: const InputDecoration(
                       labelText: 'Gender *',
                       prefixIcon: Icon(Icons.wc),
                       helperText: 'Required',
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'male', child: Text('Male')),
-                      DropdownMenuItem(value: 'female', child: Text('Female')),
-                      DropdownMenuItem(value: 'other', child: Text('Other')),
-                    ],
+                    items: FormConstants.genderOptions
+                        .map((o) => o.toMenuItem())
+                        .toList(),
                     onChanged: (v) => setState(() { _gender = v!; }),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Date of Birth (optional for family members)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.cake),
-                    title: Text(
-                      _dateOfBirth == null
-                          ? 'Date of Birth (Optional)'
-                          : '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}',
-                    ),
-                    subtitle: _dateOfBirth == null ? const Text('Tap to select', style: TextStyle(fontSize: 12)) : null,
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: _pickDateOfBirth,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Colors.grey[400]!),
-                    ),
+                  DatePickerField(
+                    label: 'Date of Birth',
+                    selectedDate: _dateOfBirth,
+                    onDateSelected: (d) => setState(() { _dateOfBirth = d; }),
+                    initialDate: DateTime(1970, 1, 1),
+                    helperText: 'Optional',
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Marital Status
                   DropdownButtonFormField<String>(
-                    value: _maritalStatus,
+                    initialValue: _maritalStatus,
                     decoration: const InputDecoration(
                       labelText: 'Marital Status',
                       prefixIcon: Icon(Icons.favorite),
                       helperText: 'Optional',
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'single', child: Text('Single')),
-                      DropdownMenuItem(value: 'married', child: Text('Married')),
-                      DropdownMenuItem(value: 'divorced', child: Text('Divorced')),
-                      DropdownMenuItem(value: 'widowed', child: Text('Widowed')),
-                    ],
+                    items: FormConstants.maritalStatusOptions
+                        .map((o) => o.toMenuItem())
+                        .toList(),
                     onChanged: (v) => setState(() { _maritalStatus = v!; }),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
 
                   // City & State (optional)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _cityController,
-                          decoration: const InputDecoration(
-                            labelText: 'City',
-                            helperText: 'Optional',
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _stateController,
-                          decoration: const InputDecoration(
-                            labelText: 'State',
-                            helperText: 'Optional',
-                          ),
-                        ),
-                      ),
-                    ],
+                  TextFormField(
+                    controller: _cityController,
+                    decoration: const InputDecoration(
+                      labelText: 'City',
+                      prefixIcon: Icon(Icons.location_city),
+                      helperText: 'Optional',
+                    ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.md),
+                  StateAutocompleteField(
+                    controller: _stateController,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Occupation (optional)
                   TextFormField(
@@ -363,31 +331,34 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                       helperText: 'Optional',
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.lg),
 
                   // Error
-                  if (_error != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(_error!, style: TextStyle(color: Colors.red[700])),
-                    ),
-                    const SizedBox(height: 16),
+                  if (_error != null) ...[  
+                    ErrorBanner(message: _error!),
+                    const SizedBox(height: AppSpacing.md),
                   ],
 
-                  // Submit
-                  ElevatedButton.icon(
-                    onPressed: _isLoading ? null : _submit,
-                    icon: _isLoading
-                        ? const SizedBox(
-                            height: 20, width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.person_add),
-                    label: Text('Add ${_relationshipLabel}'),
+                  // Submit — right-aligned row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton(
+                        onPressed: _isLoading ? null : () => context.pop(),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      ElevatedButton.icon(
+                        onPressed: _isLoading ? null : _submit,
+                        icon: _isLoading
+                            ? const SizedBox(
+                                height: 20, width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.person_add_rounded),
+                        label: Text('Add ${_relationshipLabel}'),
+                      ),
+                    ],
                   ),
                 ],
               ),

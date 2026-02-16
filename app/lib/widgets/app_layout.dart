@@ -16,51 +16,65 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 1);
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      elevation: 0,
-      backgroundColor: kPrimaryColor,
-      foregroundColor: Colors.white,
-      title: title != null
-          ? Text(
-              title!,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            )
-          : Row(
-              children: [
-                Icon(Icons.account_tree, size: 28, color: Colors.white),
-                const SizedBox(width: AppSpacing.sm),
-                const Text(
-                  'MyFamilyTree',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AppBar(
+          elevation: 0,
+          backgroundColor: kSurfaceColor,
+          foregroundColor: kTextPrimary,
+          title: title != null
+              ? Text(
+                  title!,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                    color: kTextPrimary,
                   ),
+                )
+              : Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: kPrimaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.account_tree_rounded, size: 20, color: kPrimaryColor),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    const Text(
+                      'MyFamilyTree',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                        color: kTextPrimary,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-      leading: showBackButton
-          ? IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => context.pop(),
-            )
-          : null,
-      actions: actions ??
-          [
-            // Quick access to Tree View
-            IconButton(
-              icon: const Icon(Icons.account_tree),
-              tooltip: 'View Family Tree',
-              onPressed: () => context.go('/tree'),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.menu),
+          leading: showBackButton
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  onPressed: () => context.pop(),
+                )
+              : null,
+          actions: actions ??
+              [
+                IconButton(
+                  icon: const Icon(Icons.account_tree_outlined, size: 20),
+                  tooltip: 'View Family Tree',
+                  onPressed: () => context.go('/tree'),
+                ),
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert_rounded, size: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
               onSelected: (value) {
                 switch (value) {
                   case 'tree':
@@ -85,7 +99,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   value: 'landing',
                   child: Row(
                     children: [
-                      Icon(Icons.home_outlined, color: kPrimaryColor),
+                      Icon(Icons.home_outlined, color: kTextSecondary),
                       SizedBox(width: AppSpacing.sm),
                       Text('Home'),
                     ],
@@ -95,7 +109,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   value: 'tree',
                   child: Row(
                     children: [
-                      Icon(Icons.account_tree, color: kPrimaryColor),
+                      Icon(Icons.account_tree_outlined, color: kTextSecondary),
                       SizedBox(width: AppSpacing.sm),
                       Text('Family Tree'),
                     ],
@@ -105,7 +119,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   value: 'search',
                   child: Row(
                     children: [
-                      Icon(Icons.search, color: kPrimaryColor),
+                      Icon(Icons.search, color: kTextSecondary),
                       SizedBox(width: AppSpacing.sm),
                       Text('Search'),
                     ],
@@ -115,7 +129,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   value: 'invite',
                   child: Row(
                     children: [
-                      Icon(Icons.person_add, color: kPrimaryColor),
+                      Icon(Icons.person_add_outlined, color: kTextSecondary),
                       SizedBox(width: AppSpacing.sm),
                       Text('Invite'),
                     ],
@@ -126,7 +140,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                   value: 'login',
                   child: Row(
                     children: [
-                      Icon(Icons.login, color: kSecondaryColor),
+                      Icon(Icons.login_rounded, color: kTextSecondary),
                       SizedBox(width: AppSpacing.sm),
                       Text('Sign In'),
                     ],
@@ -135,6 +149,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
           ],
+        ),
+        Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+      ],
     );
   }
 }
@@ -153,15 +170,15 @@ class AppFooter extends StatelessWidget {
     if (compact) {
       return Container(
         padding: const EdgeInsets.all(AppSpacing.md),
-        decoration: BoxDecoration(
-          color: kPrimaryDark,
+        decoration: const BoxDecoration(
+          color: kSidebarBg,
           border: Border(
             top: BorderSide(color: kDividerColor, width: 1),
           ),
         ),
-        child: Center(
+        child: const Center(
           child: Text(
-            '© 2026 MyFamilyTree. Built with ❤️',
+            '\u00A9 2026 MyFamilyTree. Built with \u2764\uFE0F',
             style: TextStyle(
               color: Colors.white70,
               fontSize: 12,
@@ -177,8 +194,8 @@ class AppFooter extends StatelessWidget {
         vertical: AppSpacing.xl,
         horizontal: AppSpacing.lg,
       ),
-      decoration: BoxDecoration(
-        color: kPrimaryDark,
+      decoration: const BoxDecoration(
+        gradient: AppGradients.sidebar,
         border: Border(
           top: BorderSide(color: kDividerColor, width: 1),
         ),

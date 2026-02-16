@@ -55,14 +55,17 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
   Widget _buildClaimUI() {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Claim Your Profile'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.account_tree),
-            tooltip: 'View Family Tree',
-            onPressed: () => context.go('/tree'),
-          ),
-        ],
+        title: Row(
+          children: [
+            Icon(Icons.card_giftcard_rounded, size: 22, color: kPrimaryColor),
+            const SizedBox(width: 8),
+            const Text('Claim Your Profile'),
+          ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+        ),
       ),
       body: Center(
         child: Padding(
@@ -73,14 +76,14 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.check_circle, size: 80, color: Colors.green),
+                        const Icon(Icons.check_circle, size: 80, color: kSuccessColor),
                         const SizedBox(height: 16),
                         Text('Profile Claimed!', style: Theme.of(context).textTheme.headlineSmall),
                         const SizedBox(height: 8),
                         const Text('You can now see your full family tree.'),
                         const SizedBox(height: 24),
                         ElevatedButton(
-                          onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                          onPressed: () => context.go('/tree'),
                           child: const Text('Go to My Tree'),
                         ),
                       ],
@@ -88,42 +91,12 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 80, color: Colors.red),
+                        const Icon(Icons.error_outline, size: 80, color: kErrorColor),
                         const SizedBox(height: 16),
                         Text(_error ?? 'Something went wrong'),
                       ],
                     ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              context.go('/tree');
-              break;
-            case 1:
-              context.go('/search');
-              break;
-            case 2:
-              // Already on invite
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_tree),
-            label: 'Tree',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_add),
-            label: 'Invite',
-          ),
-        ],
       ),
     );
   }
@@ -131,14 +104,17 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
   Widget _buildInfoUI() {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Invite Family'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.account_tree),
-            tooltip: 'View Family Tree',
-            onPressed: () => context.go('/tree'),
-          ),
-        ],
+        title: Row(
+          children: [
+            Icon(Icons.person_add_outlined, size: 22, color: kPrimaryColor),
+            const SizedBox(width: 8),
+            const Text('Invite Family'),
+          ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+        ),
       ),
       body: Center(
         child: Padding(
@@ -146,8 +122,16 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.send, size: 80, color: kPrimaryColor),
-              const SizedBox(height: 16),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: kPrimaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(Icons.send_rounded, size: 40, color: kPrimaryColor),
+              ),
+              const SizedBox(height: 24),
               Text(
                 'Invite Family Members',
                 style: Theme.of(context).textTheme.headlineSmall,
@@ -156,41 +140,11 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
               Text(
                 'Go to a person\'s profile in your tree and tap "Invite" to send them a link to claim their profile.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(color: kTextSecondary, fontSize: 15),
               ),
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 2,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              context.go('/tree');
-              break;
-            case 1:
-              context.go('/search');
-              break;
-            case 2:
-              // Already on invite
-              break;
-          }
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.account_tree),
-            label: 'Tree',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_add),
-            label: 'Invite',
-          ),
-        ],
       ),
     );
   }
@@ -260,7 +214,7 @@ class _InviteDialogState extends ConsumerState<InviteDialog> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: kSurfaceSecondary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
