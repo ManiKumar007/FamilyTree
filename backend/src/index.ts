@@ -21,7 +21,7 @@ const app = express();
 // Security
 app.use(helmet());
 app.use(cors({
-  origin: env.APP_URL,
+  origin: env.NODE_ENV === 'production' ? env.APP_URL : true, // Allow all origins in development
   credentials: true,
 }));
 

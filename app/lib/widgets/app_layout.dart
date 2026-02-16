@@ -53,6 +53,12 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           : null,
       actions: actions ??
           [
+            // Quick access to Tree View
+            IconButton(
+              icon: const Icon(Icons.account_tree),
+              tooltip: 'View Family Tree',
+              onPressed: () => context.go('/tree'),
+            ),
             PopupMenuButton<String>(
               icon: const Icon(Icons.menu),
               onSelected: (value) {

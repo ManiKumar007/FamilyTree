@@ -10,17 +10,23 @@ Future<void> main() async {
   // Load environment variables
   await dotenv.load(fileName: '.env');
 
-  // Initialize Supabase
+  // Initialize Supabase with persistent session
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL'] ?? '',
     anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+      // Session will be persisted automatically using SharedPreferences
+    ),
   );
 
-  // Handle deep links for magic link authentication
+  // Handle auth state changes
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
     final session = data.session;
     if (session != null) {
-      debugPrint('User signed in: ${session.user.email}');
+      debugPrint('✅ User session active: ${session.user.email}');
+    } else {
+      debugPrint('❌ No active session');
     }
   });
 

@@ -9,13 +9,27 @@ param(
 
 Write-Host "`n🧪 Flutter Integration Test Runner`n" -ForegroundColor Cyan
 
+# Auto-detect Flutter path
+$flutterCmd = $null
+if (Get-Command flutter -ErrorAction SilentlyContinue) {
+    $flutterCmd = "flutter"
+} elseif (Test-Path "C:\flutter\bin\flutter.bat") {
+    $flutterCmd = "C:\flutter\bin\flutter.bat"
+} elseif (Test-Path "C:\src\flutter\bin\flutter.bat") {
+    $flutterCmd = "C:\src\flutter\bin\flutter.bat"
+} else {
+    Write-Host "✗ Flutter not found. Please install Flutter first." -ForegroundColor Red
+    exit 1
+}
+
 # Check if Flutter is available
 try {
-    $flutterVersion = & C:\src\flutter\bin\flutter.bat --version 2>&1 | Select-Object -First 1
+    $flutterVersion = & $flutterCmd --version 2>&1 | Select-Object -First 1
     Write-Host "✓ Flutter found: $flutterVersion" -ForegroundColor Green
+    Write-Host "  Using: $flutterCmd" -ForegroundColor Cyan
 }
 catch {
-    Write-Host "✗ Flutter not found. Please install Flutter first." -ForegroundColor Red
+    Write-Host "✗ Error running Flutter. Please check your installation." -ForegroundColor Red
     exit 1
 }
 
@@ -24,10 +38,10 @@ $appDir = Join-Path $PSScriptRoot "app"
 Set-Location $appDir
 
 Write-Host "`n📦 Installing dependencies..." -ForegroundColor Yellow
-& C:\src\flutter\bin\flutter.bat pub get
+& $flutterCmd pub get
 
 Write-Host "`n🔍 Available devices:" -ForegroundColor Yellow
-& C:\src\flutter\bin\flutter.bat devices
+& $flutterCmd devices
 
 Write-Host "`n▶️  Running integration tests..." -ForegroundColor Cyan
 Write-Host "   Test file: integration_test/$TestFile" -ForegroundColor White
@@ -35,7 +49,7 @@ Write-Host "   Target device: $Device`n" -ForegroundColor White
 
 # Run the tests
 $testPath = "integration_test/$TestFile"
-& C:\src\flutter\bin\flutter.bat test $testPath -d $Device --verbose
+& $flutterCmd test $testPath -d $Device --verbose
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`n✅ All tests passed!" -ForegroundColor Green

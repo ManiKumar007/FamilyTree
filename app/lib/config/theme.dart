@@ -419,7 +419,7 @@ final ThemeData appTheme = ThemeData(
   scaffoldBackgroundColor: kBackgroundColor,
   
   // Dialog Theme
-  dialogTheme: DialogTheme(
+  dialogTheme: DialogThemeData(
     backgroundColor: kSurfaceColor,
     elevation: 24,
     shape: RoundedRectangleBorder(

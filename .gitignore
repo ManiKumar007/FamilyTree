@@ -35,6 +35,11 @@ app/macos/
 app/windows/
 app/web/
 
+# E2E test artifacts
+e2e-tests/test-results/
+e2e-tests/playwright-report/
+e2e-tests/e2e-tests/
+
 # Temporary files
 flutter_restart.tmp
 *.tmp

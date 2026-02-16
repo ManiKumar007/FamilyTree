@@ -170,7 +170,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Edit Profile')),
+        appBar: AppBar(
+          title: const Text('Edit Profile'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.account_tree),
+              tooltip: 'View Family Tree',
+              onPressed: () => context.go('/tree'),
+            ),
+          ],
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -192,6 +201,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                 ),
               ),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.account_tree),
+              tooltip: 'View Family Tree',
+              onPressed: () => context.go('/tree'),
             ),
         ],
       ),
@@ -241,8 +256,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Full Name *',
                         prefixIcon: Icon(Icons.person),
+                        helperText: 'Required',
                       ),
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                      validator: (v) => v == null || v.trim().isEmpty ? 'Please enter your full name' : null,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     
@@ -252,24 +268,29 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         labelText: 'Phone *',
                         prefixIcon: Icon(Icons.phone),
                         prefixText: '+91 ',
+                        helperText: 'Required - 10 digits',
                       ),
                       keyboardType: TextInputType.phone,
-                      validator: (v) => v == null || v.trim().length != 10 
-                          ? '10-digit number required' 
-                          : null,
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) return 'Please enter phone number';
+                        if (v.trim().length != 10) return 'Must be exactly 10 digits';
+                        if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) return 'Only numbers allowed';
+                        return null;
+                      },
                     ),
                     const SizedBox(height: AppSpacing.md),
                     
                     TextFormField(
                       controller: _emailController,
                       decoration: const InputDecoration(
-                        labelText: 'Email (Optional)',
+                        labelText: 'Email',
                         prefixIcon: Icon(Icons.email),
+                        helperText: 'Optional',
                       ),
                       keyboardType: TextInputType.emailAddress,
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
-                        if (!v.contains('@')) return 'Invalid email';
+                        if (!v.contains('@')) return 'Please enter a valid email';
                         return null;
                       },
                     ),
@@ -370,8 +391,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     TextFormField(
                       controller: _occupationController,
                       decoration: const InputDecoration(
-                        labelText: 'Occupation (Optional)',
+                        labelText: 'Occupation',
                         prefixIcon: Icon(Icons.work),
+                        helperText: 'Optional',
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -379,8 +401,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     TextFormField(
                       controller: _communityController,
                       decoration: const InputDecoration(
-                        labelText: 'Community (Optional)',
+                        labelText: 'Community',
                         prefixIcon: Icon(Icons.groups),
+                        helperText: 'Optional',
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -393,6 +416,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             decoration: const InputDecoration(
                               labelText: 'City',
                               prefixIcon: Icon(Icons.location_city),
+                              helperText: 'Optional',
                             ),
                           ),
                         ),
@@ -403,6 +427,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             decoration: const InputDecoration(
                               labelText: 'State',
                               prefixIcon: Icon(Icons.map),
+                              helperText: 'Optional',
                             ),
                           ),
                         ),

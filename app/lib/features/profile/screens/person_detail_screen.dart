@@ -127,6 +127,11 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
       backgroundColor: getGenderColor(person.gender),
       actions: [
         IconButton(
+          icon: const Icon(Icons.account_tree),
+          onPressed: () => context.go('/tree'),
+          tooltip: 'View Family Tree',
+        ),
+        IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () => context.push('/edit-profile/${person.id}'),
           tooltip: 'Edit',

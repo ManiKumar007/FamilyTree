@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
 
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
@@ -19,15 +20,45 @@ import '../features/admin/screens/error_logs_screen.dart';
 import '../features/admin/screens/user_management_screen.dart';
 import '../features/admin/screens/admin_analytics_screen.dart';
 
+// Auth change notifier for GoRouter
+class AuthNotifier extends ChangeNotifier {
+  StreamSubscription<AuthState>? _authSubscription;
+
+  AuthNotifier() {
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+}
+
+final authNotifierProvider = Provider<AuthNotifier>((ref) {
+  final notifier = AuthNotifier();
+  ref.onDispose(() => notifier.dispose());
+  return notifier;
+});
+
 final routerProvider = Provider<GoRouter>((ref) {
+  final authNotifier = ref.watch(authNotifierProvider);
+  
   return GoRouter(
     initialLocation: '/landing',
+    refreshListenable: authNotifier,
     redirect: (context, state) {
+      // Use currentUser instead of currentSession for more reliable auth checking
+      final user = Supabase.instance.client.auth.currentUser;
       final session = Supabase.instance.client.auth.currentSession;
-      final isLoggedIn = session != null;
+      final isLoggedIn = user != null;
       final isLoginRoute = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
       final isLandingRoute = state.matchedLocation == '/landing';
       final isInviteRoute = state.matchedLocation.startsWith('/invite');
+
+      debugPrint('🔄 Router redirect: ${state.matchedLocation}, isLoggedIn: $isLoggedIn, user: ${user?.email ?? "null"}, hasSession: ${session != null}');
 
       // Allow landing, login, signup, and invite routes without auth
       if (isLandingRoute || isLoginRoute || isInviteRoute) return null;

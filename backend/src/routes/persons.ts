@@ -27,6 +27,8 @@ const createPersonSchema = z.object({
   state: z.string().max(200).optional(),
   marital_status: MaritalStatusEnum.optional().default('single'),
   wedding_date: z.string().optional(),
+  auth_user_id: z.string().uuid().optional(), // Allow linking to auth user for profile setup
+  verified: z.boolean().optional(), // Allow setting verified status
 });
 
 const updatePersonSchema = createPersonSchema.partial();
@@ -44,6 +46,12 @@ personsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
       return;
     }
 
+    // Security: If auth_user_id is provided, it must match the current user
+    if (parsed.auth_user_id && parsed.auth_user_id !== req.userId) {
+      res.status(403).json(errorResponse(ErrorCodes.FORBIDDEN, 'Cannot create profile for another user'));
+      return;
+    }
+
     // Sanitize text fields to prevent XSS
     const sanitized = sanitizeObject(parsed, [...PERSON_SANITIZE_FIELDS]);
 
@@ -51,7 +59,10 @@ personsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
       ...sanitized,
       phone,
       created_by_user_id: req.userId,
-      verified: false,
+      // If auth_user_id is provided (profile setup), use it; otherwise leave null
+      auth_user_id: parsed.auth_user_id || null,
+      // If verified is provided, use it; otherwise default to false
+      verified: parsed.verified !== undefined ? parsed.verified : false,
     };
 
     const { data, error } = await supabaseAdmin

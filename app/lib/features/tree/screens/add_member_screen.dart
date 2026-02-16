@@ -84,6 +84,14 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     try {
       final apiService = ref.read(apiServiceProvider);
 
+      // Get current user's profile to use as anchor if no relative specified
+      final myProfile = await ref.read(myProfileProvider.future);
+      if (myProfile == null) {
+        throw Exception('Profile not found. Please complete profile setup first.');
+      }
+
+      final anchorPersonId = widget.relativePersonId ?? myProfile.id;
+
       // 1. Create person
       final result = await apiService.createPerson({
         'name': _nameController.text.trim(),
@@ -98,32 +106,26 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
 
       final newPersonId = result['person']?['id'];
 
-      // 2. Create relationship if we have a relative
-      if (widget.relativePersonId != null && newPersonId != null) {
+      // 2. Create relationship - always create a relationship to anchor the person to the tree
+      if (newPersonId != null) {
         // Determine relationship direction
         String personId;
         String relatedPersonId;
         String type;
 
         if (_relationshipType == 'CHILD_OF') {
-          // New person is child of the relative
-          // Store as: relative is FATHER_OF/MOTHER_OF new person
-          final parentType = _gender == 'male' ? 'FATHER_OF' : 'MOTHER_OF';
-          personId = widget.relativePersonId!; // not quite right — need parent gender
+          // New person is child of the anchor (me or specified relative)
+          // Store as: anchor is FATHER_OF/MOTHER_OF new person
+          personId = anchorPersonId;
           relatedPersonId = newPersonId;
-          type = parentType;
-          // Actually: the root is the parent, new person is the child
-          // So: root FATHER_OF/MOTHER_OF newPerson
-          // We need the root's gender to determine type
-          personId = widget.relativePersonId!;
-          relatedPersonId = newPersonId;
-          // For now assume the person adding is parent
-          type = 'FATHER_OF'; // Backend trigger handles inverse
+          // Determine parent type based on anchor's gender (the parent)
+          final anchorGender = myProfile.gender;
+          type = anchorGender == 'male' ? 'FATHER_OF' : 'MOTHER_OF';
         } else {
-          // New person IS the relationship type TO the relative
-          // e.g., new person is FATHER_OF relative
+          // New person IS the relationship type TO the anchor
+          // e.g., new person is FATHER_OF relative/me
           personId = newPersonId;
-          relatedPersonId = widget.relativePersonId!;
+          relatedPersonId = anchorPersonId;
           type = _relationshipType;
         }
 
@@ -197,6 +199,13 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Add ${_relationshipLabel}'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_tree),
+            tooltip: 'View Family Tree',
+            onPressed: () => context.go('/tree'),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -240,8 +249,9 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Full Name *',
                       prefixIcon: Icon(Icons.person),
+                      helperText: 'Required',
                     ),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
+                    validator: (v) => v == null || v.trim().isEmpty ? 'Please enter the full name' : null,
                   ),
                   const SizedBox(height: 16),
 
@@ -252,12 +262,13 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                       labelText: 'Phone Number *',
                       prefixIcon: Icon(Icons.phone),
                       prefixText: '+91 ',
-                      helperText: 'Required — used to invite and connect family members',
+                      helperText: 'Required — 10 digits',
                     ),
                     keyboardType: TextInputType.phone,
                     validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Phone number is required';
-                      if (v.trim().length != 10) return 'Enter a 10-digit number';
+                      if (v == null || v.trim().isEmpty) return 'Please enter phone number';
+                      if (v.trim().length != 10) return 'Must be exactly 10 digits';
+                      if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) return 'Only numbers allowed';
                       return null;
                     },
                   ),
@@ -269,6 +280,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Gender *',
                       prefixIcon: Icon(Icons.wc),
+                      helperText: 'Required',
                     ),
                     items: const [
                       DropdownMenuItem(value: 'male', child: Text('Male')),
@@ -285,9 +297,10 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     leading: const Icon(Icons.cake),
                     title: Text(
                       _dateOfBirth == null
-                          ? 'Date of Birth (optional)'
+                          ? 'Date of Birth (Optional)'
                           : '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}',
                     ),
+                    subtitle: _dateOfBirth == null ? const Text('Tap to select', style: TextStyle(fontSize: 12)) : null,
                     trailing: const Icon(Icons.calendar_today),
                     onTap: _pickDateOfBirth,
                     shape: RoundedRectangleBorder(
@@ -303,6 +316,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Marital Status',
                       prefixIcon: Icon(Icons.favorite),
+                      helperText: 'Optional',
                     ),
                     items: const [
                       DropdownMenuItem(value: 'single', child: Text('Single')),
@@ -320,14 +334,20 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                       Expanded(
                         child: TextFormField(
                           controller: _cityController,
-                          decoration: const InputDecoration(labelText: 'City'),
+                          decoration: const InputDecoration(
+                            labelText: 'City',
+                            helperText: 'Optional',
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: TextFormField(
                           controller: _stateController,
-                          decoration: const InputDecoration(labelText: 'State'),
+                          decoration: const InputDecoration(
+                            labelText: 'State',
+                            helperText: 'Optional',
+                          ),
                         ),
                       ),
                     ],
@@ -338,8 +358,9 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                   TextFormField(
                     controller: _occupationController,
                     decoration: const InputDecoration(
-                      labelText: 'Occupation (optional)',
+                      labelText: 'Occupation',
                       prefixIcon: Icon(Icons.work),
+                      helperText: 'Optional',
                     ),
                   ),
                   const SizedBox(height: 24),

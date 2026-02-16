@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../providers/providers.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -79,7 +80,16 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'verified': true,
       });
 
-      if (mounted) context.go('/');
+      // Refresh providers to load the new profile
+      ref.invalidate(myProfileProvider);
+      ref.invalidate(familyTreeProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile created successfully!')),
+        );
+        context.go('/tree');
+      }
     } catch (e) {
       setState(() { _error = e.toString(); });
     } finally {
@@ -120,8 +130,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Full Name *',
                       prefixIcon: Icon(Icons.person),
+                      helperText: 'Required',
                     ),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'Name is required' : null,
+                    validator: (v) => v == null || v.trim().isEmpty ? 'Please enter your full name' : null,
                   ),
                   const SizedBox(height: 16),
 
@@ -132,11 +143,13 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       labelText: 'Phone Number *',
                       prefixIcon: Icon(Icons.phone),
                       prefixText: '+91 ',
+                      helperText: 'Required - 10 digits',
                     ),
                     keyboardType: TextInputType.phone,
                     validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Phone number is required';
-                      if (v.trim().length != 10) return 'Enter a 10-digit phone number';
+                      if (v == null || v.trim().isEmpty) return 'Please enter your phone number';
+                      if (v.trim().length != 10) return 'Must be exactly 10 digits';
+                      if (!RegExp(r'^[0-9]+$').hasMatch(v.trim())) return 'Only numbers allowed';
                       return null;
                     },
                   ),
@@ -180,10 +193,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   TextFormField(
                     controller: _cityController,
                     decoration: const InputDecoration(
-                      labelText: 'City *',
+                      labelText: 'City',
                       prefixIcon: Icon(Icons.location_city),
+                      helperText: 'Optional',
                     ),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'City is required' : null,
                   ),
                   const SizedBox(height: 16),
 
@@ -191,10 +204,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   TextFormField(
                     controller: _stateController,
                     decoration: const InputDecoration(
-                      labelText: 'State *',
+                      labelText: 'State',
                       prefixIcon: Icon(Icons.map),
+                      helperText: 'Optional',
                     ),
-                    validator: (v) => v == null || v.trim().isEmpty ? 'State is required' : null,
                   ),
                   const SizedBox(height: 16),
 
@@ -202,8 +215,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   TextFormField(
                     controller: _occupationController,
                     decoration: const InputDecoration(
-                      labelText: 'Occupation (optional)',
+                      labelText: 'Occupation',
                       prefixIcon: Icon(Icons.work),
+                      helperText: 'Optional',
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -212,8 +226,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                   TextFormField(
                     controller: _communityController,
                     decoration: const InputDecoration(
-                      labelText: 'Community (optional)',
+                      labelText: 'Community',
                       prefixIcon: Icon(Icons.group),
+                      helperText: 'Optional',
                     ),
                   ),
                   const SizedBox(height: 24),

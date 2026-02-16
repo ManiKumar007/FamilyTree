@@ -142,11 +142,12 @@ class AdminDashboardScreen extends ConsumerWidget {
                     icon: Icons.analytics,
                     onPressed: () => context.go('/admin/analytics'),
                   ),
-                  _ActionButton(
-                    label: 'Audit Logs',
-                    icon: Icons.history,
-                    onPressed: () => context.go('/admin/audit-logs'),
-                  ),
+                  // TODO: Implement Audit Logs screen
+                  // _ActionButton(
+                  //   label: 'Audit Logs',
+                  //   icon: Icons.history,
+                  //   onPressed: () => context.go('/admin/audit-logs'),
+                  // ),
                 ],
               ),
             ],

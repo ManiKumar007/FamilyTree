@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../providers/providers.dart';
 import '../../../models/models.dart';
 import '../../../config/theme.dart';
@@ -17,6 +18,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   String? _selectedOccupation;
   String? _selectedMaritalStatus;
   bool _showFilters = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkProfileSetup();
+    });
+  }
+
+  Future<void> _checkProfileSetup() async {
+    final profile = await ref.read(myProfileProvider.future);
+    if (profile == null && mounted) {
+      context.go('/profile-setup');
+    }
+  }
 
   @override
   void dispose() {
@@ -40,6 +56,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Network'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_tree),
+            tooltip: 'View Family Tree',
+            onPressed: () => context.go('/tree'),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -148,7 +171,43 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             child: searchState.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : searchState.error != null
-                    ? Center(child: Text('Error: ${searchState.error}'))
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.error_outline, size: 64, color: Colors.orange[300]),
+                              const SizedBox(height: 16),
+                              Text(
+                                searchState.error!.contains('Profile not found')
+                                    ? 'Profile Setup Required'
+                                    : 'Search Error',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                searchState.error!.contains('Profile not found')
+                                    ? 'Please complete your profile setup to search the network.'
+                                    : searchState.error!,
+                                style: TextStyle(color: Colors.grey[600]),
+                                textAlign: TextAlign.center,
+                              ),
+                              if (searchState.error!.contains('Profile not found')) ...[
+                                const SizedBox(height: 24),
+                                ElevatedButton.icon(
+                                  onPressed: () => context.go('/profile-setup'),
+                                  icon: const Icon(Icons.person_add),
+                                  label: const Text('Set Up Profile'),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      )
                     : searchState.results.isEmpty
                         ? Center(
                             child: Column(
@@ -172,6 +231,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               return _SearchResultCard(result: result);
                             },
                           ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 1,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              context.go('/tree');
+              break;
+            case 1:
+              // Already on search
+              break;
+            case 2:
+              context.go('/invite');
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_tree),
+            label: 'Tree',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_add),
+            label: 'Invite',
           ),
         ],
       ),

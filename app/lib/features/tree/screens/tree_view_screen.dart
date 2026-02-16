@@ -22,19 +22,15 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
   @override
   void initState() {
     super.initState();
-    // 🚧 TEMPORARY: Disabled profile check for auth bypass testing
-    // _checkProfileSetup();
+    _checkProfileSetup();
   }
 
   Future<void> _checkProfileSetup() async {
-    // 🚧 TEMPORARY: Disabled for auth bypass testing
-    /* ORIGINAL CODE:
     // Check if user has completed profile setup
     final profile = await ref.read(myProfileProvider.future);
     if (profile == null && mounted) {
       context.go('/profile-setup');
     }
-    */
   }
 
   void _centerOnUser() {
@@ -57,23 +53,38 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         title: const Text('MyFamilyTree'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Tree',
+            onPressed: () {
+              ref.invalidate(familyTreeProvider);
+              ref.invalidate(myProfileProvider);
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.admin_panel_settings),
             tooltip: 'Admin Panel',
             onPressed: () => context.push('/admin'),
           ),
           IconButton(
-            icon: const Icon(Icons.search),
-            tooltip: 'Search Network',
-            onPressed: () => context.push('/search'),
-          ),
-          IconButton(
             icon: const Icon(Icons.person),
             tooltip: 'Profile',
-            onPressed: () async {
-              final profile = await ref.read(myProfileProvider.future);
-              if (profile != null && context.mounted) {
-                context.push('/person/${profile.id}');
-              }
+            onPressed: () {
+              // Navigate to profile using provider that handles async
+              ref.read(myProfileProvider.future).then((profile) {
+                if (profile != null && context.mounted) {
+                  // Profile exists, go to detail page
+                  context.push('/person/${profile.id}');
+                } else if (context.mounted) {
+                  // No profile yet, go to profile setup
+                  context.push('/profile-setup');
+                }
+              }).catchError((error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error loading profile: $error')),
+                  );
+                }
+              });
             },
           ),
           IconButton(
@@ -210,14 +221,46 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/add-member'),
+        onPressed: () => context.push('/tree/add-member'),
         backgroundColor: kPrimaryColor,
         child: const Icon(Icons.person_add, color: Colors.white),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 0,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              // Already on tree view
+              break;
+            case 1:
+              context.go('/search');
+              break;
+            case 2:
+              context.go('/invite');
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_tree),
+            label: 'Tree',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_add),
+            label: 'Invite',
+          ),
+        ],
       ),
     );
   }
 
   Widget _emptyTreeView() {
+    final profileAsync = ref.watch(myProfileProvider);
+    
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -233,9 +276,27 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
             'Start by adding your parents, siblings, or spouse.',
             style: TextStyle(color: Colors.grey[600]),
           ),
+          const SizedBox(height: 8),
+          // Debug info
+          profileAsync.when(
+            data: (profile) => profile != null
+                ? Text(
+                    'Profile: ${profile.name}',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                  )
+                : Text(
+                    'No profile found - please complete setup',
+                    style: TextStyle(color: Colors.orange[700], fontSize: 12),
+                  ),
+            loading: () => const SizedBox.shrink(),
+            error: (e, _) => Text(
+              'Profile error: $e',
+              style: TextStyle(color: Colors.red[700], fontSize: 12),
+            ),
+          ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => context.push('/add-member'),
+            onPressed: () => context.push('/tree/add-member'),
             icon: const Icon(Icons.person_add),
             label: const Text('Add Family Member'),
           ),
@@ -286,7 +347,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               top: btn.y,
               child: AddPersonButton(
                 label: btn.label,
-                onTap: () => context.push('/add-member', extra: {
+                onTap: () => context.push('/tree/add-member', extra: {
                   'relativePersonId': btn.relativePersonId,
                   'relationshipType': btn.relationshipType,
                 }),

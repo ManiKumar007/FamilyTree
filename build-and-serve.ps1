@@ -14,7 +14,23 @@ Write-Host "Building optimized web bundle..." -ForegroundColor Yellow
 Write-Host "This will take 1-2 minutes (one time)..." -ForegroundColor Gray
 Write-Host ""
 
-C:\src\flutter\bin\flutter.bat build web --release
+# Auto-detect Flutter path
+$flutterCmd = $null
+if (Get-Command flutter -ErrorAction SilentlyContinue) {
+    $flutterCmd = "flutter"
+} elseif (Test-Path "C:\flutter\bin\flutter.bat") {
+    $flutterCmd = "C:\flutter\bin\flutter.bat"
+} elseif (Test-Path "C:\src\flutter\bin\flutter.bat") {
+    $flutterCmd = "C:\src\flutter\bin\flutter.bat"
+} else {
+    Write-Host "❌ Flutter not found. Please install Flutter or add it to PATH." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "Using Flutter: $flutterCmd" -ForegroundColor Cyan
+Write-Host ""
+
+& $flutterCmd build web --release
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""

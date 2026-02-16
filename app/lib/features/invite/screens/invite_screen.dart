@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../services/api_service.dart';
 import '../../../config/theme.dart';
@@ -53,7 +54,16 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
 
   Widget _buildClaimUI() {
     return Scaffold(
-      appBar: AppBar(title: const Text('Claim Your Profile')),
+      appBar: AppBar(
+        title: const Text('Claim Your Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_tree),
+            tooltip: 'View Family Tree',
+            onPressed: () => context.go('/tree'),
+          ),
+        ],
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -85,12 +95,51 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                     ),
         ),
       ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 2,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              context.go('/tree');
+              break;
+            case 1:
+              context.go('/search');
+              break;
+            case 2:
+              // Already on invite
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_tree),
+            label: 'Tree',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_add),
+            label: 'Invite',
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildInfoUI() {
     return Scaffold(
-      appBar: AppBar(title: const Text('Invite Family')),
+      appBar: AppBar(
+        title: const Text('Invite Family'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.account_tree),
+            tooltip: 'View Family Tree',
+            onPressed: () => context.go('/tree'),
+          ),
+        ],
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -112,6 +161,36 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 2,
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              context.go('/tree');
+              break;
+            case 1:
+              context.go('/search');
+              break;
+            case 2:
+              // Already on invite
+              break;
+          }
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_tree),
+            label: 'Tree',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Search',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_add),
+            label: 'Invite',
+          ),
+        ],
       ),
     );
   }

@@ -415,7 +415,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                 title: 'Add Family Member',
                 subtitle: 'Add a new person to your family tree',
                 iconColor: kSuccessColor,
-                onTap: () => context.push('/add-member'),
+                onTap: () => context.push('/tree/add-member'),
               ),
               InfoCard(
                 icon: Icons.search,
@@ -429,7 +429,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                 title: 'Pending Merges',
                 subtitle: 'Review merge requests',
                 iconColor: kWarningColor,
-                onTap: () => context.push('/merges'),
+                onTap: () => context.go('/tree'), // Merges are shown in tree view
               ),
               InfoCard(
                 icon: Icons.group_add,
