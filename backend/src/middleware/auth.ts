@@ -41,17 +41,32 @@ export async function authMiddleware(
   const token = authHeader.split(' ')[1];
 
   try {
+    console.log('🔐 Validating token...');
+    console.log('Token length:', token.length);
+    console.log('Token preview:', token.substring(0, 30) + '...');
+    console.log('Supabase URL:', env.SUPABASE_URL);
+    
     const { data, error } = await supabaseAdmin.auth.getUser(token);
 
-    if (error || !data.user) {
+    if (error) {
+      console.error('❌ Token validation error:', error.message);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      res.status(401).json({ error: 'Invalid or expired token', details: error.message });
+      return;
+    }
+    
+    if (!data.user) {
+      console.error('❌ No user data returned for token');
       res.status(401).json({ error: 'Invalid or expired token' });
       return;
     }
 
+    console.log('✅ Token validated for user:', data.user.email);
     req.userId = data.user.id;
     req.userEmail = data.user.email;
     next();
   } catch (err) {
-    res.status(401).json({ error: 'Authentication failed' });
+    console.error('❌ Authentication exception:', err);
+    res.status(401).json({ error: 'Authentication failed', exception: String(err) });
   }
 }

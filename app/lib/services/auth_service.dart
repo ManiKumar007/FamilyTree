@@ -150,12 +150,20 @@ class AuthService {
   Future<bool> refreshSession() async {
     try {
       developer.log('🔄 Refreshing session', name: 'AuthService');
+      final oldToken = currentSession?.accessToken;
+      print('Old token length: ${oldToken?.length ?? 0}');
+      
       final response = await _supabase.auth.refreshSession();
+      
       if (response.session != null) {
+        final newToken = response.session!.accessToken;
+        print('New token length: ${newToken.length}');
+        print('Token changed: ${oldToken != newToken}');
         developer.log('✅ Session refreshed successfully', name: 'AuthService');
         return true;
       } else {
         developer.log('⚠️ Session refresh returned null', name: 'AuthService');
+        print('❌ Session refresh failed: returned null session');
         return false;
       }
     } catch (e, stackTrace) {
@@ -165,6 +173,7 @@ class AuthService {
         error: e,
         stackTrace: stackTrace,
       );
+      print('❌ Session refresh exception: $e');
       // Don't rethrow - just return false to indicate failure
       return false;
     }

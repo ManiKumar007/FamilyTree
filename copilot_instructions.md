@@ -7,24 +7,28 @@ This document details all changes, fixes, and enhancements implemented during th
 ---
 
 ## Table of Contents
+
 1. [Merge Conflicts Resolution](#merge-conflicts-resolution)
 2. [Authentication & Navigation Improvements](#authentication--navigation-improvements)
 3. [Family Tree Data Fetching Fixes](#family-tree-data-fetching-fixes)
 4. [Profile Setup Enhancements](#profile-setup-enhancements)
 5. [Search Feature Improvements](#search-feature-improvements)
 6. [Session Management Fixes](#session-management-fixes)
-7. [Compilation & Null-Safety Fixes](#compilation--null-safety-fixes)
-8. [Architecture Decisions](#architecture-decisions)
-9. [Debugging Tips](#debugging-tips)
+7. [Token Validation Fixes](#token-validation-fixes)
+8. [Compilation & Null-Safety Fixes](#compilation--null-safety-fixes)
+9. [Architecture Decisions](#architecture-decisions)
+10. [Debugging Tips](#debugging-tips)
 
 ---
 
 ## Merge Conflicts Resolution
 
 ### Issue
+
 After `git pull origin master`, encountered merge conflicts in 5 files due to refactoring of the `name` field into `given_name` and `surname`.
 
 ### Files Affected
+
 - `app/lib/features/auth/screens/profile_setup_screen.dart`
 - `app/lib/features/tree/screens/add_member_screen.dart`
 - `app/lib/features/search/screens/search_screen.dart`
@@ -32,7 +36,9 @@ After `git pull origin master`, encountered merge conflicts in 5 files due to re
 - `backend/src/services/graphService.ts`
 
 ### Resolution
+
 Accepted the incoming changes that split the `name` field into:
+
 - `given_name` (required)
 - `surname` (optional)
 
@@ -47,6 +53,7 @@ All UI components now display full names as `"$givenName ${surname ?? ''}"`.
 **Issue**: No logout functionality across the application.
 
 **Solution**: Added `PopupMenuButton` with logout option to 6 screens:
+
 - `TreeViewScreen` (tree_view_screen.dart)
 - `SearchScreen` (search_screen.dart)
 - `InviteScreen` (invite_screen.dart)
@@ -55,6 +62,7 @@ All UI components now display full names as `"$givenName ${surname ?? ''}"`.
 - `AppHeader` (app_header.dart)
 
 **Implementation**:
+
 ```dart
 actions: [
   PopupMenuButton<String>(
@@ -87,10 +95,12 @@ actions: [
 **Solution**: Added back arrows to both screens that navigate to the root route (`/`).
 
 **Files Modified**:
+
 - `app/lib/features/auth/screens/login_screen.dart`
 - `app/lib/features/auth/screens/signup_screen.dart`
 
 **Implementation**:
+
 ```dart
 appBar: AppBar(
   leading: IconButton(
@@ -113,12 +123,15 @@ appBar: AppBar(
 ## Family Tree Data Fetching Fixes
 
 ### Issue
+
 Family tree wasn't fetching existing members, showing empty state despite data in the database.
 
 ### Root Cause
+
 The `familyTreeProvider` was dependent on `myProfileProvider`, causing circular dependencies and data fetching failures.
 
 ### Solution
+
 1. Removed the dependency between `familyTreeProvider` and `myProfileProvider`
 2. Added comprehensive debug logging throughout the data fetching flow
 3. Made tree fetching independent of profile completion status
@@ -126,6 +139,7 @@ The `familyTreeProvider` was dependent on `myProfileProvider`, causing circular 
 **File Modified**: `app/lib/providers/providers.dart`
 
 **Key Changes**:
+
 ```dart
 // Before: familyTreeProvider depended on myProfileProvider
 // After: familyTreeProvider fetches independently
@@ -134,7 +148,7 @@ The `familyTreeProvider` was dependent on `myProfileProvider`, causing circular 
 Future<TreeResponse> familyTree(FamilyTreeRef ref) async {
   print('👪 FamilyTreeProvider: Starting fetch...');
   final apiService = ref.read(apiServiceProvider);
-  
+
   try {
     final response = await apiService.getTree();
     print('✅ FamilyTreeProvider: Fetched ${response.nodes.length} nodes, ${response.relationshipsCount} relationships');
@@ -154,7 +168,8 @@ Future<TreeResponse> familyTree(FamilyTreeRef ref) async {
 
 **Issue**: Adding family members required completing profile setup, creating a chicken-and-egg problem.
 
-**Solution**: 
+**Solution**:
+
 - Made profile setup optional for adding family members
 - Added a warning dialog when users try to add members without completing their profile
 - Family tree remains functional without profile completion
@@ -162,6 +177,7 @@ Future<TreeResponse> familyTree(FamilyTreeRef ref) async {
 **File Modified**: `app/lib/features/tree/screens/add_member_screen.dart`
 
 **Warning Dialog**:
+
 ```dart
 if (myProfile == null) {
   final proceed = await showDialog<bool>(
@@ -184,7 +200,7 @@ if (myProfile == null) {
       ],
     ),
   );
-  
+
   if (proceed != true) return;
 }
 ```
@@ -218,22 +234,27 @@ appBar: AppBar(
 **Solution**: Implemented comprehensive search with multiple filter options.
 
 **Frontend Changes** (`app/lib/features/search/screens/search_screen.dart`):
+
 - Added search by name, occupation, city, state
 - Improved UI with helpful search hints
 - Enhanced error handling
 
 **Backend Changes**:
+
 - `backend/src/routes/search.ts`: Added `city` and `state` parameters to search API
 - `backend/src/services/graphService.ts`: Enhanced `searchInCircles()` to filter by city and state
 
 **Search Query Schema** (search.ts):
+
 ```typescript
 const searchQuerySchema = z.object({
   query: z.string().min(1).max(100).optional(),
   occupation: z.string().min(1).max(100).optional(),
   city: z.string().min(1).max(100).optional(),
   state: z.string().min(1).max(100).optional(),
-  marital_status: z.enum(['single', 'married', 'divorced', 'widowed']).optional(),
+  marital_status: z
+    .enum(["single", "married", "divorced", "widowed"])
+    .optional(),
   depth: z.number().int().min(1).max(10).default(3),
   limit: z.number().int().min(1).max(100).default(20),
   offset: z.number().int().min(0).default(0),
@@ -243,13 +264,14 @@ const searchQuerySchema = z.object({
 ### 2. Search UI Enhancements
 
 Added helpful hints and better UX:
+
 ```dart
 TextField(
   decoration: InputDecoration(
     hintText: 'Search by name, occupation, city, or state...',
     prefixIcon: const Icon(Icons.search),
-    suffixIcon: searchQuery.isEmpty 
-      ? null 
+    suffixIcon: searchQuery.isEmpty
+      ? null
       : IconButton(
           icon: const Icon(Icons.clear),
           onPressed: () {
@@ -265,7 +287,8 @@ TextField(
 
 **Issue**: Search page showing "Session Expired" errors and blocking user interaction.
 
-**Solution**: 
+**Solution**:
+
 - Made session refresh non-blocking in search
 - Improved error categorization and user-friendly messages
 - Search continues with existing session if refresh fails
@@ -277,11 +300,14 @@ TextField(
 ## Session Management Fixes
 
 ### Issue
+
 Two critical session-related problems:
+
 1. Search page showing "Session Expired" errors
 2. Automatic sign-out when saving profile details
 
 ### Root Cause
+
 - `authService.refreshSession()` was throwing exceptions, causing operations to fail
 - `ProfileSetupScreen` was calling `signOut()` when session refresh failed
 - Session failures triggered router redirects to login page
@@ -293,6 +319,7 @@ Two critical session-related problems:
 **File Modified**: `app/lib/services/auth_service.dart`
 
 Changed from:
+
 ```dart
 Future<void> refreshSession() async {
   // throws exception on error
@@ -300,6 +327,7 @@ Future<void> refreshSession() async {
 ```
 
 To:
+
 ```dart
 Future<bool> refreshSession() async {
   try {
@@ -322,6 +350,7 @@ Future<bool> refreshSession() async {
 **File Modified**: `app/lib/features/auth/screens/profile_setup_screen.dart`
 
 Removed aggressive sign-out logic:
+
 ```dart
 // Before: Forced logout on refresh failure
 try {
@@ -351,7 +380,7 @@ Future<void> search({
   // ... other params
 }) async {
   state = state.copyWith(isLoading: true, error: null);
-  
+
   try {
     // Non-blocking session refresh
     final authService = ref.read(authServiceProvider);
@@ -359,11 +388,11 @@ Future<void> search({
     if (!refreshed) {
       print('⚠️ Session refresh failed in search, continuing anyway');
     }
-    
+
     // Continue with search regardless
     final apiService = ref.read(apiServiceProvider);
     final results = await apiService.search(/* ... */);
-    
+
     state = state.copyWith(
       results: results,
       isLoading: false,
@@ -378,7 +407,7 @@ Future<void> search({
     } else {
       userMessage = 'Search failed: ${e.toString()}';
     }
-    
+
     state = state.copyWith(
       error: userMessage,
       isLoading: false,
@@ -389,6 +418,231 @@ Future<void> search({
 
 ---
 
+## Token Validation Fixes
+
+### Issue
+
+Getting `401 Invalid or expired token` error when creating profile, despite user being logged in with an active session. The error occurred after successful login when attempting to create profile data.
+
+**Error Message**:
+```
+Response Status: 401
+Response Body: {"error":"Invalid or expired token"}
+```
+
+### Root Causes
+
+1. **Email Confirmation Required (Most Common)**: By default, Supabase requires email confirmation before tokens have full access. If email is not confirmed, the user can login but API calls return 401.
+
+2. **Stale Token**: Access token may have expired between login and profile creation, requiring refresh before API call.
+
+3. **Token Not Updated After Refresh**: Session refresh may complete, but the token used in API call is still the old one.
+
+### Solution
+
+#### 1. Enhanced Token Refresh with Validation
+
+**File Modified**: `app/lib/services/auth_service.dart`
+
+Added detailed token change tracking:
+
+```dart
+Future<bool> refreshSession() async {
+  try {
+    developer.log('🔄 Refreshing session', name: 'AuthService');
+    final oldToken = currentSession?.accessToken;
+    print('Old token length: ${oldToken?.length ?? 0}');
+    
+    final response = await _supabase.auth.refreshSession();
+    
+    if (response.session != null) {
+      final newToken = response.session!.accessToken;
+      print('New token length: ${newToken.length}');
+      print('Token changed: ${oldToken != newToken}');
+      developer.log('✅ Session refreshed successfully', name: 'AuthService');
+      return true;
+    } else {
+      developer.log('⚠️ Session refresh returned null', name: 'AuthService');
+      print('❌ Session refresh failed: returned null session');
+      return false;
+    }
+  } catch (e, stackTrace) {
+    developer.log(
+      '❌ Error refreshing session',
+      name: 'AuthService',
+      error: e,
+      stackTrace: stackTrace,
+    );
+    print('❌ Session refresh exception: $e');
+    return false;
+  }
+}
+```
+
+#### 2. Mandatory Token Refresh Before Profile Creation
+
+**File Modified**: `app/lib/features/auth/screens/profile_setup_screen.dart`
+
+Made token refresh mandatory and blocking for profile creation:
+
+```dart
+// Refresh the session to ensure we have a valid token
+print('🔄 Refreshing session before profile creation...');
+print('Token BEFORE refresh: ${authService.accessToken?.substring(0, 30)}...');
+
+final refreshed = await authService.refreshSession();
+if (refreshed) {
+  print('✅ Session refreshed successfully');
+  // Give a moment for the session to update
+  await Future.delayed(const Duration(milliseconds: 100));
+  print('Token AFTER refresh: ${authService.accessToken?.substring(0, 30)}...');
+} else {
+  print('⚠️ Session refresh failed - this will likely cause token errors');
+  // For profile setup, we need a valid token, so show error
+  setState(() {
+    _error = 'Failed to refresh authentication. Please try logging in again.';
+    _isLoading = false;
+  });
+  return;
+}
+```
+
+#### 3. Email Confirmation Status Check
+
+**File Modified**: `app/lib/features/auth/screens/profile_setup_screen.dart`
+
+Added logging to detect email confirmation issues:
+
+```dart
+// Check email confirmation status
+final user = authService.currentUser;
+if (user != null) {
+  print('User Email: ${user.email}');
+  print('Email Confirmed: ${user.confirmedAt != null}');
+  print('User Created: ${user.createdAt}');
+  
+  // If email is not confirmed, show warning
+  if (user.confirmedAt == null) {
+    print('⚠️ WARNING: Email not confirmed. This may cause token issues.');
+  }
+}
+```
+
+#### 4. Enhanced Backend Token Validation Logging
+
+**File Modified**: `backend/src/middleware/auth.ts`
+
+Added comprehensive error logging to identify token rejection reasons:
+
+```typescript
+const token = authHeader.split(' ')[1];
+
+try {
+  console.log('🔐 Validating token...');
+  console.log('Token length:', token.length);
+  console.log('Token preview:', token.substring(0, 30) + '...');
+  console.log('Supabase URL:', env.SUPABASE_URL);
+  
+  const { data, error } = await supabaseAdmin.auth.getUser(token);
+
+  if (error) {
+    console.error('❌ Token validation error:', error.message);
+    console.error('Error details:', JSON.stringify(error, null, 2));
+    res.status(401).json({ 
+      error: 'Invalid or expired token', 
+      details: error.message 
+    });
+    return;
+  }
+  
+  if (!data.user) {
+    console.error('❌ No user data returned for token');
+    res.status(401).json({ error: 'Invalid or expired token' });
+    return;
+  }
+
+  console.log('✅ Token validated for user:', data.user.email);
+  req.userId = data.user.id;
+  req.userEmail = data.user.email;
+  next();
+} catch (err) {
+  console.error('❌ Authentication exception:', err);
+  res.status(401).json({ 
+    error: 'Authentication failed', 
+    exception: String(err) 
+  });
+}
+```
+
+### Fix for Email Confirmation Issue
+
+#### Option 1: Disable Email Confirmation (Development Only)
+
+1. Go to Supabase Dashboard
+2. Navigate to **Authentication → Providers**
+3. Click on **Email** provider
+4. Toggle **Enable email confirmation** to OFF
+5. Click **Save**
+
+⚠️ **Warning**: Only for development. Keep enabled in production.
+
+#### Option 2: Manually Confirm Email
+
+1. Go to Supabase Dashboard
+2. Navigate to **Authentication → Users**
+3. Find your user
+4. Click three dots menu → **Confirm email**
+
+#### Option 3: Use Email Confirmation Link
+
+Check email inbox for Supabase confirmation link and click it.
+
+### Diagnostic Tools
+
+Created `diagnose-token.ps1` script to check:
+- Environment variables are set correctly
+- Backend is running
+- Provides instructions for checking logs
+
+**Usage**:
+```powershell
+.\diagnose-token.ps1
+```
+
+### Expected Log Output (Success)
+
+**Frontend Console**:
+```
+🔄 Refreshing session before profile creation...
+Token BEFORE refresh: eyJhbGciOiJFUzI1NiIsImtpZCI6Im...
+Old token length: 978
+New token length: 984
+Token changed: true
+✅ Session refreshed successfully
+Token AFTER refresh: eyJhbGciOiJFUzI1NiIsImtpZCI6Im...
+User Email: user@example.com
+Email Confirmed: true
+📝 Creating profile for: John Doe
+```
+
+**Backend Console**:
+```
+🔐 Validating token...
+Token length: 984
+Token preview: eyJhbGciOiJFUzI1NiIsImtpZCI6Im...
+✅ Token validated for user: user@example.com
+```
+
+### Common Error Patterns
+
+- **"Email Confirmed: false"** → Email needs confirmation
+- **"Token changed: false"** → Session already fresh or connection issue
+- **"Supabase URL: undefined"** → Backend .env missing SUPABASE_URL
+- **"Token validation error: invalid_token"** → Wrong Supabase project
+- **"Token validation error: expired_token"** → User should re-login
+
+---
+
 ## Compilation & Null-Safety Fixes
 
 ### 1. TreeResponse Relationships Error
@@ -396,6 +650,7 @@ Future<void> search({
 **Issue**: Compilation error in `TreeResponse.relationships` property.
 
 **Error**:
+
 ```
 The getter 'relationships' isn't defined for the type 'TreeNode'
 ```
@@ -420,6 +675,7 @@ class TreeResponse {
 **Issue**: Null-safety errors when accessing `myProfile.id` and `myProfile.gender`.
 
 **Errors**:
+
 ```
 The property 'id' can't be unconditionally accessed because the receiver can be 'null'
 The property 'gender' can't be unconditionally accessed because the receiver can be 'null'
@@ -456,6 +712,7 @@ PersonModel(
 **Issue**: `search_screen.dart` had duplicate arguments in TextField causing compilation errors.
 
 **Error**:
+
 ```
 The argument 'hintText' was already specified
 The argument 'prefixIcon' was already specified
@@ -475,12 +732,14 @@ The argument 'onSubmitted' was already specified
 **Decision**: Use graceful degradation instead of aggressive sign-outs.
 
 **Rationale**:
+
 - Session refresh failures don't always mean invalid credentials
 - Network issues shouldn't force users to re-authenticate
 - Existing sessions may still be valid even if refresh fails
 - Better UX to continue with existing session and show warnings
 
 **Implementation**:
+
 - `refreshSession()` returns `bool` instead of throwing
 - Callers check return value but continue operation
 - Only force sign-out on explicit 401/403 responses
@@ -490,6 +749,7 @@ The argument 'onSubmitted' was already specified
 **Decision**: Allow family tree operations without profile completion.
 
 **Rationale**:
+
 - Users may want to add family data before completing personal profile
 - Prevents chicken-and-egg problem (need profile to add family, need family to understand relationships)
 - Improves onboarding experience
@@ -500,6 +760,7 @@ The argument 'onSubmitted' was already specified
 **Decision**: Remove dependencies between `familyTreeProvider` and `myProfileProvider`.
 
 **Rationale**:
+
 - Prevents circular dependencies
 - Allows parallel data fetching
 - Independent refresh cycles
@@ -522,6 +783,7 @@ The codebase uses emoji prefixes for easy log filtering:
 - `🔍` Search operations
 
 **Example**:
+
 ```dart
 print('👤 User logged in: ${user.email}');
 print('✅ Profile created successfully');
@@ -531,22 +793,26 @@ print('❌ Failed to fetch tree: $error');
 ### 2. Common Issues
 
 #### "Session Expired" Errors
+
 - Check if `refreshSession()` is being called correctly
 - Verify it returns `bool` and doesn't throw
 - Ensure operations continue even if refresh returns `false`
 
 #### Tree Not Loading
+
 - Check `familyTreeProvider` logs
 - Verify API service is initialized
 - Ensure no circular provider dependencies
 - Check Supabase RLS policies
 
 #### Profile Setup Redirect Loop
+
 - Verify `_checkProfileSetup()` doesn't force redirect
 - Check router guards in `app_router.dart`
 - Ensure `initialLocation` in router is `/tree`
 
 #### Add Member Failures
+
 - Check for null-safety issues with `myProfile`
 - Verify API endpoint is reachable
 - Check backend validation schemas
@@ -557,11 +823,12 @@ print('❌ Failed to fetch tree: $error');
 ## Files Modified Summary
 
 ### Frontend (Flutter)
-1. `app/lib/services/auth_service.dart` - Session management improvements
+
+1. `app/lib/services/auth_service.dart` - Session management improvements, token refresh with validation
 2. `app/lib/providers/providers.dart` - Provider independence, search enhancements
 3. `app/lib/features/auth/screens/login_screen.dart` - Back navigation
 4. `app/lib/features/auth/screens/signup_screen.dart` - Back navigation
-5. `app/lib/features/auth/screens/profile_setup_screen.dart` - Session handling, back button, logout
+5. `app/lib/features/auth/screens/profile_setup_screen.dart` - Session handling, token refresh, email confirmation check, back button, logout
 6. `app/lib/features/tree/screens/tree_view_screen.dart` - Logout, debug logging
 7. `app/lib/features/tree/screens/add_member_screen.dart` - Optional profile, null-safety
 8. `app/lib/features/search/screens/search_screen.dart` - Enhanced filters, duplicate fix, logout
@@ -572,8 +839,16 @@ print('❌ Failed to fetch tree: $error');
 13. `app/lib/models/tree_response.dart` - Relationships count fix
 
 ### Backend (Node.js/TypeScript)
+
 1. `backend/src/routes/search.ts` - Added city/state parameters
 2. `backend/src/services/graphService.ts` - Enhanced search filtering
+3. `backend/src/middleware/auth.ts` - Enhanced token validation logging
+
+### Scripts & Documentation
+
+1. `diagnose-token.ps1` - Token diagnostics tool
+2. `TOKEN_VALIDATION_FIX.md` - Comprehensive token fix guide
+3. `copilot_instructions.md` - This file (session documentation)
 
 ---
 
@@ -590,6 +865,11 @@ After implementing these changes, verify:
 - [ ] Search works with name, occupation, city, state filters
 - [ ] Session refresh failures don't force logout
 - [ ] Profile details save without automatic sign-out
+- [ ] Token refresh occurs before profile creation
+- [ ] Email confirmation status is logged
+- [ ] Backend logs show token validation details
+- [ ] No compilation errors in Flutter app
+- [ ] Backend search API accepts new parameters
 - [ ] No compilation errors in Flutter app
 - [ ] Backend search API accepts new parameters
 
@@ -598,6 +878,7 @@ After implementing these changes, verify:
 ## Future Improvements
 
 ### Potential Enhancements
+
 1. **Offline Support**: Cache family tree data locally
 2. **Real-time Updates**: WebSocket integration for live family tree changes
 3. **Advanced Search**: Full-text search, fuzzy matching, saved searches
@@ -610,6 +891,7 @@ After implementing these changes, verify:
 10. **Analytics**: Track user engagement and feature usage
 
 ### Technical Debt
+
 1. Consider migrating from `print()` statements to proper logging framework
 2. Add comprehensive unit tests for providers
 3. Add integration tests for critical user flows
@@ -621,7 +903,17 @@ After implementing these changes, verify:
 
 ## Version History
 
+### V1.1 - February 17, 2026
+
+- Token validation fixes for profile creation
+- Enhanced token refresh with detailed logging
+- Email confirmation status detection
+- Backend token validation error logging
+- Diagnostic tools (diagnose-token.ps1)
+- Documentation updates
+
 ### V1.0 - February 2025
+
 - Initial documentation of changes
 - Merge conflict resolution
 - Authentication improvements
@@ -635,15 +927,17 @@ After implementing these changes, verify:
 ## Contact & Support
 
 For questions or issues related to these changes, refer to:
+
 - `README.md` - General project overview
 - `QUICK_REFERENCE.md` - Quick start guide
 - `TESTING_GUIDE.md` - Testing documentation
 - `AUTH_FIX_GUIDE.md` - Authentication troubleshooting
+- `TOKEN_VALIDATION_FIX.md` - Token validation error fixes
 
 ---
 
-**Last Updated**: February 2025  
+**Last Updated**: February 17, 2026  
 **Session Duration**: Multiple hours  
-**Files Changed**: 15 files (13 frontend, 2 backend)  
-**Lines Added/Modified**: ~500+ lines  
+**Files Changed**: 18 files (15 frontend, 2 backend, 1 script)  
+**Lines Added/Modified**: ~700+ lines  
 **Tests Passing**: ✅ No compilation errors

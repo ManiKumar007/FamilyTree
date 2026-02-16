@@ -87,6 +87,19 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       if (authService.accessToken != null) {
         print('Token Preview: ${authService.accessToken!.substring(0, 20)}...');
       }
+      
+      // Check email confirmation status
+      final user = authService.currentUser;
+      if (user != null) {
+        print('User Email: ${user.email}');
+        print('Email Confirmed: ${user.confirmedAt != null}');
+        print('User Created: ${user.createdAt}');
+        
+        // If email is not confirmed, show warning
+        if (user.confirmedAt == null) {
+          print('⚠️ WARNING: Email not confirmed. This may cause token issues.');
+        }
+      }
       print('========================================\n');
 
       // Validate we have a user
@@ -101,13 +114,25 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         return;
       }
 
-      // Optionally refresh the session (non-blocking)
-      print('🔄 Checking session before profile creation...');
+      // Refresh the session to ensure we have a valid token
+      print('🔄 Refreshing session before profile creation...');
+      print('Token BEFORE refresh: ${authService.accessToken?.substring(0, 30)}...');
+      
       final refreshed = await authService.refreshSession();
       if (refreshed) {
         print('✅ Session refreshed successfully');
+        // Give a moment for the session to update
+        await Future.delayed(const Duration(milliseconds: 100));
+        print('Token AFTER refresh: ${authService.accessToken?.substring(0, 30)}...');
       } else {
-        print('⚠️ Session refresh failed, but continuing with existing session');\n      }
+        print('⚠️ Session refresh failed - this will likely cause token errors');
+        // For profile setup, we need a valid token, so show error
+        setState(() {
+          _error = 'Failed to refresh authentication. Please try logging in again.';
+          _isLoading = false;
+        });
+        return;
+      }
 
       // Create person record linked to the auth user
       final givenName = _givenNameController.text.trim();
