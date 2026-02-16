@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io' if (dart.library.html) 'dart:html';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../services/api_service.dart';
 import '../../../providers/providers.dart';
@@ -426,12 +426,23 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                               fit: BoxFit.cover,
                               width: 120,
                               height: 120,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(Icons.error, size: 40, color: Colors.red);
+                              },
                             )
-                          : Image.file(
-                              File(_imageFile!.path),
-                              fit: BoxFit.cover,
-                              width: 120,
-                              height: 120,
+                          : FutureBuilder<Uint8List>(
+                              future: _imageFile!.readAsBytes(),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  return Image.memory(
+                                    snapshot.data!,
+                                    fit: BoxFit.cover,
+                                    width: 120,
+                                    height: 120,
+                                  );
+                                }
+                                return const CircularProgressIndicator();
+                              },
                             ),
                     )
                   : Icon(

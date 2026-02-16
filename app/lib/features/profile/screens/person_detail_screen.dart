@@ -41,11 +41,17 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
     try {
       final api = ref.read(apiServiceProvider);
       final person = await api.getPerson(widget.personId);
-      final rels = await api.getRelationships(widget.personId);
-      setState(() { 
-        _person = person; 
-        _relationships = rels; 
-      });
+      setState(() { _person = person; });
+
+      // Load relationships separately — don't let this failure hide the person
+      try {
+        final rels = await api.getRelationships(widget.personId);
+        setState(() { _relationships = rels; });
+      } catch (relError) {
+        debugPrint('Failed to load relationships: $relError');
+        // Still show the person even if relationships fail
+        setState(() { _relationships = []; });
+      }
     } catch (e) {
       setState(() { _loadError = e.toString().replaceAll('Exception: ', ''); });
       if (mounted) {

@@ -82,7 +82,7 @@ relationshipsRouter.get('/:personId', async (req: AuthenticatedRequest, res: Res
       .from('relationships')
       .select(`
         *,
-        related_person:persons!relationships_related_person_id_fkey(id, name, gender, photo_url, date_of_birth)
+        related_person:persons!relationships_related_person_id_fkey(id, name, given_name, surname, gender, phone, photo_url, date_of_birth, marital_status, verified)
       `, { count: 'exact' })
       .eq('person_id', req.params.personId)
       .range((page - 1) * pageSize, page * pageSize - 1);
