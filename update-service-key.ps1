@@ -69,7 +69,8 @@ $envContent = Get-Content ".\backend\.env"
 $updatedContent = $envContent | ForEach-Object {
     if ($_ -match "^SUPABASE_SERVICE_ROLE_KEY=") {
         "SUPABASE_SERVICE_ROLE_KEY=$newKey"
-    } else {
+    }
+    else {
         $_
     }
 }
