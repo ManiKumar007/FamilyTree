@@ -189,7 +189,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       String errorMessage = e.toString().replaceAll('Exception: ', '');
       
       // Check for specific error types
-      if (errorMessage.contains('Invalid or expired token')) {
+      if (errorMessage.contains('Service unavailable') || errorMessage.contains('authentication service') || errorMessage.contains('503')) {
+        errorMessage = 'Server configuration error. The backend cannot connect to the authentication service. '
+                      'Please contact the administrator or check the backend configuration.';
+      } else if (errorMessage.contains('Invalid or expired token')) {
         errorMessage = 'Your session has expired. Please sign in again.';
         // Auto redirect to login after showing error
         Future.delayed(const Duration(seconds: 3), () {
