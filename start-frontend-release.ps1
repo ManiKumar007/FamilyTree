@@ -39,4 +39,4 @@ Write-Host "Using Flutter: $flutterCmd" -ForegroundColor Cyan
 Write-Host ""
 
 Set-Location app
-& $flutterCmd run -d chrome --release
+& $flutterCmd run -d chrome --web-port=5500 --release

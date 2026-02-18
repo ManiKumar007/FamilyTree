@@ -100,13 +100,16 @@ $envContent = Get-Content ".\backend\.env"
 $updatedContent = $envContent | ForEach-Object {
     if ($_ -match "^SUPABASE_SERVICE_ROLE_KEY=") {
         "SUPABASE_SERVICE_ROLE_KEY=$newServiceKey"
-    } elseif ($_ -match "^SUPABASE_ANON_KEY=") {
+    }
+    elseif ($_ -match "^SUPABASE_ANON_KEY=") {
         # Also update anon key to ensure it's correct
         "SUPABASE_ANON_KEY=$CORRECT_ANON_KEY"
-    } elseif ($_ -match "^SUPABASE_URL=") {
+    }
+    elseif ($_ -match "^SUPABASE_URL=") {
         # Ensure URL is correct
         "SUPABASE_URL=$PROJECT_URL"
-    } else {
+    }
+    else {
         $_
     }
 }

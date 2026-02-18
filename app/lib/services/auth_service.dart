@@ -136,6 +136,42 @@ class AuthService {
     }
   }
 
+  /// Sign in with Google OAuth
+  Future<bool> signInWithGoogle() async {
+    developer.log('🔐 Attempting Google OAuth sign in', name: 'AuthService');
+    
+    try {
+      developer.log('📡 Calling Supabase auth.signInWithOAuth', name: 'AuthService');
+      // Note: For web, omitting redirectTo allows Supabase to redirect back to current URL
+      // For mobile, you'd need to configure deep linking and set redirectTo
+      final response = await _supabase.auth.signInWithOAuth(
+        OAuthProvider.google,
+        // redirectTo omitted - Supabase will use the current page URL for web
+      );
+      
+      developer.log('✅ Google OAuth initiated', name: 'AuthService', error: {
+        'success': response,
+      });
+      
+      return response;
+    } on AuthException catch (e) {
+      developer.log(
+        '🚫 Supabase AuthException',
+        name: 'AuthService',
+        error: {'message': e.message, 'statusCode': e.statusCode},
+      );
+      throw Exception('Google sign in failed: ${e.message}');
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Unexpected error during Google sign in',
+        name: 'AuthService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
   /// Sign out
   Future<void> signOut() async {
     developer.log('👋 Signing out', name: 'AuthService');

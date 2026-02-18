@@ -21,6 +21,10 @@ Thumbs.db
 .env
 .env.local
 .env.production
+.env.backup*
+
+# Secrets and setup guides with credentials
+GOOGLE_OAUTH_SETUP.md
 
 # Flutter generated
 *.g.dart

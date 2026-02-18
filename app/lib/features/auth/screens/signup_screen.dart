@@ -81,6 +81,32 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     }
   }
 
+  Future<void> _signUpWithGoogle() async {
+    developer.log('🔐 Google sign up attempt started', name: 'SignupScreen');
+    
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      final authService = ref.read(authServiceProvider);
+      developer.log('📞 Calling authService.signInWithGoogle', name: 'SignupScreen');
+      
+      await authService.signInWithGoogle();
+      
+      developer.log('✅ Google sign up initiated', name: 'SignupScreen');
+      
+      // Navigation will be handled by auth state listener
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Google sign up failed',
+        name: 'SignupScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      setState(() { _error = e.toString().replaceAll('Exception: ', ''); });
+    } finally {
+      if (mounted) setState(() { _isLoading = false; });
+    }
+  }
+
   void _goToLogin() {
     context.go('/login');
   }
@@ -322,7 +348,60 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           ],
 
                           const SizedBox(height: 24),
+                          // Divider with "OR"
+                          Row(
+                            children: [
+                              const Expanded(child: Divider()),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Text(
+                                  'OR',
+                                  style: TextStyle(
+                                    color: kTextSecondary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              const Expanded(child: Divider()),
+                            ],
+                          ),
 
+                          const SizedBox(height: 24),
+
+                          // Google Sign-Up Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _isLoading ? null : _signUpWithGoogle,
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 50),
+                                side: BorderSide(color: Colors.grey.shade300),
+                                backgroundColor: Colors.white,
+                              ),
+                              icon: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Icon(
+                                  Icons.g_mobiledata_rounded,
+                                  size: 28,
+                                  color: Color(0xFF4285F4),
+                                ),
+                              ),
+                              label: const Text(
+                                'Continue with Google',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: kTextPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
                           // Sign in link
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,

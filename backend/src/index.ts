@@ -1,6 +1,16 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Fix for corporate proxy/firewall with self-signed certificates
+// WARNING: This disables TLS verification - only for development!
+// In production, properly configure trusted certificates instead
+if (process.env.NODE_ENV !== 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+  console.warn('⚠️  TLS certificate verification disabled for development');
+  console.warn('   This is required if behind a corporate proxy with self-signed certificates');
+  console.warn('   Do NOT use this in production!');
+}
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';

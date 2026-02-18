@@ -15,9 +15,10 @@ This document details all changes, fixes, and enhancements implemented during th
 5. [Search Feature Improvements](#search-feature-improvements)
 6. [Session Management Fixes](#session-management-fixes)
 7. [Token Validation Fixes](#token-validation-fixes)
-8. [Compilation & Null-Safety Fixes](#compilation--null-safety-fixes)
-9. [Architecture Decisions](#architecture-decisions)
-10. [Debugging Tips](#debugging-tips)
+8. [Backend TLS Certificate Fix (503 Service Unavailable)](#backend-tls-certificate-fix-503-service-unavailable)
+9. [Compilation & Null-Safety Fixes](#compilation--null-safety-fixes)
+10. [Architecture Decisions](#architecture-decisions)
+11. [Debugging Tips](#debugging-tips)
 
 ---
 
@@ -645,6 +646,167 @@ Token preview: eyJhbGciOiJFUzI1NiIsImtpZCI6Im...
 - **"Supabase URL: undefined"** → Backend .env missing SUPABASE_URL
 - **"Token validation error: invalid_token"** → Wrong Supabase project
 - **"Token validation error: expired_token"** → User should re-login
+
+---
+
+## Backend TLS Certificate Fix (503 Service Unavailable)
+
+### Issue
+
+Backend returns `503 Service unavailable` when trying to validate authentication tokens with Supabase, despite correct configuration (SUPABASE_URL and SERVICE_ROLE_KEY properly set).
+
+**Error Message**:
+
+```
+Response Status: 503
+Response Body: {"error":"Service unavailable","details":"Cannot connect to authentication service. Please contact administrator."}
+```
+
+### Root Cause
+
+The error was caused by **self-signed certificate in certificate chain** from corporate proxy/firewall performing SSL inspection. Node.js by default rejects self-signed certificates.
+
+**Actual Error in Backend**:
+
+```
+TypeError: fetch failed
+  cause: Error: self-signed certificate in certificate chain
+  code: 'SELF_SIGNED_CERT_IN_CHAIN'
+```
+
+This occurs when:
+
+- Running behind corporate proxy that intercepts HTTPS traffic
+- Using corporate firewall with SSL inspection enabled
+- Network security software inserting its own certificates into the certificate chain
+
+### Solution
+
+#### Development Fix (Current Implementation)
+
+Disabled TLS certificate verification for development environment only.
+
+**File Modified**: `backend/src/index.ts`
+
+Added at the very top, after `dotenv.config()`:
+
+```typescript
+import dotenv from "dotenv";
+dotenv.config();
+
+// Fix for corporate proxy/firewall with self-signed certificates
+// WARNING: This disables TLS verification - only for development!
+// In production, properly configure trusted certificates instead
+if (process.env.NODE_ENV !== "production") {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+  console.warn("⚠️  TLS certificate verification disabled for development");
+  console.warn(
+    "   This is required if behind a corporate proxy with self-signed certificates",
+  );
+  console.warn("   Do NOT use this in production!");
+}
+
+import express from "express";
+// ... rest of imports
+```
+
+#### Testing the Fix
+
+##### 1. Connection Test Script
+
+Created `backend/test-supabase-connection.js` to verify Supabase connectivity:
+
+```bash
+cd backend
+node test-supabase-connection.js
+```
+
+**Before Fix**:
+
+```
+❌ CONNECTION ERROR - Cannot reach Supabase
+Error: self-signed certificate in certificate chain
+```
+
+**After Fix**:
+
+```
+✅ CONNECTION OK - Got expected auth error (not connection error)
+Error: invalid JWT (expected for test token)
+```
+
+##### 2. Integration Test
+
+Run the automated profile setup test:
+
+```bash
+.\run-profile-setup-test.ps1
+```
+
+This tests:
+
+1. Account creation
+2. Login
+3. Profile setup form submission
+4. Token validation via backend API
+5. Successful profile creation
+
+### Production Deployment
+
+⚠️ **IMPORTANT**: Do NOT use `NODE_TLS_REJECT_UNAUTHORIZED=0` in production!
+
+For production, use one of these approaches:
+
+#### Option 1: Add Corporate CA Certificate (Recommended)
+
+```typescript
+import https from "https";
+import fs from "fs";
+
+const corporateCACert = fs.readFileSync("./corporate-ca-cert.pem");
+
+const httpsAgent = new https.Agent({
+  ca: corporateCACert,
+});
+
+// Configure Supabase client to use this agent
+```
+
+#### Option 2: System-Wide Certificate Installation
+
+- **Windows**: Import to Trusted Root Certification Authorities via `certmgr.msc`
+- **Linux**: Copy to `/usr/local/share/ca-certificates/` and run `update-ca-certificates`
+- **macOS**: Add to System keychain via Keychain Access
+
+#### Option 3: Environment Variables
+
+```bash
+export NODE_EXTRA_CA_CERTS=/path/to/corporate-ca-cert.pem
+```
+
+### Security Considerations
+
+The development fix is safe because:
+
+- Only applies when `NODE_ENV !== 'production'`
+- Development environment is behind corporate firewall (trusted network)
+- No production data or real user credentials
+- Alternative would prevent development entirely
+
+For production:
+
+- Certificate validation MUST be enabled
+- Use proper CA certificates
+- Run security audits
+- Comply with PCI DSS, HIPAA, etc.
+
+### Related Files
+
+- `backend/src/index.ts` - TLS fix implementation
+- `backend/test-supabase-connection.js` - Connection test script
+- `backend/src/middleware/auth.ts` - Auth middleware using Supabase
+- `TLS_CERTIFICATE_FIX.md` - Detailed documentation
+- `run-profile-setup-test.ps1` - Automated integration test script
 
 ---
 

@@ -15,9 +15,10 @@ These tests use Flutter's `integration_test` package, which provides:
 
 ```
 integration_test/
-├── app_test.dart       # Main test suite (runs all tests)
-├── auth_test.dart      # Authentication flow tests (8 tests)
-└── tree_test.dart      # Family tree feature tests (12 tests)
+├── app_test.dart            # Main test suite (runs all tests)
+├── auth_test.dart           # Authentication flow tests (8 tests)
+├── profile_setup_test.dart  # Profile setup feature tests (3 tests)
+└── tree_test.dart           # Family tree feature tests (12 tests)
 ```
 
 ## Running Tests
@@ -45,6 +46,9 @@ flutter test integration_test/app_test.dart -d iphone
 ```bash
 # Just auth tests
 flutter test integration_test/auth_test.dart -d chrome
+
+# Just profile setup tests
+flutter test integration_test/profile_setup_test.dart -d chrome
 
 # Just tree tests
 flutter test integration_test/tree_test.dart -d chrome

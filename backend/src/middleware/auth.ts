@@ -58,14 +58,32 @@ export async function authMiddleware(
       return;
     }
     
-    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    let result;
+    try {
+      console.log('Calling supabaseAdmin.auth.getUser()...');
+      result = await supabaseAdmin.auth.getUser(token);
+      console.log('getUser result:', JSON.stringify(result, null, 2));
+    } catch (err) {
+      console.error('❌ EXCEPTION in getUser():', err);
+      console.error('Exception type:', typeof err);
+      console.error('Exception stack:', err instanceof Error ? err.stack : 'No stack');
+      res.status(503).json({ 
+        error: 'Service unavailable', 
+        details: 'Exception while connecting to authentication service. Please contact administrator.' 
+      });
+      return;
+    }
+
+    const { data, error } = result;
 
     if (error) {
       console.error('❌ Token validation error:', error.message);
       console.error('Error details:', JSON.stringify(error, null, 2));
+      console.error('Error name:', error.name);
+      console.error('Error status:', (error as any).status);
       
       // Check if it's a connection error
-      if (error.message && (error.message.includes('fetch') || error.message.includes('network'))) {
+      if (error.message && (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch'))) {
         console.error('❌ CRITICAL: Cannot connect to Supabase!');
         console.error('   Check SUPABASE_URL and network connectivity');
         res.status(503).json({ 
