@@ -755,26 +755,6 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
         return Icons.event;
     }
   }
-      } catch (e) {
-        return 0;
-      }
-    });
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      itemCount: events.length,
-      itemBuilder: (context, index) {
-        final event = events[index];
-        return _buildTimelineItem(
-          icon: event['icon'],
-          title: event['title'],
-          date: _formatDate(event['date']),
-          color: event['color'],
-          isLast: index == events.length - 1,
-        );
-      },
-    );
-  }
 
   Widget _buildTimelineItem({
     required IconData icon,
