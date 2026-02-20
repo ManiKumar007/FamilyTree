@@ -31,6 +31,31 @@ class ApiService {
     };
   }
 
+  // ==================== GENERIC HTTP METHODS ====================
+
+  /// Generic GET request
+  Future<Map<String, dynamic>> get(String endpoint) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl$endpoint'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) throw _handleError(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Generic POST request
+  Future<Map<String, dynamic>> post(String endpoint, Map<String, dynamic> data) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl$endpoint'),
+      headers: _headers,
+      body: jsonEncode(data),
+    );
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw _handleError(response);
+    }
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   // ==================== PERSONS ====================
 
   /// Get current user's profile

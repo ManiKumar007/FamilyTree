@@ -63,13 +63,8 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                   icon: Icons.error_outline,
                   title: 'Error Loading Statistics',
                   subtitle: _loadError!,
-                  actions: [
-                    ElevatedButton.icon(
-                      onPressed: _loadStatistics,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ],
+                  actionLabel: 'Retry',
+                  onAction: _loadStatistics,
                 )
               : RefreshIndicator(
                   onRefresh: _loadStatistics,

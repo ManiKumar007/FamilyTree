@@ -111,13 +111,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           icon: Icons.error_outline,
           title: 'Error Loading Notifications',
           subtitle: _loadError!,
-          actions: [
-            ElevatedButton.icon(
-              onPressed: _loadNotifications,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
+          actionLabel: 'Retry',
+          onAction: _loadNotifications,
         ),
       );
     }
@@ -202,7 +197,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               Text(notification.message),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                _formatTimestamp(notification.createdAt),
+                _formatTimestamp(notification.createdAt ?? ''),
                 style: const TextStyle(
                   fontSize: 12,
                   color: kTextSecondary,

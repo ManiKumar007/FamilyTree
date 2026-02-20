@@ -94,13 +94,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   icon: Icons.error_outline,
                   title: 'Error Loading Calendar',
                   subtitle: _loadError!,
-                  actions: [
-                    ElevatedButton.icon(
-                      onPressed: _loadEvents,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
-                    ),
-                  ],
+                  actionLabel: 'Retry',
+                  onAction: _loadEvents,
                 )
               : RefreshIndicator(
                   onRefresh: _loadEvents,
