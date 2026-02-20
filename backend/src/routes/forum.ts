@@ -78,7 +78,7 @@ forumRouter.get('/posts', async (req: AuthenticatedRequest, res: Response) => {
 
     let query = supabaseAdmin
       .from('forum_posts')
-      .select('*, author:auth.users!forum_posts_author_user_id_fkey(email)', { count: 'exact' })
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
@@ -90,7 +90,25 @@ forumRouter.get('/posts', async (req: AuthenticatedRequest, res: Response) => {
 
     if (error) throw error;
 
-    res.json(paginatedResponse(data || [], count || 0, page, limit));
+    // Enrich posts with author data from persons table
+    if (data && data.length > 0) {
+      const authorIds = [...new Set(data.map(p => p.author_user_id))];
+      const { data: authors } = await supabaseAdmin
+        .from('persons')
+        .select('auth_user_id, name, email, photo_url')
+        .in('auth_user_id', authorIds);
+
+      const authorsMap = new Map(authors?.map(a => [a.auth_user_id, a]) || []);
+      
+      const enrichedData = data.map(post => ({
+        ...post,
+        author: authorsMap.get(post.author_user_id) || { name: 'Unknown User', email: '' },
+      }));
+
+      res.json(paginatedResponse(enrichedData, count || 0, page, limit));
+    } else {
+      res.json(paginatedResponse(data || [], count || 0, page, limit));
+    }
   } catch (err: any) {
     res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
@@ -105,12 +123,8 @@ forumRouter.get('/posts/:id', async (req: AuthenticatedRequest, res: Response) =
       .from('forum_posts')
       .select(`
         *,
-        author:auth.users!forum_posts_author_user_id_fkey(email),
         media:forum_media(*),
-        comments:forum_comments(
-          *,
-          author:auth.users!forum_comments_author_user_id_fkey(email)
-        )
+        comments:forum_comments(*)
       `)
       .eq('id', req.params.id)
       .single();
@@ -120,7 +134,35 @@ forumRouter.get('/posts/:id', async (req: AuthenticatedRequest, res: Response) =
       return;
     }
 
-    res.json(successResponse(data));
+    // Enrich with author data from persons table
+    const { data: author } = await supabaseAdmin
+      .from('persons')
+      .select('name, email, photo_url')
+      .eq('auth_user_id', data.author_user_id)
+      .single();
+
+    const enrichedData = {
+      ...data,
+      author: author || { name: 'Unknown User', email: '' },
+    };
+
+    // Enrich comments with author data
+    if (enrichedData.comments && enrichedData.comments.length > 0) {
+      const authorIds = [...new Set(enrichedData.comments.map((c: any) => c.author_user_id))];
+      const { data: commentAuthors } = await supabaseAdmin
+        .from('persons')
+        .select('auth_user_id, name, email, photo_url')
+        .in('auth_user_id', authorIds);
+
+      const authorsMap = new Map(commentAuthors?.map(a => [a.auth_user_id, a]) || []);
+      
+      enrichedData.comments = enrichedData.comments.map((comment: any) => ({
+        ...comment,
+        author: authorsMap.get(comment.author_user_id) || { name: 'Unknown User', email: '' },
+      }));
+    }
+
+    res.json(successResponse(enrichedData));
   } catch (err: any) {
     res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }
