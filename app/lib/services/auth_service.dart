@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:developer' as developer;
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
@@ -142,11 +143,10 @@ class AuthService {
     
     try {
       developer.log('📡 Calling Supabase auth.signInWithOAuth', name: 'AuthService');
-      // Note: For web, omitting redirectTo allows Supabase to redirect back to current URL
-      // For mobile, you'd need to configure deep linking and set redirectTo
+      // Set explicit redirect URL to frontend
       final response = await _supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        // redirectTo omitted - Supabase will use the current page URL for web
+        redirectTo: kIsWeb ? 'http://localhost:5500' : null,
       );
       
       developer.log('✅ Google OAuth initiated', name: 'AuthService', error: {
