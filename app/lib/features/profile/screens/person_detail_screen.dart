@@ -61,10 +61,6 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
       } catch (eventError) {
         print('⚠️ Failed to load life events: $eventError');
       }
-        debugPrint('Failed to load relationships: $relError');
-        // Still show the person even if relationships fail
-        setState(() { _relationships = []; });
-      }
     } catch (e) {
       setState(() { _loadError = e.toString().replaceAll('Exception: ', ''); });
       if (mounted) {
