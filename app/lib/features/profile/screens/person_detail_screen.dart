@@ -355,6 +355,13 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
                       value: person.community!,
                       iconColor: kSecondaryColor,
                     ),
+                  if (person.gotra != null)
+                    DetailRow(
+                      icon: Icons.family_restroom,
+                      label: 'Gotra',
+                      value: person.gotra!,
+                      iconColor: kSecondaryColor,
+                    ),
                   DetailRow(
                     icon: Icons.wc,
                     label: 'Gender',

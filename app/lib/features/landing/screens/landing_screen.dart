@@ -57,7 +57,7 @@ class _LandingScreenState extends State<LandingScreen>
 
     return AppScaffold(
       showFooter: true,
-      compactFooter: false,
+      compactFooter: true,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,7 +90,7 @@ class _LandingScreenState extends State<LandingScreen>
         child: Padding(
           padding: EdgeInsets.symmetric(
             horizontal: isMobile ? AppSpacing.lg : AppSpacing.xxl,
-            vertical: isMobile ? AppSpacing.xxl : AppSpacing.xxl,
+            vertical: isMobile ? AppSpacing.lg : AppSpacing.xl,
           ),
           child: FadeTransition(
             opacity: _fadeAnimation,
@@ -100,25 +100,25 @@ class _LandingScreenState extends State<LandingScreen>
                 children: [
                   // Tree Icon with glow effect
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withOpacity(0.2),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.white.withOpacity(0.3),
-                          blurRadius: 30,
-                          spreadRadius: 10,
+                          blurRadius: 20,
+                          spreadRadius: 5,
                         ),
                       ],
                     ),
                     child: Icon(
                       Icons.account_tree,
-                      size: isMobile ? 60 : 80,
+                      size: isMobile ? 48 : 64,
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: AppSpacing.xl),
+                  SizedBox(height: AppSpacing.lg),
 
                   // Main headline
                   Text(
@@ -131,7 +131,7 @@ class _LandingScreenState extends State<LandingScreen>
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: AppSpacing.md),
+                  SizedBox(height: AppSpacing.sm),
 
                   // Subheadline
                   Text(
@@ -143,7 +143,7 @@ class _LandingScreenState extends State<LandingScreen>
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  SizedBox(height: AppSpacing.xxl),
+                  SizedBox(height: AppSpacing.xl),
 
                   // CTA Buttons
                   Wrap(

@@ -323,6 +323,13 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     value: profile.community!,
                     iconColor: kSecondaryColor,
                   ),
+                if (profile.gotra != null)
+                  DetailRow(
+                    icon: Icons.family_restroom,
+                    label: 'Gotra',
+                    value: profile.gotra!,
+                    iconColor: kSecondaryColor,
+                  ),
                 DetailRow(
                   icon: Icons.wc,
                   label: 'Gender',

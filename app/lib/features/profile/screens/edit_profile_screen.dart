@@ -29,6 +29,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _stateController = TextEditingController();
   final _occupationController = TextEditingController();
   final _communityController = TextEditingController();
+  final _gotraController = TextEditingController();
 
   String _gender = 'male';
   String _maritalStatus = 'single';
@@ -88,6 +89,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _stateController.text = person.state ?? '';
       _occupationController.text = person.occupation ?? '';
       _communityController.text = person.community ?? '';
+      _gotraController.text = person.gotra ?? '';
       _gender = person.gender;
       _maritalStatus = person.maritalStatus;
       if (person.dateOfBirth != null) {
@@ -160,6 +162,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'state': _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
         'occupation': _occupationController.text.trim().isEmpty ? null : _occupationController.text.trim(),
         'community': _communityController.text.trim().isEmpty ? null : _communityController.text.trim(),
+        'gotra': _gotraController.text.trim().isEmpty ? null : _gotraController.text.trim(),
         'marital_status': _maritalStatus,
         'wedding_date': _weddingDate?.toIso8601String().split('T')[0],
       };
@@ -204,6 +207,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _stateController.dispose();
     _occupationController.dispose();
     _communityController.dispose();
+    _gotraController.dispose();
     super.dispose();
   }
 
@@ -414,6 +418,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       decoration: const InputDecoration(
                         labelText: 'Community',
                         prefixIcon: Icon(Icons.groups),
+                        helperText: 'Optional',
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    
+                    TextFormField(
+                      controller: _gotraController,
+                      decoration: const InputDecoration(
+                        labelText: 'Gotra',
+                        prefixIcon: Icon(Icons.family_restroom),
                         helperText: 'Optional',
                       ),
                     ),

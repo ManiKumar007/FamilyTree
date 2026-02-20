@@ -12,6 +12,7 @@ class Person {
   final String? email;
   final String? occupation;
   final String? community;
+  final String? gotra;
   final String? city;
   final String? state;
   final String maritalStatus; // 'single', 'married', 'divorced', 'widowed'
@@ -34,6 +35,7 @@ class Person {
     this.email,
     this.occupation,
     this.community,
+    this.gotra,
     this.city,
     this.state,
     this.maritalStatus = 'single',
@@ -58,6 +60,7 @@ class Person {
       email: json['email'] as String?,
       occupation: json['occupation'] as String?,
       community: json['community'] as String?,
+      gotra: json['gotra'] as String?,
       city: json['city'] as String?,
       state: json['state'] as String?,
       maritalStatus: json['marital_status'] as String? ?? 'single',
@@ -83,6 +86,7 @@ class Person {
       'email': email,
       'occupation': occupation,
       'community': community,
+      'gotra': gotra,
       'city': city,
       'state': state,
       'marital_status': maritalStatus,
@@ -124,6 +128,7 @@ class Person {
     String? email,
     String? occupation,
     String? community,
+    String? gotra,
     String? city,
     String? state,
     String? maritalStatus,
@@ -142,6 +147,7 @@ class Person {
       email: email ?? this.email,
       occupation: occupation ?? this.occupation,
       community: community ?? this.community,
+      gotra: gotra ?? this.gotra,
       city: city ?? this.city,
       state: state ?? this.state,
       maritalStatus: maritalStatus ?? this.maritalStatus,

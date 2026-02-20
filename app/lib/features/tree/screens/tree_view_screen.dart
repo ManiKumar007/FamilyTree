@@ -757,11 +757,12 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
       genGroups[entry.value]!.add(entry.key);
     }
 
-    // Calculate positions
+    // Calculate positions with better family grouping
     const cardWidth = 140.0;
     const cardHeight = 120.0;
-    const hGap = 30.0;
-    const vGap = 80.0;
+    const hGap = 60.0;  // Increased gap between siblings/families
+    const spouseGap = 30.0;  // Gap between spouses
+    const vGap = 100.0;  // Increased vertical gap
     const padding = 200.0;
 
     final positionedNodes = <_PositionedNode>[];
@@ -769,24 +770,68 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
     final lines = <ConnectionLine>[];
 
     final sortedGens = genGroups.keys.toList()..sort();
+    final positioned = <String>{};
     
     for (final gen in sortedGens) {
       final members = genGroups[gen]!;
       final y = padding + (gen * (cardHeight + vGap));
+      double currentX = padding;
       
-      for (int i = 0; i < members.length; i++) {
-        final x = padding + (i * (cardWidth + hGap));
-        final personId = members[i];
-        final person = personMap[personId];
+      for (final personId in members) {
+        if (positioned.contains(personId)) continue;
         
-        if (person != null) {
-          nodePositions[personId] = Offset(x + cardWidth / 2, y + cardHeight / 2);
+        final person = personMap[personId];
+        if (person == null) continue;
+        
+        // Check if this person has a spouse in the same generation
+        final spouseId = spouseOf[personId];
+        final hasSpouseInGen = spouseId != null && genGroups[gen]?.contains(spouseId) == true;
+        
+        if (hasSpouseInGen && !positioned.contains(spouseId)) {
+          // Position this person and spouse together
+          final spouse = personMap[spouseId];
+          
+          // Determine order by gender (male on left, female on right by convention)
+          final leftPerson = person.gender == 'male' ? person : spouse;
+          final rightPerson = person.gender == 'male' ? spouse : person;
+          final leftId = leftPerson?.id ?? personId;
+          final rightId = rightPerson?.id ?? spouseId;
+          
+          // Position left person
+          nodePositions[leftId] = Offset(currentX + cardWidth / 2, y + cardHeight / 2);
+          positionedNodes.add(_PositionedNode(
+            person: personMap[leftId]!,
+            x: currentX,
+            y: y,
+            canEdit: personMap[leftId]!.createdByUserId == userId || 
+                     personMap[leftId]!.authUserId == userId,
+          ));
+          positioned.add(leftId);
+          
+          // Position right person (spouse)
+          final spouseX = currentX + cardWidth + spouseGap;
+          nodePositions[rightId!] = Offset(spouseX + cardWidth / 2, y + cardHeight / 2);
+          positionedNodes.add(_PositionedNode(
+            person: personMap[rightId]!,
+            x: spouseX,
+            y: y,
+            canEdit: personMap[rightId]!.createdByUserId == userId || 
+                     personMap[rightId]!.authUserId == userId,
+          ));
+          positioned.add(rightId);
+          
+          currentX = spouseX + cardWidth + hGap;
+        } else if (!positioned.contains(personId)) {
+          // Position single person
+          nodePositions[personId] = Offset(currentX + cardWidth / 2, y + cardHeight / 2);
           positionedNodes.add(_PositionedNode(
             person: person,
-            x: x,
+            x: currentX,
             y: y,
             canEdit: person.createdByUserId == userId || person.authUserId == userId,
           ));
+          positioned.add(personId);
+          currentX += cardWidth + hGap;
         }
       }
     }
@@ -845,7 +890,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         // Show a single "Add Parents" button above
         addButtons.add(_AddButton(
           x: pos.dx - cardWidth / 2,
-          y: pos.dy - cardHeight / 2 - cardHeight - vGap + 20,
+          y: pos.dy - cardHeight / 2 - cardHeight - vGap + 10,
           label: 'Add Parents',
           relativePersonId: personId,
           relationshipType: '_PARENTS_',  // special sentinel
@@ -859,11 +904,11 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               .map((p) => nodePositions[p])
               .firstOrNull;
           final fx = motherPos != null
-              ? motherPos.dx - cardWidth - hGap
-              : pos.dx - cardWidth / 2 - cardWidth / 2 - hGap;
+              ? motherPos.dx - cardWidth - spouseGap - cardWidth / 2
+              : pos.dx - cardWidth - hGap / 2;
           final fy = motherPos != null
               ? motherPos.dy - cardHeight / 2
-              : pos.dy - cardHeight / 2 - cardHeight - vGap;
+              : pos.dy - cardHeight / 2 - cardHeight - vGap + 10;
           addButtons.add(_AddButton(
             x: fx,
             y: fy,
@@ -878,11 +923,11 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               .map((p) => nodePositions[p])
               .firstOrNull;
           final mx = fatherPos != null
-              ? fatherPos.dx + cardWidth + hGap
-              : pos.dx + cardWidth / 2 + hGap;
+              ? fatherPos.dx + cardWidth + spouseGap - cardWidth / 2
+              : pos.dx + cardWidth + hGap / 2;
           final my = fatherPos != null
               ? fatherPos.dy - cardHeight / 2
-              : pos.dy - cardHeight / 2 - cardHeight - vGap;
+              : pos.dy - cardHeight / 2 - cardHeight - vGap + 10;
           addButtons.add(_AddButton(
             x: mx,
             y: my,
@@ -896,7 +941,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
       // Spouse — only show if no spouse yet
       if (spouseOf[personId] == null) {
         addButtons.add(_AddButton(
-          x: pos.dx + cardWidth / 2 + hGap,
+          x: pos.dx + cardWidth / 2 + spouseGap,
           y: pos.dy - cardHeight / 2,
           label: 'Add Spouse',
           relativePersonId: personId,
@@ -904,11 +949,13 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         ));
       }
 
-      // Sibling — show a small "Add Sibling" to the right of this person
-      // (only if they have at least one parent, so the sibling connects correctly)
+      // Sibling — show to the far right
       if (parents.isNotEmpty) {
+        final siblingX = spouseOf[personId] != null
+            ? pos.dx + cardWidth / 2 + spouseGap + cardWidth + hGap
+            : pos.dx + cardWidth / 2 + hGap;
         addButtons.add(_AddButton(
-          x: pos.dx + cardWidth / 2 + hGap + (spouseOf[personId] != null ? cardWidth + hGap : 0),
+          x: siblingX,
           y: pos.dy - cardHeight / 2,
           label: 'Add Sibling',
           relativePersonId: personId,
@@ -916,11 +963,14 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         ));
       }
 
-      // Child — show below
+      // Child — show below centered
       if (children.isEmpty) {
+        final childX = spouseOf[personId] != null
+            ? pos.dx + (cardWidth + spouseGap) / 2 - 60  // Center between couple
+            : pos.dx - cardWidth / 2 + (cardWidth - 120) / 2;  // Center under single person
         addButtons.add(_AddButton(
-          x: pos.dx - cardWidth / 2 + (cardWidth - 120) / 2,
-          y: pos.dy + cardHeight / 2 + vGap,
+          x: childX,
+          y: pos.dy + cardHeight / 2 + 20,
           label: 'Add Child',
           relativePersonId: personId,
           relationshipType: 'CHILD_OF',

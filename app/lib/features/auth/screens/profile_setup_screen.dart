@@ -24,6 +24,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _stateController = TextEditingController();
   final _occupationController = TextEditingController();
   final _communityController = TextEditingController();
+  final _gotraController = TextEditingController();
   
   String _gender = 'male';
   String _countryCode = '+91';
@@ -58,6 +59,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     _stateController.dispose();
     _occupationController.dispose();
     _communityController.dispose();
+    _gotraController.dispose();
     super.dispose();
   }
 
@@ -158,6 +160,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'community': _communityController.text.trim().isEmpty 
             ? null 
             : _communityController.text.trim(),
+        'gotra': _gotraController.text.trim().isEmpty 
+            ? null 
+            : _gotraController.text.trim(),
         'email': authService.currentUser!.email,
         'auth_user_id': authService.currentUser!.id,
         'verified': true,
@@ -370,6 +375,17 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Community',
                       prefixIcon: Icon(Icons.group),
+                      helperText: 'Optional',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Gotra (optional)
+                  TextFormField(
+                    controller: _gotraController,
+                    decoration: const InputDecoration(
+                      labelText: 'Gotra',
+                      prefixIcon: Icon(Icons.family_restroom),
                       helperText: 'Optional',
                     ),
                   ),

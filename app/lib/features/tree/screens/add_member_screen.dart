@@ -32,6 +32,8 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   final _occupationController = TextEditingController();
+  final _communityController = TextEditingController();
+  final _gotraController = TextEditingController();
 
   String _gender = 'male';
   String _countryCode = '+91';
@@ -69,6 +71,8 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     _cityController.dispose();
     _stateController.dispose();
     _occupationController.dispose();
+    _communityController.dispose();
+    _gotraController.dispose();
     super.dispose();
   }
 
@@ -121,6 +125,8 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
         'state': _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
         'occupation': _occupationController.text.trim().isEmpty ? null : _occupationController.text.trim(),
+        'community': _communityController.text.trim().isEmpty ? null : _communityController.text.trim(),
+        'gotra': _gotraController.text.trim().isEmpty ? null : _gotraController.text.trim(),
         'marital_status': _maritalStatus,
       });
 
@@ -404,6 +410,28 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                     decoration: const InputDecoration(
                       labelText: 'Occupation',
                       prefixIcon: Icon(Icons.work),
+                      helperText: 'Optional',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Community (optional)
+                  TextFormField(
+                    controller: _communityController,
+                    decoration: const InputDecoration(
+                      labelText: 'Community',
+                      prefixIcon: Icon(Icons.group),
+                      helperText: 'Optional',
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Gotra (optional)
+                  TextFormField(
+                    controller: _gotraController,
+                    decoration: const InputDecoration(
+                      labelText: 'Gotra',
+                      prefixIcon: Icon(Icons.family_restroom),
                       helperText: 'Optional',
                     ),
                   ),
