@@ -46,9 +46,19 @@ export function sanitizeObject<T extends Record<string, any>>(
  */
 export const PERSON_SANITIZE_FIELDS = [
   'name',
+  'given_name',
+  'surname',
   'occupation',
   'community',
   'city',
   'state',
   'email',
+  'place_of_death',
+  'nakshatra',
+  'rashi',
+  'native_place',
+  'ancestral_village',
+  'sub_caste',
+  'kula_devata',
+  'pravara',
 ] as const;

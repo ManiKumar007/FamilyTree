@@ -13,11 +13,13 @@ import '../../../widgets/form_fields.dart';
 class AddMemberScreen extends ConsumerStatefulWidget {
   final String? relativePersonId;
   final String? relationshipType;
+  final String? gender;
 
   const AddMemberScreen({
     super.key,
     this.relativePersonId,
     this.relationshipType,
+    this.gender,
   });
 
   @override
@@ -51,15 +53,28 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     super.initState();
     if (widget.relationshipType != null) {
       _relationshipType = widget.relationshipType!;
-      // Auto-set gender based on relationship type
-      if (_relationshipType == 'FATHER_OF') _gender = 'male';
-      if (_relationshipType == 'MOTHER_OF') _gender = 'female';
-      // Auto-set marital status based on relationship type
-      if (_relationshipType == 'FATHER_OF' ||
-          _relationshipType == 'MOTHER_OF' ||
-          _relationshipType == 'SPOUSE_OF') {
-        _maritalStatus = 'married';
+    }
+
+    // Auto-set gender: explicit gender param takes priority, then infer from relationship
+    if (widget.gender != null) {
+      _gender = widget.gender!;
+    } else {
+      // Infer gender from relationship type
+      switch (_relationshipType) {
+        case 'FATHER_OF':
+          _gender = 'male';
+          break;
+        case 'MOTHER_OF':
+          _gender = 'female';
+          break;
       }
+    }
+
+    // Auto-set marital status based on relationship type
+    if (_relationshipType == 'FATHER_OF' ||
+        _relationshipType == 'MOTHER_OF' ||
+        _relationshipType == 'SPOUSE_OF') {
+      _maritalStatus = 'married';
     }
   }
 

@@ -10,6 +10,7 @@ class PersonCard extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onInvite;
+  final VoidCallback? onFindConnection;
 
   const PersonCard({
     super.key,
@@ -18,6 +19,7 @@ class PersonCard extends StatefulWidget {
     this.onTap,
     this.onEdit,
     this.onInvite,
+    this.onFindConnection,
   });
 
   @override
@@ -121,7 +123,7 @@ class _PersonCardState extends State<PersonCard> {
               ),
 
               // Action buttons
-              if (widget.onEdit != null || (!widget.person.verified && widget.onInvite != null))
+              if (widget.onEdit != null || (!widget.person.verified && widget.onInvite != null) || widget.onFindConnection != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6, left: 6, right: 6),
                   child: Row(
@@ -131,6 +133,8 @@ class _PersonCardState extends State<PersonCard> {
                         _actionIcon(Icons.edit_outlined, widget.onEdit!, 'Edit'),
                       if (!widget.person.verified && widget.onInvite != null)
                         _actionIcon(Icons.send_outlined, widget.onInvite!, 'Invite'),
+                      if (widget.onFindConnection != null && !widget.isCurrentUser)
+                        _actionIcon(Icons.link_rounded, widget.onFindConnection!, 'Find Connection'),
                     ],
                   ),
                 ),

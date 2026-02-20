@@ -24,6 +24,13 @@ import { searchRouter } from './routes/search';
 import { mergeRouter } from './routes/merge';
 import { inviteRouter } from './routes/invite';
 import adminRouter from './routes/admin';
+import { forumRouter } from './routes/forum';
+import { lifeEventsRouter } from './routes/lifeEvents';
+import { notificationsRouter } from './routes/notifications';
+import { activityRouter } from './routes/activity';
+import { calendarRouter } from './routes/calendar';
+import { statsRouter } from './routes/stats';
+import { documentsRouter } from './routes/documents';
 import { logger, requestLogger } from './config/logger';
 
 const app = express();
@@ -88,6 +95,13 @@ app.use('/api/search', searchLimiter, searchRouter);   // Search is expensive �
 app.use('/api/merge', writeLimiter, mergeRouter);      // Merge writes — 50/15min
 app.use('/api/invite', writeLimiter, inviteRouter);    // Invite generation — 50/15min
 app.use('/api/admin', adminLimiter, adminRouter);      // Admin — 200/15min
+app.use('/api/forum', forumRouter);                    // Forum posts, comments, likes
+app.use('/api/life-events', lifeEventsRouter);         // Life events for persons
+app.use('/api/notifications', notificationsRouter);    // User notifications
+app.use('/api/activity', activityRouter);              // Activity feed
+app.use('/api/calendar', calendarRouter);              // Family calendar events
+app.use('/api/stats', statsRouter);                    // Statistics and analytics
+app.use('/api/documents', documentsRouter);            // Person documents
 
 // Error handler (must be last)
 app.use(errorHandler);

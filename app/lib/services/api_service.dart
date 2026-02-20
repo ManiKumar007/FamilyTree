@@ -99,7 +99,31 @@ class ApiService {
   Future<String> uploadProfileImage(String personId, XFile imageFile) async {
     try {
       final bytes = await imageFile.readAsBytes();
-      final fileExt = imageFile.path.split('.').last;
+
+      // Determine file extension and content type safely.
+      // On web, imageFile.path is a blob URL (e.g. blob:http://...),
+      // so we use mimeType or the original file name instead.
+      String contentType = 'image/jpeg'; // safe default
+      String fileExt = 'jpg';
+
+      final mime = imageFile.mimeType;
+      if (mime != null && mime.startsWith('image/')) {
+        contentType = mime;
+        // e.g. 'image/png' -> 'png', 'image/jpeg' -> 'jpeg'
+        fileExt = mime.split('/').last;
+        if (fileExt == 'jpeg') fileExt = 'jpg';
+      } else {
+        // Try to extract from the original file name (works on mobile & some web pickers)
+        final name = imageFile.name;
+        if (name.contains('.')) {
+          final ext = name.split('.').last.toLowerCase();
+          if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].contains(ext)) {
+            fileExt = ext;
+            contentType = 'image/${ext == 'jpg' ? 'jpeg' : ext}';
+          }
+        }
+      }
+
       final fileName = '$personId-${DateTime.now().millisecondsSinceEpoch}.$fileExt';
       final filePath = 'profiles/$fileName';
 
@@ -109,7 +133,7 @@ class ApiService {
         filePath,
         bytes,
         fileOptions: FileOptions(
-          contentType: 'image/${fileExt == 'jpg' ? 'jpeg' : fileExt}',
+          contentType: contentType,
           upsert: false,
         ),
       );
@@ -289,6 +313,41 @@ class ApiService {
     if (response.statusCode != 200) throw _handleError(response);
     final wrapper = jsonDecode(response.body);
     return wrapper['data'] as Map<String, dynamic>;
+  }
+
+  // ==================== CONNECTION FINDER ====================
+
+  /// Find the connection path between two persons by their IDs
+  Future<ConnectionResult> findConnection(String personAId, String personBId) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/tree/connection/$personAId/$personBId'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) throw _handleError(response);
+    final wrapper = jsonDecode(response.body);
+    return ConnectionResult.fromJson(wrapper['data']);
+  }
+
+  /// Find the connection path between two persons by their usernames
+  Future<ConnectionResult> findConnectionByUsername(String usernameA, String usernameB) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/tree/connection-by-username/$usernameA/$usernameB'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) throw _handleError(response);
+    final wrapper = jsonDecode(response.body);
+    return ConnectionResult.fromJson(wrapper['data']);
+  }
+
+  /// Check if a username is available
+  Future<bool> checkUsernameAvailability(String username) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/persons/check-username/$username'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200) throw _handleError(response);
+    final wrapper = jsonDecode(response.body);
+    return wrapper['data']['available'] as bool;
   }
 
   // ==================== ERROR HANDLING ====================

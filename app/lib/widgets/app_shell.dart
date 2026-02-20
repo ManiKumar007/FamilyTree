@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/theme.dart';
 import '../services/auth_service.dart';
+import '../services/notifications_service.dart';
 
 /// Navigation destination definition
 class _NavDestination {
@@ -34,10 +35,34 @@ const _destinations = [
     path: '/search',
   ),
   _NavDestination(
+    label: 'Connection',
+    icon: Icons.link_outlined,
+    activeIcon: Icons.link,
+    path: '/connection',
+  ),
+  _NavDestination(
     label: 'Invite',
     icon: Icons.person_add_outlined,
     activeIcon: Icons.person_add,
     path: '/invite',
+  ),
+  _NavDestination(
+    label: 'Forum',
+    icon: Icons.forum_outlined,
+    activeIcon: Icons.forum,
+    path: '/forum',
+  ),
+  _NavDestination(
+    label: 'Calendar',
+    icon: Icons.calendar_today_outlined,
+    activeIcon: Icons.calendar_today,
+    path: '/calendar',
+  ),
+  _NavDestination(
+    label: 'Statistics',
+    icon: Icons.analytics_outlined,
+    activeIcon: Icons.analytics,
+    path: '/statistics',
   ),
 ];
 
@@ -180,7 +205,7 @@ class _SidebarState extends State<_Sidebar> {
       ),
       child: Column(
         children: [
-          // Logo area
+          // Logo area with notifications
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
             child: Row(
@@ -199,15 +224,18 @@ class _SidebarState extends State<_Sidebar> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  'MyFamilyTree',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
+                const Expanded(
+                  child: Text(
+                    'MyFamilyTree',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.3,
+                    ),
                   ),
                 ),
+                _NotificationBell(ref: widget.ref),
               ],
             ),
           ),
@@ -420,6 +448,84 @@ class _SidebarState extends State<_Sidebar> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Notification bell icon with unread count badge
+class _NotificationBell extends ConsumerStatefulWidget {
+  final WidgetRef ref;
+  
+  const _NotificationBell({required this.ref});
+
+  @override
+  ConsumerState<_NotificationBell> createState() => _NotificationBellState();
+}
+
+class _NotificationBellState extends ConsumerState<_NotificationBell> {
+  int _unreadCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnreadCount();
+  }
+
+  Future<void> _loadUnreadCount() async {
+    try {
+      final service = ref.read(notificationsServiceProvider);
+      final count = await service.getUnreadCount();
+      if (mounted) {
+        setState(() { _unreadCount = count; });
+      }
+    } catch (e) {
+      // Silently fail for notification badge
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        IconButton(
+          icon: const Icon(
+            Icons.notifications_outlined,
+            color: Colors.white,
+            size: 22,
+          ),
+          onPressed: () {
+            context.push('/notifications');
+            // Reload count after returning from notifications
+            Future.delayed(const Duration(seconds: 1), _loadUnreadCount);
+          },
+          tooltip: 'Notifications',
+        ),
+        if (_unreadCount > 0)
+          Positioned(
+            right: 8,
+            top: 8,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: kErrorColor,
+                shape: BoxShape.circle,
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 16,
+                minHeight: 16,
+              ),
+              child: Text(
+                _unreadCount > 99 ? '99+' : _unreadCount.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

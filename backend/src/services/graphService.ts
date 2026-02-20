@@ -251,3 +251,372 @@ export async function getPathNames(personIds: string[]): Promise<string[]> {
   const nameMap = new Map(data.map((p: any) => [p.id, p.name]));
   return personIds.map(id => nameMap.get(id) || 'Unknown');
 }
+
+/**
+ * Find multiple connection paths between two persons using BFS.
+ * Returns up to 3 paths, common ancestors, and relationship statistics.
+ * Works across the entire graph — the two people do NOT need to be in the same tree.
+ */
+export async function findConnection(
+  personAId: string,
+  personBId: string,
+  maxDepth: number = 20,
+  maxPaths: number = 3
+): Promise<{
+  connected: boolean;
+  paths: Array<{
+    path: { personId: string; name: string; gender: string }[];
+    relationships: { from: string; to: string; type: string; label: string }[];
+    depth: number;
+  }>;
+  commonAncestors: Array<{ personId: string; name: string; distanceFromA: number; distanceFromB: number }>;
+  statistics: {
+    totalPaths: number;
+    shortestDistance: number;
+    longestDistance: number;
+  };
+  // Legacy fields for backward compatibility
+  path: { personId: string; name: string; gender: string }[];
+  relationships: { from: string; to: string; type: string; label: string }[];
+  depth: number;
+} | null> {
+  if (personAId === personBId) {
+    // Same person
+    const { data } = await supabaseAdmin
+      .from('persons')
+      .select('id, name, gender')
+      .eq('id', personAId)
+      .single();
+    if (!data) return null;
+    const selfPath = {
+      path: [{ personId: data.id, name: data.name, gender: data.gender }],
+      relationships: [],
+      depth: 0,
+    };
+    return {
+      connected: true,
+      paths: [selfPath],
+      commonAncestors: [],
+      statistics: { totalPaths: 1, shortestDistance: 0, longestDistance: 0 },
+      ...selfPath, // Legacy fields
+    };
+  }
+
+  // Multi-path BFS: Track all paths up to maxPaths
+  const visitedFromA = new Map<string, number>(); // person -> distance from A
+  const visitedFromB = new Map<string, number>(); // person -> distance from B
+  const parentsA = new Map<string, Array<{ parentId: string; relType: string }>>(); // child -> parents
+  const parentsB = new Map<string, Array<{ parentId: string; relType: string }>>(); // child -> parents
+  
+  visitedFromA.set(personAId, 0);
+  visitedFromB.set(personBId, 0);
+  
+  let queueA = [personAId];
+  let queueB = [personBId];
+  let meetingPoints = new Set<string>();
+  let minDistance = Infinity;
+  
+  // Bidirectional BFS
+  for (let depth = 0; depth < maxDepth && queueA.length > 0 && queueB.length > 0; depth++) {
+    // Expand from the smaller frontier
+    const expandFromA = queueA.length <= queueB.length;
+    const currentQueue = expandFromA ? queueA : queueB;
+    const visited = expandFromA ? visitedFromA : visitedFromB;
+    const otherVisited = expandFromA ? visitedFromB : visitedFromA;
+    const parents = expandFromA ? parentsA : parentsB;
+    
+    if (currentQueue.length === 0) break;
+
+    // Check if we've gone beyond the minimum distance
+    if (meetingPoints.size > 0 && depth > minDistance) break;
+
+    const { data: relsForward } = await supabaseAdmin
+      .from('relationships')
+      .select('person_id, related_person_id, type')
+      .in('person_id', currentQueue);
+    
+    const { data: relsReverse } = await supabaseAdmin
+      .from('relationships')
+      .select('person_id, related_person_id, type')
+      .in('related_person_id', currentQueue);
+
+    const nextQueue: string[] = [];
+    const allEdges: { from: string; to: string; type: string }[] = [];
+
+    for (const rel of (relsForward || [])) {
+      allEdges.push({ from: rel.person_id, to: rel.related_person_id, type: rel.type });
+    }
+    for (const rel of (relsReverse || [])) {
+      const reverseType = flipRelationshipType(rel.type);
+      allEdges.push({ from: rel.related_person_id, to: rel.person_id, type: reverseType });
+    }
+
+    for (const edge of allEdges) {
+      const currentDist = visited.get(edge.from)!;
+      const newDist = currentDist + 1;
+      
+      // Check if we've found a meeting point
+      if (otherVisited.has(edge.to)) {
+        const totalDist = newDist + otherVisited.get(edge.to)!;
+        if (totalDist <= minDistance) {
+          minDistance = totalDist;
+          meetingPoints.add(edge.to);
+        }
+      }
+      
+      if (!visited.has(edge.to)) {
+        visited.set(edge.to, newDist);
+        nextQueue.push(edge.to);
+        parents.set(edge.to, [{ parentId: edge.from, relType: edge.type }]);
+      } else if (visited.get(edge.to) === newDist) {
+        // Same distance - add alternate parent for multiple paths
+        const existing = parents.get(edge.to) || [];
+        existing.push({ parentId: edge.from, relType: edge.type });
+        parents.set(edge.to, existing);
+      }
+    }
+
+    if (expandFromA) {
+      queueA = nextQueue;
+    } else {
+      queueB = nextQueue;
+    }
+  }
+
+  if (meetingPoints.size === 0) {
+    return {
+      connected: false,
+      paths: [],
+      commonAncestors: [],
+      statistics: { totalPaths: 0, shortestDistance: -1, longestDistance: -1 },
+      path: [],
+      relationships: [],
+      depth: -1,
+    };
+  }
+
+  // Find common ancestors (people visited from both sides)
+  const commonAncestors: Array<{ personId: string; name: string; distanceFromA: number; distanceFromB: number }> = [];
+  for (const [personId, distA] of visitedFromA) {
+    if (visitedFromB.has(personId) && personId !== personAId && personId !== personBId) {
+      const distB = visitedFromB.get(personId)!;
+      commonAncestors.push({ personId, name: '', distanceFromA: distA, distanceFromB: distB });
+    }
+  }
+
+  // Sort common ancestors by total distance (closest first)
+  commonAncestors.sort((a, b) => (a.distanceFromA + a.distanceFromB) - (b.distanceFromA + b.distanceFromB));
+
+  // Fetch names for common ancestors
+  if (commonAncestors.length > 0) {
+    const { data: ancestorPersons } = await supabaseAdmin
+      .from('persons')
+      .select('id, name')
+      .in('id', commonAncestors.map(a => a.personId));
+    const nameMap = new Map((ancestorPersons || []).map((p: any) => [p.id, p.name]));
+    commonAncestors.forEach(a => a.name = nameMap.get(a.personId) || 'Unknown');
+  }
+
+  // Reconstruct multiple paths through meeting points
+  const allPaths: Array<{
+    path: { personId: string; name: string; gender: string }[];
+    relationships: { from: string; to: string; type: string; label: string }[];
+    depth: number;
+  }> = [];
+
+  const reconstructedPaths = new Set<string>(); // To avoid duplicates
+
+  for (const meetPoint of Array.from(meetingPoints).slice(0, maxPaths * 2)) {
+    const paths = reconstructPathsThroughMeetingPoint(
+      meetPoint,
+      personAId,
+      personBId,
+      parentsA,
+      parentsB,
+      maxPaths - allPaths.length
+    );
+    
+    for (const p of paths) {
+      const pathKey = p.map(id => id).join('-');
+      if (!reconstructedPaths.has(pathKey) && allPaths.length < maxPaths) {
+        reconstructedPaths.add(pathKey);
+        allPaths.push(await buildPathObject(p, parentsA, parentsB, personAId, meetPoint));
+      }
+    }
+    
+    if (allPaths.length >= maxPaths) break;
+  }
+
+  // Sort by depth (shortest first)
+  allPaths.sort((a, b) => a.depth - b.depth);
+
+  const statistics = {
+    totalPaths: allPaths.length,
+    shortestDistance: allPaths.length > 0 ? allPaths[0].depth : -1,
+    longestDistance: allPaths.length > 0 ? allPaths[allPaths.length - 1].depth : -1,
+  };
+
+  return {
+    connected: true,
+    paths: allPaths,
+    commonAncestors: commonAncestors.slice(0, 5), // Top 5 common ancestors
+    statistics,
+    // Legacy fields (use first path)
+    path: allPaths[0]?.path || [],
+    relationships: allPaths[0]?.relationships || [],
+    depth: allPaths[0]?.depth || 0,
+  };
+}
+
+/**
+ * Reconstruct paths from personA to personB through a meeting point
+ */
+function reconstructPathsThroughMeetingPoint(
+  meetPoint: string,
+  personAId: string,
+  personBId: string,
+  parentsA: Map<string, Array<{ parentId: string; relType: string }>>,
+  parentsB: Map<string, Array<{ parentId: string; relType: string }>>,
+  maxPaths: number
+): string[][] {
+  // Get all paths from A to meeting point
+  const pathsFromA = reconstructAllPaths(meetPoint, personAId, parentsA, Math.ceil(maxPaths / 2));
+  const pathsFromB = reconstructAllPaths(meetPoint, personBId, parentsB, Math.ceil(maxPaths / 2));
+
+  const fullPaths: string[][] = [];
+  for (const pathA of pathsFromA) {
+    for (const pathB of pathsFromB) {
+      if (fullPaths.length >= maxPaths) break;
+      // Combine: A -> ... -> meetPoint -> ... -> B
+      // Reverse pathB and remove duplicate meeting point
+      const reversedB = [...pathB].reverse();
+      reversedB.shift(); // Remove meeting point duplicate
+      fullPaths.push([...pathA, ...reversedB]);
+    }
+    if (fullPaths.length >= maxPaths) break;
+  }
+
+  return fullPaths;
+}
+
+/**
+ * Reconstruct all paths from target back to source using parent map (DFS)
+ */
+function reconstructAllPaths(
+  target: string,
+  source: string,
+  parents: Map<string, Array<{ parentId: string; relType: string }>>,
+  maxPaths: number
+): string[][] {
+  const result: string[][] = [];
+  
+  function dfs(current: string, path: string[]) {
+    if (result.length >= maxPaths) return;
+    
+    if (current === source) {
+      result.push([...path]);
+      return;
+    }
+    
+    const parentList = parents.get(current);
+    if (!parentList) return;
+    
+    for (const p of parentList) {
+      path.unshift(p.parentId);
+      dfs(p.parentId, path);
+      path.shift();
+      if (result.length >= maxPaths) break;
+    }
+  }
+  
+  dfs(target, [target]);
+  return result;
+}
+
+/**
+ * Build path object with person details and relationships
+ */
+async function buildPathObject(
+  pathIds: string[],
+  parentsA: Map<string, Array<{ parentId: string; relType: string }>>,
+  parentsB: Map<string, Array<{ parentId: string; relType: string }>>,
+  personAId: string,
+  meetPoint: string
+): Promise<{
+  path: { personId: string; name: string; gender: string }[];
+  relationships: { from: string; to: string; type: string; label: string }[];
+  depth: number;
+}> {
+  // Batch load person details
+  const { data: persons } = await supabaseAdmin
+    .from('persons')
+    .select('id, name, gender')
+    .in('id', pathIds);
+
+  const personMap = new Map((persons || []).map((p: any) => [p.id, p]));
+
+  const path = pathIds.map(id => {
+    const p = personMap.get(id);
+    return {
+      personId: id,
+      name: p?.name || 'Unknown',
+      gender: p?.gender || 'other',
+    };
+  });
+
+  // Build relationships from path
+  const relationships: { from: string; to: string; type: string; label: string }[] = [];
+  for (let i = 0; i < pathIds.length - 1; i++) {
+    const from = pathIds[i];
+    const to = pathIds[i + 1];
+    
+    // Find the relationship type from parent maps
+    let relType = 'UNKNOWN';
+    const parents = parentsA.get(to) || parentsB.get(to) || [];
+    for (const p of parents) {
+      if (p.parentId === from) {
+        relType = p.relType;
+        break;
+      }
+    }
+    
+    relationships.push({
+      from,
+      to,
+      type: relType,
+      label: humanReadableRelType(relType),
+    });
+  }
+
+  return {
+    path,
+    relationships,
+    depth: pathIds.length - 1,
+  };
+}
+
+/** Flip a relationship type to its reverse direction */
+function flipRelationshipType(type: string): string {
+  switch (type) {
+    case 'FATHER_OF': return 'CHILD_OF';
+    case 'MOTHER_OF': return 'CHILD_OF';
+    case 'PARENT_OF': return 'CHILD_OF';
+    case 'CHILD_OF': return 'PARENT_OF';
+    case 'SPOUSE_OF': return 'SPOUSE_OF';
+    case 'SIBLING_OF': return 'SIBLING_OF';
+    default: return type;
+  }
+}
+
+/** Convert relationship type to human-readable label */
+function humanReadableRelType(type: string): string {
+  switch (type) {
+    case 'FATHER_OF': return 'Father of';
+    case 'MOTHER_OF': return 'Mother of';
+    case 'PARENT_OF': return 'Parent of';
+    case 'CHILD_OF': return 'Child of';
+    case 'SPOUSE_OF': return 'Spouse of';
+    case 'SIBLING_OF': return 'Sibling of';
+    default: return type;
+  }
+}

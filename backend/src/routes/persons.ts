@@ -14,11 +14,20 @@ export const personsRouter = Router();
 personsRouter.use(authMiddleware);
 
 // Validation schemas
+const usernameSchema = z.string()
+  .min(3, 'Username must be at least 3 characters')
+  .max(20, 'Username must be at most 20 characters')
+  .regex(/^[a-zA-Z][a-zA-Z0-9_]*$/, 'Username must start with a letter and contain only letters, numbers, and underscores');
+
 const createPersonSchema = z.object({
+  username: usernameSchema.nullish(),
   name: z.string().min(1).max(200),
   given_name: z.string().min(1).max(100).optional(),
   surname: z.string().max(100).nullish(),
   date_of_birth: z.string().nullish(),
+  date_of_death: z.string().nullish(),
+  place_of_death: z.string().max(200).nullish(),
+  is_alive: z.boolean().nullish().default(true),
   gender: GenderEnum,
   phone: z.string().min(5),
   email: z.string().email().nullish(),
@@ -29,6 +38,14 @@ const createPersonSchema = z.object({
   state: z.string().max(200).nullish(),
   marital_status: MaritalStatusEnum.nullish().default('single'),
   wedding_date: z.string().nullish(),
+  nakshatra: z.string().max(100).nullish(),
+  rashi: z.string().max(100).nullish(),
+  native_place: z.string().max(200).nullish(),
+  ancestral_village: z.string().max(200).nullish(),
+  sub_caste: z.string().max(200).nullish(),
+  kula_devata: z.string().max(200).nullish(),
+  pravara: z.string().max(200).nullish(),
+  is_profile_public: z.boolean().nullish().default(false),
   auth_user_id: z.string().uuid().nullish(), // Allow linking to auth user for profile setup
   verified: z.boolean().nullish(), // Allow setting verified status
 });
@@ -245,6 +262,54 @@ personsRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response) =>
     if (error) throw error;
 
     res.json(successResponse({ message: `Person '${existing.name}' deleted successfully` }));
+  } catch (err: any) {
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+  }
+});
+
+/**
+ * GET /api/persons/check-username/:username — Check if a username is available
+ */
+personsRouter.get('/check-username/:username', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const username = req.params.username.toLowerCase();
+
+    // Validate format
+    const parsed = usernameSchema.safeParse(req.params.username);
+    if (!parsed.success) {
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, parsed.error.errors[0].message));
+      return;
+    }
+
+    const { data } = await supabaseAdmin
+      .from('persons')
+      .select('id')
+      .ilike('username', username)
+      .maybeSingle();
+
+    res.json(successResponse({ available: !data }));
+  } catch (err: any) {
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+  }
+});
+
+/**
+ * GET /api/persons/by-username/:username — Find a person by username
+ */
+personsRouter.get('/by-username/:username', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('persons')
+      .select('*')
+      .ilike('username', req.params.username)
+      .single();
+
+    if (error || !data) {
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Person not found'));
+      return;
+    }
+
+    res.json(successResponse(data));
   } catch (err: any) {
     res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
   }

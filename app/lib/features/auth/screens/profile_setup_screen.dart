@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,7 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _usernameController = TextEditingController();
   final _givenNameController = TextEditingController();
   final _surnameController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -31,6 +33,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   DateTime? _dateOfBirth;
   bool _isLoading = false;
   String? _error;
+
+  // Username availability state
+  bool _isCheckingUsername = false;
+  bool? _isUsernameAvailable;
+  String? _usernameError;
+  Timer? _usernameDebounce;
 
   @override
   void initState() {
@@ -52,6 +60,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
 
   @override
   void dispose() {
+    _usernameDebounce?.cancel();
+    _usernameController.dispose();
     _givenNameController.dispose();
     _surnameController.dispose();
     _phoneController.dispose();
@@ -63,10 +73,77 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     super.dispose();
   }
 
+  /// Debounced username availability check
+  void _onUsernameChanged(String value) {
+    _usernameDebounce?.cancel();
+    final username = value.trim();
+
+    if (username.isEmpty) {
+      setState(() {
+        _isUsernameAvailable = null;
+        _usernameError = null;
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    // Local format validation first
+    if (username.length < 3) {
+      setState(() {
+        _isUsernameAvailable = null;
+        _usernameError = 'At least 3 characters';
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+    if (!RegExp(r'^[a-zA-Z][a-zA-Z0-9_]*$').hasMatch(username)) {
+      setState(() {
+        _isUsernameAvailable = null;
+        _usernameError = 'Letters, numbers & underscores only (start with letter)';
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isCheckingUsername = true;
+      _usernameError = null;
+      _isUsernameAvailable = null;
+    });
+
+    _usernameDebounce = Timer(const Duration(milliseconds: 500), () async {
+      try {
+        final api = ref.read(apiServiceProvider);
+        final available = await api.checkUsernameAvailability(username);
+        if (mounted && _usernameController.text.trim() == username) {
+          setState(() {
+            _isUsernameAvailable = available;
+            _usernameError = available ? null : 'Username already taken';
+            _isCheckingUsername = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() => _isCheckingUsername = false);
+        }
+      }
+    });
+  }
+
   Future<void> _submitProfile() async {
     if (!_formKey.currentState!.validate()) return;
     if (_dateOfBirth == null) {
       setState(() { _error = 'Please select your date of birth'; });
+      return;
+    }
+    // Validate username
+    final username = _usernameController.text.trim();
+    if (username.isEmpty) {
+      setState(() { _error = 'Please choose a username'; });
+      return;
+    }
+    if (_isUsernameAvailable != true) {
+      setState(() { _error = 'Please choose an available username'; });
       return;
     }
 
@@ -146,6 +223,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       print('Auth User ID: ${authService.currentUser!.id}');
       
       final profileData = {
+        'username': username,
         'name': fullName,
         'given_name': givenName,
         'surname': surname.isEmpty ? null : surname,
@@ -272,6 +350,45 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     style: TextStyle(color: kTextSecondary),
                   ),
                   const SizedBox(height: AppSpacing.lg),
+
+                  // Username field with real-time availability check
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      labelText: 'Username *',
+                      prefixIcon: const Icon(Icons.alternate_email),
+                      prefixText: '@',
+                      helperText: 'Unique, 3-20 chars. Letters, numbers & underscores.',
+                      suffixIcon: _isCheckingUsername
+                          ? const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: SizedBox(
+                                width: 20, height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : _isUsernameAvailable == true
+                              ? const Icon(Icons.check_circle, color: Colors.green)
+                              : _usernameError != null
+                                  ? const Icon(Icons.cancel, color: kErrorColor)
+                                  : null,
+                      errorText: _usernameError,
+                    ),
+                    onChanged: _onUsernameChanged,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Required';
+                      if (v.trim().length < 3) return 'At least 3 characters';
+                      if (v.trim().length > 20) return 'Max 20 characters';
+                      if (!RegExp(r'^[a-zA-Z][a-zA-Z0-9_]*$').hasMatch(v.trim())) {
+                        return 'Letters, numbers & underscores only';
+                      }
+                      return null;
+                    },
+                    textInputAction: TextInputAction.next,
+                    autocorrect: false,
+                    enableSuggestions: false,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Name fields
                   Row(

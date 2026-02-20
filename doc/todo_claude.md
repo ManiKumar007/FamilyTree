@@ -96,6 +96,7 @@
 
 ## Future Improvements (Not in Current Sprint)
 
+- [ ] Build Android APK using Android Studio (see android_bringup.md for instructions)
 - [ ] Add Playwright E2E tests
 - [ ] Add Docker Compose for local dev
 - [ ] Add CI/CD (GitHub Actions)

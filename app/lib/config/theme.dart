@@ -134,7 +134,37 @@ class AppGradients {
   static const LinearGradient hero = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [kPrimaryDark, kPrimaryColor, Color(0xFF40916C)],
+    colors: [Color(0xFF0D2818), kPrimaryDark, kPrimaryColor, Color(0xFF40916C)],
+    stops: [0.0, 0.3, 0.7, 1.0],
+  );
+
+  /// Rich hero gradient with deep contrast
+  static const LinearGradient heroRich = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF0A1F13), Color(0xFF1B4332), Color(0xFF2D6A4F), Color(0xFF40916C)],
+    stops: [0.0, 0.35, 0.65, 1.0],
+  );
+
+  /// Sunset warm gradient for CTA sections
+  static const LinearGradient ctaGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF1B4332), Color(0xFF2D6A4F), Color(0xFF52B788)],
+  );
+
+  /// Features section subtle gradient
+  static const LinearGradient featuresBg = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFFF0F7F4), Color(0xFFE8F5E9), Color(0xFFF8F9FA)],
+  );
+
+  /// Glass overlay gradient
+  static const LinearGradient glassOverlay = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0x30FFFFFF), Color(0x10FFFFFF)],
   );
 
   /// Warm accent gradient (for CTAs)

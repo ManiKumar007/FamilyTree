@@ -1,10 +1,26 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConfig {
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-  static String get apiBaseUrl => dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
+  
+  /// API Base URL with Android emulator support
+  /// On Android emulator: 10.0.2.2 maps to host machine's localhost
+  /// On web/iOS/real Android device: use localhost or actual IP
+  static String get apiBaseUrl {
+    var url = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
+    
+    // On Android emulator, replace localhost with 10.0.2.2
+    if (!kIsWeb && Platform.isAndroid && url.contains('localhost')) {
+      url = url.replaceAll('localhost', '10.0.2.2');
+    }
+    
+    return url;
+  }
+  
   static String get googleWebClientId => dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
 }
 

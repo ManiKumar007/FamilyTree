@@ -14,7 +14,12 @@ import '../features/profile/screens/person_detail_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/search/screens/search_screen.dart';
 import '../features/invite/screens/invite_screen.dart';
+import '../features/connection/screens/connection_finder_screen.dart';
 import '../features/merge/screens/merge_review_screen.dart';
+import '../features/forum/screens/forum_screen.dart';
+import '../features/notifications/screens/notifications_screen.dart';
+import '../features/stats/screens/statistics_screen.dart';
+import '../features/calendar/screens/calendar_screen.dart';
 import '../features/admin/screens/admin_dashboard_screen.dart';
 import '../features/admin/screens/error_logs_screen.dart';
 import '../features/admin/screens/user_management_screen.dart';
@@ -113,6 +118,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                       return AddMemberScreen(
                         relativePersonId: extra?['relativePersonId'] as String?,
                         relationshipType: extra?['relationshipType'] as String?,
+                        gender: extra?['gender'] as String?,
                       );
                     },
                   ),
@@ -129,7 +135,19 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Branch 2: Invite
+          // Branch 2: Connection Finder
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/connection',
+                builder: (context, state) {
+                  final targetUsername = state.uri.queryParameters['target'];
+                  return ConnectionFinderScreen(targetUsername: targetUsername);
+                },
+              ),
+            ],
+          ),
+          // Branch 3: Invite
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -138,6 +156,33 @@ final routerProvider = Provider<GoRouter>((ref) {
                   final token = state.uri.queryParameters['token'];
                   return InviteScreen(token: token);
                 },
+              ),
+            ],
+          ),
+          // Branch 4: Forum
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/forum',
+                builder: (context, state) => const ForumScreen(),
+              ),
+            ],
+          ),
+          // Branch 5: Calendar
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/calendar',
+                builder: (context, state) => const CalendarScreen(),
+              ),
+            ],
+          ),
+          // Branch 6: Statistics
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/statistics',
+                builder: (context, state) => const StatisticsScreen(),
               ),
             ],
           ),
@@ -168,6 +213,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => MergeReviewScreen(
           mergeRequestId: state.pathParameters['id']!,
         ),
+      ),
+
+      // Notifications
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
 
       // Admin routes

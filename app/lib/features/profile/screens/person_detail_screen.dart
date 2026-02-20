@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../services/api_service.dart';
+import '../../../services/life_events_service.dart';
 import '../../../models/models.dart';
 import '../../../config/theme.dart';
 import '../../../widgets/common_widgets.dart';
@@ -19,6 +20,7 @@ class PersonDetailScreen extends ConsumerStatefulWidget {
 class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with SingleTickerProviderStateMixin {
   Person? _person;
   List<Relationship>? _relationships;
+  List<LifeEvent>? _lifeEvents;
   bool _isLoading = true;
   String? _loadError;
   TabController? _tabController;
@@ -48,6 +50,17 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
         final rels = await api.getRelationships(widget.personId);
         setState(() { _relationships = rels; });
       } catch (relError) {
+        print('⚠️ Failed to load relationships: $relError');
+      }
+
+      // Load life events separately
+      try {
+        final lifeEventsService = ref.read(lifeEventsServiceProvider);
+        final events = await lifeEventsService.getLifeEventsByPerson(widget.personId);
+        setState(() { _lifeEvents = events; });
+      } catch (eventError) {
+        print('⚠️ Failed to load life events: $eventError');
+      }
         debugPrint('Failed to load relationships: $relError');
         // Still show the person even if relationships fail
         setState(() { _relationships = []; });
@@ -225,11 +238,36 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                if (person.verified)
-                  const StatusBadge(
-                    label: 'Verified',
-                    color: Colors.white,
-                    icon: Icons.verified,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (person.verified)
+                      const StatusBadge(
+                        label: 'Verified',
+                        color: Colors.white,
+                        icon: Icons.verified,
+                      ),
+                    if (person.verified && !person.isAlive)
+                      const SizedBox(width: AppSpacing.xs),
+                    if (!person.isAlive)
+                      const StatusBadge(
+                        label: 'Deceased',
+                        color: Colors.grey,
+                        icon: Icons.front_hand,
+                      ),
+                  ],
+                ),
+                if (!person.isAlive && person.dateOfDeath != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xs),
+                    child: Text(
+                      _formatDate(person.dateOfDeath!),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -341,6 +379,20 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
                       value: _formatDate(person.dateOfBirth!),
                       iconColor: kAccentColor,
                     ),
+                  if (!person.isAlive && person.dateOfDeath != null)
+                    DetailRow(
+                      icon: Icons.front_hand,
+                      label: 'Date of Death',
+                      value: _formatDate(person.dateOfDeath!),
+                      iconColor: Colors.grey,
+                    ),
+                  if (!person.isAlive && person.placeOfDeath != null)
+                    DetailRow(
+                      icon: Icons.location_on,
+                      label: 'Place of Death',
+                      value: person.placeOfDeath!,
+                      iconColor: Colors.grey,
+                    ),
                   if (person.occupation != null)
                     DetailRow(
                       icon: Icons.work,
@@ -426,6 +478,77 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
               ),
             ),
           ),
+          if (person.nativePlace != null || 
+              person.ancestralVillage != null ||
+              person.nakshatra != null ||
+              person.rashi != null ||
+              person.subCaste != null ||
+              person.kulaDevata != null ||
+              person.pravara != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            const SectionHeader(
+              title: 'Heritage & Cultural Information',
+              icon: Icons.temple_hindu,
+            ),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  children: [
+                    if (person.nativePlace != null)
+                      DetailRow(
+                        icon: Icons.home_work,
+                        label: 'Native Place',
+                        value: person.nativePlace!,
+                        iconColor: kPrimaryColor,
+                      ),
+                    if (person.ancestralVillage != null)
+                      DetailRow(
+                        icon: Icons.landscape,
+                        label: 'Ancestral Village',
+                        value: person.ancestralVillage!,
+                        iconColor: kSecondaryColor,
+                      ),
+                    if (person.nakshatra != null)
+                      DetailRow(
+                        icon: Icons.stars,
+                        label: 'Nakshatra',
+                        value: person.nakshatra!,
+                        iconColor: kAccentColor,
+                      ),
+                    if (person.rashi != null)
+                      DetailRow(
+                        icon: Icons.circle,
+                        label: 'Rashi',
+                        value: person.rashi!,
+                        iconColor: kAccentColor,
+                      ),
+                    if (person.subCaste != null)
+                      DetailRow(
+                        icon: Icons.people,
+                        label: 'Sub-Caste',
+                        value: person.subCaste!,
+                        iconColor: kSecondaryColor,
+                      ),
+                    if (person.kulaDevata != null)
+                      DetailRow(
+                        icon: Icons.self_improvement,
+                        label: 'Kula Devata',
+                        value: person.kulaDevata!,
+                        iconColor: kPrimaryColor,
+                      ),
+                    if (person.pravara != null)
+                      DetailRow(
+                        icon: Icons.auto_awesome,
+                        label: 'Pravara',
+                        value: person.pravara!,
+                        iconColor: kSecondaryColor,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -507,12 +630,31 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
   Widget _buildTimelineTab(Person person) {
     final events = <Map<String, dynamic>>[];
     
+    // Add life events from API
+    if (_lifeEvents != null) {
+      for (final event in _lifeEvents!) {
+        events.add({
+          'icon': _getEventIcon(event.eventType),
+          'title': event.eventType,
+          'subtitle': event.description,
+          'location': event.location,
+          'date': event.eventDate,
+          'color': kPrimaryColor,
+          'isLifeEvent': true,
+          'eventId': event.id,
+          'photos': event.photos,
+        });
+      }
+    }
+    
+    // Add person milestones
     if (person.createdAt != null) {
       events.add({
         'icon': Icons.person_add,
         'title': 'Profile Created',
         'date': person.createdAt!,
         'color': kSuccessColor,
+        'isLifeEvent': false,
       });
     }
     
@@ -522,6 +664,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
         'title': 'Born',
         'date': person.dateOfBirth!,
         'color': kAccentColor,
+        'isLifeEvent': false,
       });
     }
     
@@ -531,6 +674,17 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
         'title': 'Married',
         'date': person.weddingDate!,
         'color': kRelationshipSpouse,
+        'isLifeEvent': false,
+      });
+    }
+
+    if (!person.isAlive && person.dateOfDeath != null) {
+      events.add({
+        'icon': Icons.front_hand,
+        'title': 'Passed Away',
+        'date': person.dateOfDeath!,
+        'color': Colors.grey,
+        'isLifeEvent': false,
       });
     }
 
@@ -542,12 +696,69 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
       );
     }
 
-    // Sort events by date
+    // Sort events by date (oldest first for timeline)
     events.sort((a, b) {
       try {
         final dateA = DateTime.parse(a['date']);
         final dateB = DateTime.parse(b['date']);
-        return dateB.compareTo(dateA); // Most recent first
+        return dateA.compareTo(dateB);
+      } catch (e) {
+        return 0;
+      }
+    });
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      itemCount: events.length,
+      itemBuilder: (context, index) {
+        final event = events[index];
+        return _buildTimelineItem(
+          icon: event['icon'],
+          title: event['title'],
+          subtitle: event['subtitle'],
+          location: event['location'],
+          date: _formatDate(event['date']),
+          color: event['color'],
+          isLast: index == events.length - 1,
+        );
+      },
+    );
+  }
+
+  IconData _getEventIcon(String eventType) {
+    switch (eventType.toLowerCase()) {
+      case 'birth':
+        return Icons.cake;
+      case 'marriage':
+        return Icons.favorite;
+      case 'death':
+        return Icons.front_hand;
+      case 'education':
+        return Icons.school;
+      case 'graduation':
+        return Icons.school;
+      case 'job_start':
+        return Icons.work;
+      case 'job_end':
+        return Icons.work_off;
+      case 'retirement':
+        return Icons.beach_access;
+      case 'relocation':
+        return Icons.moving;
+      case 'immigration':
+        return Icons.flight;
+      case 'achievement':
+        return Icons.emoji_events;
+      case 'health':
+        return Icons.local_hospital;
+      case 'travel':
+        return Icons.flight_takeoff;
+      case 'other':
+        return Icons.event;
+      default:
+        return Icons.event;
+    }
+  }
       } catch (e) {
         return 0;
       }
@@ -572,6 +783,8 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
   Widget _buildTimelineItem({
     required IconData icon,
     required String title,
+    String? subtitle,
+    String? location,
     required String date,
     required Color color,
     required bool isLast,
@@ -626,6 +839,32 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
                           color: kTextSecondary,
                         ),
                       ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          subtitle,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: kTextPrimary,
+                          ),
+                        ),
+                      ],
+                      if (location != null) ...[
+                        const SizedBox(height: AppSpacing.xs),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on, size: 14, color: kTextSecondary),
+                            const SizedBox(width: 4),
+                            Text(
+                              location,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: kTextSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
