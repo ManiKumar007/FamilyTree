@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _searchController = TextEditingController();
+  Timer? _debounce;
   int _selectedDepth = 3;
   String? _selectedOccupation;
   String? _selectedMaritalStatus;
@@ -23,13 +25,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    // Remove automatic redirect - let user use search even if profile setup is incomplete
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (_searchController.text.trim().isNotEmpty) {
+        _doSearch();
+      }
+    });
   }
 
   void _doSearch() {
@@ -98,15 +111,32 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       child: TextField(
                         controller: _searchController,
                         onSubmitted: (_) => _doSearch(),
+                        autofocus: true,
+                        textInputAction: TextInputAction.search,
                         decoration: InputDecoration(
                           hintText: 'Search by name, occupation, city, state...',
                           hintStyle: TextStyle(color: kTextDisabled, fontSize: 14),
                           prefixIcon: Icon(Icons.search, color: kTextSecondary),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _showFilters ? Icons.filter_list_off : Icons.filter_list,
-                            ),
-                            onPressed: () => setState(() { _showFilters = !_showFilters; }),
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_searchController.text.isNotEmpty)
+                                IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {});
+                                  },
+                                  tooltip: 'Clear search',
+                                ),
+                              IconButton(
+                                icon: Icon(
+                                  _showFilters ? Icons.filter_list_off : Icons.filter_list,
+                                ),
+                                onPressed: () => setState(() { _showFilters = !_showFilters; }),
+                                tooltip: _showFilters ? 'Hide filters' : 'Show filters',
+                              ),
+                            ],
                           ),
                         ),
                       ),

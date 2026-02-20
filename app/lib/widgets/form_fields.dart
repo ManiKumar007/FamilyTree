@@ -170,8 +170,11 @@ class PhoneInputField extends StatelessWidget {
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 0),
         helperText: helperText,
+        counterText: '',
       ),
       keyboardType: TextInputType.phone,
+      textInputAction: TextInputAction.next,
+      maxLength: 10,
       validator: validator ??
           (v) {
             if (v == null || v.trim().isEmpty) return 'Please enter phone number';

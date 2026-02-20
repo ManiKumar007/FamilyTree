@@ -233,6 +233,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               prefixIcon: Icon(Icons.person_outline),
                               hintText: 'John Doe',
                             ),
+                            textInputAction: TextInputAction.next,
+                            autofocus: true,
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.isEmpty) return 'Please enter your name';
@@ -250,6 +252,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               hintText: 'you@example.com',
                             ),
                             keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.isEmpty) return 'Please enter your email';
@@ -270,9 +273,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                 ),
                                 onPressed: () => setState(() { _obscurePassword = !_obscurePassword; }),
+                                tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                               ),
                             ),
                             obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.next,
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.isEmpty) return 'Please enter a password';
@@ -293,9 +298,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                 ),
                                 onPressed: () => setState(() { _obscureConfirmPassword = !_obscureConfirmPassword; }),
+                                tooltip: _obscureConfirmPassword ? 'Show password' : 'Hide password',
                               ),
                             ),
                             obscureText: _obscureConfirmPassword,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: !_isLoading ? (_) => _signUp() : null,
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.isEmpty) return 'Please confirm your password';

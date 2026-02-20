@@ -44,6 +44,8 @@ async function seedData() {
       .insert([
         {
           name: 'Rajesh Kumar',
+          given_name: 'Rajesh',
+          surname: 'Kumar',
           date_of_birth: '1965-03-15',
           gender: 'male',
           phone: '+919876543210',
@@ -59,6 +61,8 @@ async function seedData() {
         },
         {
           name: 'Sunita Kumar',
+          given_name: 'Sunita',
+          surname: 'Kumar',
           date_of_birth: '1968-07-22',
           gender: 'female',
           phone: '+919876543211',
@@ -71,6 +75,8 @@ async function seedData() {
         },
         {
           name: 'Amit Kumar',
+          given_name: 'Amit',
+          surname: 'Kumar',
           date_of_birth: '1992-11-08',
           gender: 'male',
           phone: '+919876543212',
@@ -84,6 +90,8 @@ async function seedData() {
         },
         {
           name: 'Priya Sharma',
+          given_name: 'Priya',
+          surname: 'Sharma',
           date_of_birth: '1995-05-14',
           gender: 'female',
           phone: '+919876543213',
@@ -96,6 +104,8 @@ async function seedData() {
         },
         {
           name: 'Vishwanath Kumar',
+          given_name: 'Vishwanath',
+          surname: 'Kumar',
           date_of_birth: '1935-01-10',
           gender: 'male',
           phone: '+919876543218',
@@ -224,32 +234,26 @@ async function seedData() {
     // 5. Create calendar events
     console.log('📅 Creating calendar events...');
     const { data: calEvents, error: calError } = await supabase
-      .from('calendar_events')
+      .from('family_events')
       .insert([
         {
           title: 'Annual Family Reunion',
-          description: 'All family members gathering',
+          description: 'All family members gathering at Kumar Family Home, Bangalore',
           event_date: '2026-12-25',
-          event_time: '10:00:00',
-          location: 'Kumar Family Home, Bangalore',
-          event_type: 'gathering',
+          event_type: 'reunion',
           created_by_user_id: userId,
         },
         {
           title: 'Deepavali Celebration',
-          description: 'Festival of Lights',
+          description: 'Festival of Lights at Community Hall',
           event_date: '2026-11-01',
-          event_time: '18:00:00',
-          location: 'Community Hall',
           event_type: 'festival',
           created_by_user_id: userId,
         },
         {
           title: 'Wedding Anniversary - Rajesh & Sunita',
-          description: '36 years of togetherness',
+          description: '36 years of togetherness - Restaurant celebration',
           event_date: '2026-11-25',
-          event_time: '19:00:00',
-          location: 'Restaurant',
           event_type: 'anniversary',
           created_by_user_id: userId,
         },

@@ -34,24 +34,9 @@ class _ConnectionFinderScreenState
   @override
   void initState() {
     super.initState();
-    // Pre-fill person A with the current user's username
-    _prefillMyUsername();
     // Pre-fill target username if provided
     if (widget.targetUsername != null) {
       _usernameBController.text = widget.targetUsername!;
-    }
-  }
-
-  Future<void> _prefillMyUsername() async {
-    try {
-      final profile = await ref.read(myProfileProvider.future);
-      if (profile != null && profile.username != null && mounted) {
-        setState(() {
-          _usernameAController.text = profile.username!;
-        });
-      }
-    } catch (_) {
-      // Ignore — user can manually enter
     }
   }
 
@@ -68,6 +53,11 @@ class _ConnectionFinderScreenState
 
     if (usernameA.isEmpty || usernameB.isEmpty) {
       setState(() => _error = 'Please enter both usernames');
+      return;
+    }
+
+    if (usernameA == usernameB) {
+      setState(() => _error = 'Cannot find connection with yourself');
       return;
     }
 
@@ -209,50 +199,72 @@ class _ConnectionFinderScreenState
             // Person A (Me)
             _buildLabel('Your Username'),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _usernameAController,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      hintText: 'Loading your username...',
-                      prefixIcon: const Icon(Icons.alternate_email, size: 20),
-                      filled: true,
-                      fillColor: kSurfaceSecondary,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: kDividerColor),
+            Consumer(
+              builder: (context, ref, _) {
+                final profileAsync = ref.watch(myProfileProvider);
+                
+                // Auto-populate username when profile loads
+                profileAsync.whenData((profile) {
+                  if (profile != null && 
+                      profile.username != null && 
+                      _usernameAController.text.isEmpty) {
+                    // Use addPostFrameCallback to avoid calling setState during build
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        _usernameAController.text = profile.username!;
+                      }
+                    });
+                  }
+                });
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _usernameAController,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          hintText: profileAsync.isLoading 
+                              ? 'Loading your username...' 
+                              : 'Your username',
+                          prefixIcon: const Icon(Icons.alternate_email, size: 20),
+                          filled: true,
+                          fillColor: kSurfaceSecondary,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: kDividerColor),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: kDividerColor),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 14),
+                        ),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: kDividerColor),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 14),
                     ),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Material(
-                  elevation: 1,
-                  borderRadius: BorderRadius.circular(10),
-                  child: InkWell(
-                    onTap: _copyMyUsername,
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: kPrimaryColor,
+                    const SizedBox(width: 8),
+                    Material(
+                      elevation: 1,
+                      borderRadius: BorderRadius.circular(10),
+                      child: InkWell(
+                        onTap: _copyMyUsername,
                         borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: kPrimaryColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.copy_rounded,
+                              color: Colors.white, size: 20),
+                        ),
                       ),
-                      child: const Icon(Icons.copy_rounded,
-                          color: Colors.white, size: 20),
                     ),
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 6),
             Text(
@@ -308,39 +320,59 @@ class _ConnectionFinderScreenState
             // Person B (Other person)
             _buildLabel("Other Person's Username"),
             const SizedBox(height: 8),
-            TextField(
-              controller: _usernameBController,
-              decoration: InputDecoration(
-                hintText: 'Enter their username',
-                prefixIcon: const Icon(Icons.person_outline, size: 20),
-                filled: true,
-                fillColor: kSurfaceColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: kDividerColor),
+            StatefulBuilder(
+              builder: (context, setTextFieldState) => TextField(
+                controller: _usernameBController,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (_) => _findConnection(),
+                onChanged: (_) => setTextFieldState(() {}),
+                decoration: InputDecoration(
+                  hintText: 'Enter their username',
+                  prefixIcon: const Icon(Icons.person_outline, size: 20),
+                  filled: true,
+                  fillColor: kSurfaceColor,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: kDividerColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: kDividerColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: kPrimaryColor, width: 2),
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_usernameBController.text.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          tooltip: 'Clear',
+                          onPressed: () {
+                            _usernameBController.clear();
+                            setTextFieldState(() {});
+                          },
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.paste_rounded, size: 20),
+                        tooltip: 'Paste from clipboard',
+                        onPressed: () async {
+                          final data = await Clipboard.getData('text/plain');
+                          if (data?.text != null) {
+                            _usernameBController.text = data!.text!;
+                            setTextFieldState(() {});
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: kDividerColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: kPrimaryColor, width: 2),
-                ),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.paste_rounded, size: 20),
-                  tooltip: 'Paste from clipboard',
-                  onPressed: () async {
-                    final data = await Clipboard.getData('text/plain');
-                    if (data?.text != null) {
-                      _usernameBController.text = data!.text!;
-                    }
-                  },
-                ),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               ),
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 32),
 

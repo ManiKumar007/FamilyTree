@@ -63,7 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         error: e,
         stackTrace: stackTrace,
       );
-      setState(() { _error = e.toString().replaceAll('Exception: ', ''); });
+      setState(() { _error = _formatErrorMessage(e.toString()); });
     } finally {
       if (mounted) setState(() { _isLoading = false; });
     }
@@ -97,6 +97,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _goToSignUp() {
     context.push('/signup');
+  }
+
+  String _formatErrorMessage(String error) {
+    final cleanError = error.replaceAll('Exception: ', '');
+    if (cleanError.contains('Invalid login credentials')) {
+      return 'Invalid email or password. Please try again.';
+    } else if (cleanError.contains('Email not confirmed')) {
+      return 'Please verify your email address before signing in.';
+    } else if (cleanError.toLowerCase().contains('network') || cleanError.contains('SocketException')) {
+      return 'No internet connection. Please check your network.';
+    } else if (cleanError.toLowerCase().contains('timeout')) {
+      return 'Request timed out. Please try again.';
+    }
+    return cleanError;
   }
 
   @override
@@ -223,6 +237,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               hintText: 'you@example.com',
                             ),
                             keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            autofocus: true,
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.isEmpty) return 'Please enter your email';
@@ -243,9 +259,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
                                 ),
                                 onPressed: () => setState(() { _obscurePassword = !_obscurePassword; }),
+                                tooltip: _obscurePassword ? 'Show password' : 'Hide password',
                               ),
                             ),
                             obscureText: _obscurePassword,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: !_isLoading ? (_) => _signIn() : null,
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.isEmpty) return 'Please enter your password';

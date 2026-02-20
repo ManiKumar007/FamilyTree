@@ -40,11 +40,16 @@ class AppAvatar extends StatelessWidget {
           : _buildPlaceholder(),
     );
 
+    final Widget avatarWithSemantics = Semantics(
+      label: name != null ? 'Profile picture of $name' : 'Profile picture',
+      child: avatar,
+    );
+
     final Widget content = showEditIcon
         ? Stack(
             clipBehavior: Clip.none,
             children: [
-              avatar,
+              avatarWithSemantics,
               Positioned(
                 bottom: 0,
                 right: 0,
@@ -64,7 +69,7 @@ class AppAvatar extends StatelessWidget {
               ),
             ],
           )
-        : avatar;
+        : avatarWithSemantics;
 
     return onTap != null
         ? InkWell(

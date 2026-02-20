@@ -14,8 +14,10 @@ statsRouter.use(authMiddleware);
  */
 statsRouter.get('/family', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // Call the database function
-    const { data, error } = await supabaseAdmin.rpc('get_family_statistics');
+    // Call the database function with user ID
+    const { data, error } = await supabaseAdmin.rpc('get_family_statistics', {
+      p_user_id: req.user.id
+    });
 
     if (error) throw error;
 
@@ -30,8 +32,10 @@ statsRouter.get('/family', async (req: AuthenticatedRequest, res: Response) => {
  */
 statsRouter.get('/consistency', async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // Call the database function
-    const { data, error } = await supabaseAdmin.rpc('check_tree_consistency');
+    // Call the database function with user ID
+    const { data, error } = await supabaseAdmin.rpc('check_tree_consistency', {
+      p_user_id: req.user.id
+    });
 
     if (error) throw error;
 
