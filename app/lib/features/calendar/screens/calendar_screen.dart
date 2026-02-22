@@ -4,6 +4,7 @@ import '../../../services/calendar_service.dart';
 import '../../../models/models.dart';
 import '../../../config/theme.dart';
 import '../../../widgets/common_widgets.dart';
+import '../../../widgets/app_shell.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -78,6 +79,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: MediaQuery.of(context).size.width < AppSizing.breakpointTablet
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: 'Menu',
+                onPressed: () => mobileShellScaffoldKey.currentState?.openDrawer(),
+              )
+            : null,
         title: const Text('Family Calendar'),
         actions: [
           IconButton(

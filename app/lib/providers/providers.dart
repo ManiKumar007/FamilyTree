@@ -50,16 +50,11 @@ final familyTreeProvider = FutureProvider<TreeResponse?>((ref) async {
   }
 
   final apiService = ref.watch(apiServiceProvider);
-  try {
-    print('🌲 Fetching family tree...');
-    final tree = await apiService.getMyTree();
-    final totalRelationships = tree.nodes.fold<int>(0, (sum, node) => sum + node.relationships.length);
-    print('✅ Family tree fetched: ${tree.nodes.length} nodes, $totalRelationships relationships');
-    return tree;
-  } catch (e) {
-    print('❌ Error fetching family tree: $e');
-    return null;
-  }
+  print('🌲 Fetching family tree...');
+  final tree = await apiService.getMyTree();
+  final totalRelationships = tree.nodes.fold<int>(0, (sum, node) => sum + node.relationships.length);
+  print('✅ Family tree fetched: ${tree.nodes.length} nodes, $totalRelationships relationships');
+  return tree;
 });
 
 // ==================== MERGE REQUESTS ====================

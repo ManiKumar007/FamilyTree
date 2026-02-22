@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../models/models.dart';
 import '../../../services/api_service.dart';
+import '../../../config/theme.dart';
+import '../../../widgets/app_shell.dart';
 
 /// Forum screen showing posts (recipes, stories, photos, etc.)
 class ForumScreen extends ConsumerStatefulWidget {
@@ -100,6 +102,13 @@ class _ForumScreenState extends ConsumerState<ForumScreen> with SingleTickerProv
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
+        leading: MediaQuery.of(context).size.width < AppSizing.breakpointTablet
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: 'Menu',
+                onPressed: () => mobileShellScaffoldKey.currentState?.openDrawer(),
+              )
+            : null,
         title: const Text('Family Forum'),
         bottom: TabBar(
           controller: _tabController,

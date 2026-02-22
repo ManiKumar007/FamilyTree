@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../config/responsive.dart';
 import '../../../models/models.dart';
+import '../../../widgets/app_shell.dart';
 import '../../../providers/providers.dart';
 import '../../../services/api_service.dart';
 
@@ -152,6 +153,13 @@ class _ConnectionFinderScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: MediaQuery.of(context).size.width < AppSizing.breakpointTablet
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: 'Menu',
+                onPressed: () => mobileShellScaffoldKey.currentState?.openDrawer(),
+              )
+            : null,
         title: const Row(
           children: [
             Icon(Icons.link_rounded, size: 22, color: kPrimaryColor),

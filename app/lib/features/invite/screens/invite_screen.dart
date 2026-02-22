@@ -7,6 +7,7 @@ import '../../../services/auth_service.dart';
 import '../../../services/api_service.dart';
 import '../../../config/theme.dart';
 import '../../../config/responsive.dart';
+import '../../../widgets/app_shell.dart';
 
 class InviteScreen extends ConsumerStatefulWidget {
   final String? token;
@@ -56,6 +57,13 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
   Widget _buildClaimUI() {
     return Scaffold(
       appBar: AppBar(
+        leading: MediaQuery.of(context).size.width < AppSizing.breakpointTablet
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: 'Menu',
+                onPressed: () => mobileShellScaffoldKey.currentState?.openDrawer(),
+              )
+            : null,
         title: Row(
           children: [
             Icon(Icons.card_giftcard_rounded, size: 22, color: kPrimaryColor),

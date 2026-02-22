@@ -7,15 +7,22 @@ class AppConfig {
   static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
   static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
   
-  /// API Base URL with Android emulator support
-  /// On Android emulator: 10.0.2.2 maps to host machine's localhost
-  /// On web/iOS/real Android device: use localhost or actual IP
+  /// API Base URL with platform-aware resolution:
+  /// - Web: uses localhost (same machine)
+  /// - Android emulator with adb reverse: uses localhost  
+  /// - Real Android device: uses the host machine's WiFi IP
   static String get apiBaseUrl {
     var url = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
     
-    // On Android emulator, replace localhost with 10.0.2.2
+    // On a real Android device (not emulator), replace localhost with the
+    // host machine's local-network IP so the phone can reach the backend.
     if (!kIsWeb && Platform.isAndroid && url.contains('localhost')) {
-      url = url.replaceAll('localhost', '10.0.2.2');
+      // Check if running on emulator vs real device
+      // adb reverse handles emulator, but real devices need the LAN IP
+      final hostIp = dotenv.env['HOST_IP'] ?? '';
+      if (hostIp.isNotEmpty) {
+        url = url.replaceAll('localhost', hostIp);
+      }
     }
     
     return url;

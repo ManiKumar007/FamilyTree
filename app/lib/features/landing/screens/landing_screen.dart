@@ -811,16 +811,19 @@ class _LandingScreenState extends State<LandingScreen>
 
   // ─── CTA Section ─────────────────────────────────────────────
   Widget _buildCTASection(bool isMobile) {
-    return Stack(
-      children: [
-        Container(
-          decoration: const BoxDecoration(gradient: AppGradients.hero),
-          padding: EdgeInsets.symmetric(
-            horizontal: isMobile ? AppSpacing.lg : AppSpacing.xxl,
-            vertical: isMobile ? AppSpacing.xxl * 1.2 : AppSpacing.xxl * 1.5,
-          ),
-          child: Column(
-            children: [
+    return SizedBox(
+      width: double.infinity,
+      child: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            decoration: const BoxDecoration(gradient: AppGradients.hero),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? AppSpacing.lg : AppSpacing.xxl,
+              vertical: isMobile ? AppSpacing.xxl * 1.2 : AppSpacing.xxl * 1.5,
+            ),
+            child: Column(
+              children: [
               // Decorative icon cluster
               Stack(
                 alignment: Alignment.center,
@@ -935,6 +938,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
         ),
       ],
+    ),
     );
   }
 }

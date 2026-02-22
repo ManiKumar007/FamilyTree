@@ -4,6 +4,7 @@ import '../../../services/stats_service.dart';
 import '../../../config/theme.dart';
 import '../../../config/responsive.dart';
 import '../../../widgets/common_widgets.dart';
+import '../../../widgets/app_shell.dart';
 
 class StatisticsScreen extends ConsumerStatefulWidget {
   const StatisticsScreen({super.key});
@@ -48,6 +49,13 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: MediaQuery.of(context).size.width < AppSizing.breakpointTablet
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: 'Menu',
+                onPressed: () => mobileShellScaffoldKey.currentState?.openDrawer(),
+              )
+            : null,
         title: const Text('Family Statistics'),
         actions: [
           IconButton(

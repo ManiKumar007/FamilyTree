@@ -6,6 +6,9 @@ import '../config/theme.dart';
 import '../services/auth_service.dart';
 import '../services/notifications_service.dart';
 
+/// Global key for the mobile shell scaffold to open drawer from child screens
+final mobileShellScaffoldKey = GlobalKey<ScaffoldState>();
+
 /// Navigation destination definition
 class _NavDestination {
   final String label;
@@ -88,8 +91,8 @@ class AppShell extends ConsumerWidget {
       );
     }
 
-    // Mobile: bottom navigation
-    return _MobileShell(navigationShell: navigationShell);
+    // Mobile: bottom navigation + drawer
+    return _MobileShell(navigationShell: navigationShell, ref: ref);
   }
 }
 
@@ -131,13 +134,14 @@ class _DesktopShell extends StatelessWidget {
   }
 }
 
-/// Mobile layout with bottom navigation bar
+/// Mobile layout with bottom navigation bar + drawer for all nav items
 class _MobileShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
+  final WidgetRef ref;
 
-  const _MobileShell({required this.navigationShell});
+  const _MobileShell({required this.navigationShell, required this.ref});
 
-  // On mobile, show only the 5 most important nav items to prevent overflow
+  // On mobile bottom nav, show only the 5 most important items
   static const _mobileDestinationIndices = [0, 1, 2, 3, 6]; // Tree, Search, Connection, Invite, Statistics
 
   int _mapToMobileIndex(int shellIndex) {
@@ -158,8 +162,132 @@ class _MobileShell extends StatelessWidget {
     final mobileDestinations = _mobileDestinationIndices
         .map((i) => _destinations[i])
         .toList();
+    final user = Supabase.instance.client.auth.currentUser;
+    final email = user?.email ?? '';
+    final displayName = user?.userMetadata?['full_name'] as String? ??
+        email.split('@').first;
 
     return Scaffold(
+      key: mobileShellScaffoldKey,
+      drawer: Drawer(
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: AppGradients.sidebar,
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Header — fixed at top
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: kSidebarActive.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.account_tree_rounded, color: kSidebarActive, size: 16),
+                      ),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text('MyFamilyTree',
+                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 20),
+                        onPressed: () { Navigator.of(context).pop(); context.push('/notifications'); },
+                        tooltip: 'Notifications',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+                // Scrollable nav items — takes all remaining space
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    children: [
+                      for (int i = 0; i < _destinations.length; i++)
+                        _buildDrawerItem(context, i),
+                      _buildDrawerItem(context, -1, isAdmin: true),
+                    ],
+                  ),
+                ),
+                // User section — fixed at bottom
+                Divider(height: 1, color: Colors.white.withValues(alpha: 0.1)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Row(
+                    children: [
+                      // Avatar
+                      Container(
+                        width: 32, height: 32,
+                        decoration: BoxDecoration(
+                          color: kSidebarActive.withValues(alpha: 0.25),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Name + email
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(displayName,
+                              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                            Text(email,
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 10),
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ],
+                        ),
+                      ),
+                      // Profile
+                      IconButton(
+                        icon: Icon(Icons.person_outline, size: 18, color: Colors.white.withValues(alpha: 0.7)),
+                        tooltip: 'Profile',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          final userId = Supabase.instance.client.auth.currentUser?.id;
+                          if (userId != null) context.push('/edit-profile/$userId');
+                        },
+                      ),
+                      // Sign out
+                      IconButton(
+                        icon: Icon(Icons.logout_rounded, size: 18, color: Colors.white.withValues(alpha: 0.5)),
+                        tooltip: 'Sign Out',
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                        onPressed: () async {
+                          await ref.read(authServiceProvider).signOut();
+                          if (context.mounted) context.go('/login');
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
       body: navigationShell,
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
@@ -186,6 +314,87 @@ class _MobileShell extends StatelessWidget {
                     label: d.label,
                   ))
               .toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem(BuildContext context, int index, {bool isAdmin = false}) {
+    final isSelected = !isAdmin && navigationShell.currentIndex == index;
+    final dest = isAdmin
+        ? const _NavDestination(
+            label: 'Admin',
+            icon: Icons.admin_panel_settings_outlined,
+            activeIcon: Icons.admin_panel_settings,
+            path: '/admin',
+          )
+        : _destinations[index];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 1),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).pop(); // close drawer
+            if (isAdmin) {
+              context.push('/admin');
+            } else {
+              navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+            }
+          },
+          borderRadius: BorderRadius.circular(8),
+          hoverColor: Colors.white.withValues(alpha: 0.08),
+          splashColor: Colors.white.withValues(alpha: 0.12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: isSelected
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : Colors.transparent,
+            ),
+            child: Row(
+              children: [
+                if (isSelected) ...[
+                  Container(
+                    width: 3,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: kSidebarActive,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                ] else
+                  const SizedBox(width: 13),
+                Icon(
+                  isSelected ? dest.activeIcon : dest.icon,
+                  color: isSelected
+                      ? kSidebarActive
+                      : isAdmin
+                          ? Colors.white.withValues(alpha: 0.4)
+                          : Colors.white.withValues(alpha: 0.6),
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  dest.label,
+                  style: TextStyle(
+                    color: isSelected
+                        ? Colors.white
+                        : isAdmin
+                            ? Colors.white.withValues(alpha: 0.4)
+                            : Colors.white.withValues(alpha: 0.6),
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

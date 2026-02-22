@@ -11,6 +11,7 @@ final statsServiceProvider = Provider<StatsService>((ref) {
 
 class StatsService {
   final AuthService _authService;
+  static const _timeout = Duration(seconds: 15);
   
   StatsService(this._authService);
 
@@ -34,7 +35,7 @@ class StatsService {
     final response = await http.get(
       Uri.parse('$_baseUrl/stats/family'),
       headers: _headers,
-    );
+    ).timeout(_timeout);
     
     if (response.statusCode != 200) throw _handleError(response);
     
@@ -47,7 +48,7 @@ class StatsService {
     final response = await http.get(
       Uri.parse('$_baseUrl/stats/consistency'),
       headers: _headers,
-    );
+    ).timeout(_timeout);
     
     if (response.statusCode != 200) throw _handleError(response);
     
@@ -66,7 +67,7 @@ class StatsService {
         'person_id_2': personId2,
         'max_depth': maxDepth,
       }),
-    );
+    ).timeout(_timeout);
     
     if (response.statusCode != 200) throw _handleError(response);
     
@@ -80,7 +81,7 @@ class StatsService {
     final response = await http.get(
       Uri.parse('$_baseUrl/stats/tree-depth'),
       headers: _headers,
-    );
+    ).timeout(_timeout);
     
     if (response.statusCode != 200) throw _handleError(response);
     

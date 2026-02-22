@@ -7,6 +7,7 @@ import '../../../services/auth_service.dart';
 import '../../../models/models.dart';
 import '../../../config/theme.dart';
 import '../../../config/responsive.dart';
+import '../../../widgets/app_shell.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -61,6 +62,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: MediaQuery.of(context).size.width < AppSizing.breakpointTablet
+            ? IconButton(
+                icon: const Icon(Icons.menu),
+                tooltip: 'Menu',
+                onPressed: () => mobileShellScaffoldKey.currentState?.openDrawer(),
+              )
+            : null,
         title: Row(
           children: [
             Icon(Icons.search_rounded, size: 22, color: kPrimaryColor),

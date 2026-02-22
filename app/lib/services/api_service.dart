@@ -15,6 +15,7 @@ final apiServiceProvider = Provider<ApiService>((ref) {
 
 class ApiService {
   final AuthService _authService;
+  static const _timeout = Duration(seconds: 15);
   
   ApiService(this._authService);
 
@@ -38,7 +39,7 @@ class ApiService {
     final response = await http.get(
       Uri.parse('$_baseUrl$endpoint'),
       headers: _headers,
-    );
+    ).timeout(_timeout);
     if (response.statusCode != 200) throw _handleError(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -49,7 +50,7 @@ class ApiService {
       Uri.parse('$_baseUrl$endpoint'),
       headers: _headers,
       body: jsonEncode(data),
-    );
+    ).timeout(_timeout);
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw _handleError(response);
     }
@@ -63,7 +64,7 @@ class ApiService {
     final response = await http.get(
       Uri.parse('$_baseUrl/persons/me/profile'),
       headers: _headers,
-    );
+    ).timeout(_timeout);
     if (response.statusCode == 404) return null;
     if (response.statusCode != 200) throw _handleError(response);
     final wrapper = jsonDecode(response.body);
@@ -199,7 +200,7 @@ class ApiService {
     final response = await http.get(
       Uri.parse('$_baseUrl/tree'),
       headers: _headers,
-    );
+    ).timeout(_timeout);
     if (response.statusCode != 200) throw _handleError(response);
     final wrapper = jsonDecode(response.body);
     return TreeResponse.fromJson(wrapper['data']);
@@ -210,7 +211,7 @@ class ApiService {
     final response = await http.get(
       Uri.parse('$_baseUrl/tree/$personId'),
       headers: _headers,
-    );
+    ).timeout(_timeout);
     if (response.statusCode != 200) throw _handleError(response);
     final wrapper = jsonDecode(response.body);
     return TreeResponse.fromJson(wrapper['data']);
