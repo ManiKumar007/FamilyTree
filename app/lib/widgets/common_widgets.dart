@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../config/theme.dart';
+import '../config/responsive.dart';
 
 /// A beautiful avatar widget with gender-based colors and image support
 class AppAvatar extends StatelessWidget {
@@ -131,7 +132,7 @@ class InfoCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: (iconColor ?? kPrimaryColor).withOpacity(0.1),
+                  color: (iconColor ?? kPrimaryColor).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
                 ),
                 child: Icon(
@@ -302,9 +303,9 @@ class StatusBadge extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.1),
+        color: badgeColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
-        border: Border.all(color: badgeColor.withOpacity(0.3)),
+        border: Border.all(color: badgeColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -345,6 +346,8 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = Responsive(context);
+    final emptyIconSize = r.value(mobile: 60.0, tablet: 72.0, desktop: 80.0);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -353,7 +356,7 @@ class EmptyState extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 80,
+              size: emptyIconSize,
               color: kTextDisabled,
             ),
             const SizedBox(height: AppSpacing.lg),
@@ -472,9 +475,9 @@ class RelationshipChip extends StatelessWidget {
     return Chip(
       avatar: Icon(_icon, size: 16, color: color),
       label: Text(_displayLabel),
-      backgroundColor: color.withOpacity(0.1),
+      backgroundColor: color.withValues(alpha: 0.1),
       labelStyle: TextStyle(color: color, fontWeight: FontWeight.w600),
-      side: BorderSide(color: color.withOpacity(0.3)),
+      side: BorderSide(color: color.withValues(alpha: 0.3)),
       onDeleted: onTap,
       deleteIcon: onTap != null ? const Icon(Icons.close, size: 16) : null,
     );

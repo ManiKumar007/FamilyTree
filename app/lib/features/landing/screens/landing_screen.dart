@@ -116,7 +116,7 @@ class _LandingScreenState extends State<LandingScreen>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      kPrimaryLight.withOpacity(0.15),
+                      kPrimaryLight.withValues(alpha: 0.15),
                       Colors.transparent,
                     ],
                   ),
@@ -186,7 +186,7 @@ class _LandingScreenState extends State<LandingScreen>
                           decoration: BoxDecoration(
                             border: Border(
                               left: BorderSide(
-                                color: kAccentColor.withOpacity(0.8),
+                                color: kAccentColor.withValues(alpha: 0.8),
                                 width: 3,
                               ),
                             ),
@@ -195,7 +195,7 @@ class _LandingScreenState extends State<LandingScreen>
                             'Discover, connect, and preserve your family legacy\nwith India\'s most powerful family tree platform',
                             style: TextStyle(
                               fontSize: isMobile ? 14 : 18,
-                              color: Colors.white.withOpacity(0.85),
+                              color: Colors.white.withValues(alpha: 0.85),
                               height: 1.6,
                               fontWeight: FontWeight.w300,
                             ),
@@ -247,7 +247,7 @@ class _LandingScreenState extends State<LandingScreen>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withOpacity(0.08),
+              color: Colors.white.withValues(alpha: 0.08),
               width: 1,
             ),
           ),
@@ -259,7 +259,7 @@ class _LandingScreenState extends State<LandingScreen>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               width: 1,
             ),
           ),
@@ -274,17 +274,17 @@ class _LandingScreenState extends State<LandingScreen>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withOpacity(0.2),
-                kPrimaryLight.withOpacity(0.15),
+                Colors.white.withValues(alpha: 0.2),
+                kPrimaryLight.withValues(alpha: 0.15),
               ],
             ),
             border: Border.all(
-              color: Colors.white.withOpacity(0.25),
+              color: Colors.white.withValues(alpha: 0.25),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: kPrimaryLight.withOpacity(0.3),
+                color: kPrimaryLight.withValues(alpha: 0.3),
                 blurRadius: 30,
                 spreadRadius: 5,
               ),
@@ -304,7 +304,7 @@ class _LandingScreenState extends State<LandingScreen>
           return Positioned(
             top: 60 + _floatAnimation.value * 0.5,
             left: isMobile ? -30 : 60,
-            child: _buildOrb(80, kPrimaryLight.withOpacity(0.06)),
+            child: _buildOrb(80, kPrimaryLight.withValues(alpha: 0.06)),
           );
         },
       ),
@@ -314,7 +314,7 @@ class _LandingScreenState extends State<LandingScreen>
           return Positioned(
             top: 120 - _floatAnimation.value * 0.7,
             right: isMobile ? -20 : 80,
-            child: _buildOrb(60, kAccentColor.withOpacity(0.05)),
+            child: _buildOrb(60, kAccentColor.withValues(alpha: 0.05)),
           );
         },
       ),
@@ -324,7 +324,7 @@ class _LandingScreenState extends State<LandingScreen>
           return Positioned(
             bottom: 140 + _floatAnimation.value * 0.4,
             left: isMobile ? 20 : 120,
-            child: _buildOrb(50, kSecondaryLight.withOpacity(0.06)),
+            child: _buildOrb(50, kSecondaryLight.withValues(alpha: 0.06)),
           );
         },
       ),
@@ -354,7 +354,7 @@ class _LandingScreenState extends State<LandingScreen>
             borderRadius: BorderRadius.circular(AppSizing.borderRadius),
             boxShadow: [
               BoxShadow(
-                color: kAccentColor.withOpacity(0.4),
+                color: kAccentColor.withValues(alpha: 0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 4),
               ),
@@ -388,11 +388,11 @@ class _LandingScreenState extends State<LandingScreen>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSizing.borderRadius),
             border:
-                Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+                Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
             gradient: LinearGradient(
               colors: [
-                Colors.white.withOpacity(0.1),
-                Colors.white.withOpacity(0.05),
+                Colors.white.withValues(alpha: 0.1),
+                Colors.white.withValues(alpha: 0.05),
               ],
             ),
           ),
@@ -435,8 +435,8 @@ class _LandingScreenState extends State<LandingScreen>
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withOpacity(0.08),
-            border: Border.all(color: Colors.white.withOpacity(0.12)),
+            color: Colors.white.withValues(alpha: 0.08),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -446,7 +446,7 @@ class _LandingScreenState extends State<LandingScreen>
               Text(
                 badge.$2,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontSize: isMobile ? 11 : 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -472,9 +472,9 @@ class _LandingScreenState extends State<LandingScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: kPrimaryColor.withOpacity(0.1),
+              color: kPrimaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: kPrimaryColor.withOpacity(0.2)),
+              border: Border.all(color: kPrimaryColor.withValues(alpha: 0.2)),
             ),
             child: const Text(
               '✨ FEATURES',
@@ -620,9 +620,9 @@ class _LandingScreenState extends State<LandingScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: kSecondaryColor.withOpacity(0.1),
+              color: kSecondaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: kSecondaryColor.withOpacity(0.2)),
+              border: Border.all(color: kSecondaryColor.withValues(alpha: 0.2)),
             ),
             child: const Text(
               '🚀 HOW IT WORKS',
@@ -719,8 +719,8 @@ class _LandingScreenState extends State<LandingScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            kPrimaryDark.withOpacity(0.95),
-            kPrimaryColor.withOpacity(0.95),
+            kPrimaryDark.withValues(alpha: 0.95),
+            kPrimaryColor.withValues(alpha: 0.95),
           ],
         ),
       ),
@@ -777,7 +777,7 @@ class _LandingScreenState extends State<LandingScreen>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 28, color: kPrimaryLight.withOpacity(0.6)),
+        Icon(icon, size: 28, color: kPrimaryLight.withValues(alpha: 0.6)),
         const SizedBox(height: 8),
         Text(
           value,
@@ -793,7 +793,7 @@ class _LandingScreenState extends State<LandingScreen>
           label,
           style: TextStyle(
             fontSize: 14,
-            color: Colors.white.withOpacity(0.7),
+            color: Colors.white.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -805,7 +805,7 @@ class _LandingScreenState extends State<LandingScreen>
     return Container(
       width: 1,
       height: 60,
-      color: Colors.white.withOpacity(0.15),
+      color: Colors.white.withValues(alpha: 0.15),
     );
   }
 
@@ -830,9 +830,9 @@ class _LandingScreenState extends State<LandingScreen>
                     height: isMobile ? 100 : 130,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.05),
+                      color: Colors.white.withValues(alpha: 0.05),
                       border:
-                          Border.all(color: Colors.white.withOpacity(0.1)),
+                          Border.all(color: Colors.white.withValues(alpha: 0.1)),
                     ),
                   ),
                   Container(
@@ -844,8 +844,8 @@ class _LandingScreenState extends State<LandingScreen>
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withOpacity(0.15),
-                          Colors.white.withOpacity(0.05),
+                          Colors.white.withValues(alpha: 0.15),
+                          Colors.white.withValues(alpha: 0.05),
                         ],
                       ),
                     ),
@@ -874,7 +874,7 @@ class _LandingScreenState extends State<LandingScreen>
                 'Join families across India who are preserving their heritage',
                 style: TextStyle(
                   fontSize: isMobile ? 14 : 18,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontWeight: FontWeight.w300,
                 ),
                 textAlign: TextAlign.center,
@@ -887,7 +887,7 @@ class _LandingScreenState extends State<LandingScreen>
                   borderRadius: BorderRadius.circular(AppSizing.borderRadius),
                   boxShadow: [
                     BoxShadow(
-                      color: kAccentColor.withOpacity(0.5),
+                      color: kAccentColor.withValues(alpha: 0.5),
                       blurRadius: 25,
                       offset: const Offset(0, 6),
                     ),
@@ -929,7 +929,7 @@ class _LandingScreenState extends State<LandingScreen>
           child: CustomPaint(
             size: const Size(double.infinity, 50),
             painter: _WavePainter(
-              color: kPrimaryDark.withOpacity(0.95),
+              color: kPrimaryDark.withValues(alpha: 0.95),
               flipVertically: true,
             ),
           ),
@@ -948,7 +948,7 @@ class _TreePatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.04)
+      ..color = Colors.white.withValues(alpha: 0.04)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
@@ -998,13 +998,13 @@ class _TreePatternPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(midX, midY),
         3,
-        Paint()..color = Colors.white.withOpacity(0.06),
+        Paint()..color = Colors.white.withValues(alpha: 0.06),
       );
     }
 
     // Subtle circles representing family members
     final circlePaint = Paint()
-      ..color = Colors.white.withOpacity(0.03)
+      ..color = Colors.white.withValues(alpha: 0.03)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8;
 
@@ -1083,7 +1083,7 @@ class _DotPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
+      ..color = Colors.white.withValues(alpha: 0.05)
       ..style = PaintingStyle.fill;
 
     const spacing = 30.0;
@@ -1163,34 +1163,34 @@ class _FeatureCardState extends State<_FeatureCard> {
           borderRadius: BorderRadius.circular(AppSizing.borderRadiusLg),
           border: Border.all(
             color: _isHovered
-                ? widget.feature.gradient.colors.first.withOpacity(0.3)
+                ? widget.feature.gradient.colors.first.withValues(alpha: 0.3)
                 : kDividerColor,
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
               color: _isHovered
-                  ? widget.feature.gradient.colors.first.withOpacity(0.15)
-                  : Colors.black.withOpacity(0.04),
+                  ? widget.feature.gradient.colors.first.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.04),
               blurRadius: _isHovered ? 20 : 8,
               offset: Offset(0, _isHovered ? 8 : 2),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Animated gradient icon container
               AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   gradient: _isHovered ? widget.feature.gradient : null,
                   color: _isHovered
                       ? null
-                      : widget.feature.gradient.colors.first.withOpacity(0.08),
+                      : widget.feature.gradient.colors.first.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
@@ -1201,27 +1201,31 @@ class _FeatureCardState extends State<_FeatureCard> {
                       : widget.feature.gradient.colors.first,
                 ),
               ),
-              SizedBox(height: AppSpacing.md),
+              SizedBox(height: AppSpacing.sm),
               Text(
                 widget.feature.title,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: kTextPrimary,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               SizedBox(height: AppSpacing.xs),
-              Text(
-                widget.feature.description,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: kTextSecondary,
-                  height: 1.5,
+              Flexible(
+                child: Text(
+                  widget.feature.description,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: kTextSecondary,
+                    height: 1.5,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -1264,11 +1268,11 @@ class _StepItem extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [step.color, step.color.withOpacity(0.7)],
+                      colors: [step.color, step.color.withValues(alpha: 0.7)],
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: step.color.withOpacity(0.3),
+                        color: step.color.withValues(alpha: 0.3),
                         blurRadius: 12,
                         offset: const Offset(0, 4),
                       ),
@@ -1294,7 +1298,7 @@ class _StepItem extends StatelessWidget {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [step.color.withOpacity(0.3), kDividerColor],
+                        colors: [step.color.withValues(alpha: 0.3), kDividerColor],
                       ),
                     ),
                   ),
@@ -1365,11 +1369,11 @@ class _StepCardDesktop extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [step.color, step.color.withOpacity(0.7)],
+                colors: [step.color, step.color.withValues(alpha: 0.7)],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: step.color.withOpacity(0.3),
+                  color: step.color.withValues(alpha: 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -1392,7 +1396,7 @@ class _StepCardDesktop extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: step.color.withOpacity(0.08),
+              color: step.color.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(step.icon, color: step.color, size: 24),

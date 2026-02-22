@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/api_service.dart';
 import '../../../config/theme.dart';
+import '../../../config/responsive.dart';
 
 class InviteScreen extends ConsumerStatefulWidget {
   final String? token;
@@ -18,7 +19,6 @@ class InviteScreen extends ConsumerStatefulWidget {
 
 class _InviteScreenState extends ConsumerState<InviteScreen> {
   bool _isLoading = false;
-  Map<String, dynamic>? _inviteData;
   String? _error;
   bool _claimed = false;
 
@@ -34,8 +34,8 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
     setState(() { _isLoading = true; });
     try {
       final api = ref.read(apiServiceProvider);
-      final result = await api.claimInvite(widget.token!);
-      setState(() { _claimed = true; _inviteData = result; });
+      await api.claimInvite(widget.token!);
+      setState(() { _claimed = true; });
     } catch (e) {
       setState(() { _error = e.toString(); });
     } finally {
@@ -65,7 +65,7 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+          child: Container(height: 1, color: kDividerColor.withValues(alpha: 0.5)),
         ),
         actions: [
           PopupMenuButton<String>(
@@ -140,23 +140,31 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+          child: Container(height: 1, color: kDividerColor.withValues(alpha: 0.5)),
         ),
       ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: Column(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: kPrimaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Icon(Icons.send_rounded, size: 40, color: kPrimaryColor),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final r = Responsive(context);
+                  final iconBoxSize = r.value(mobile: 64.0, tablet: 80.0, desktop: 80.0);
+                  return Container(
+                    width: iconBoxSize,
+                    height: iconBoxSize,
+                    decoration: BoxDecoration(
+                      color: kPrimaryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Icon(Icons.send_rounded, size: iconBoxSize * 0.5, color: kPrimaryColor),
+                  );
+                },
               ),
               const SizedBox(height: 24),
               Text(
@@ -170,6 +178,7 @@ class _InviteScreenState extends ConsumerState<InviteScreen> {
                 style: TextStyle(color: kTextSecondary, fontSize: 15),
               ),
             ],
+          ),
           ),
         ),
       ),

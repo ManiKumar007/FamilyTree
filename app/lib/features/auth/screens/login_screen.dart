@@ -148,7 +148,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: const Icon(
@@ -173,7 +173,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           'Build, explore, and share your family tree\nwith the people who matter most.',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             height: 1.6,
                           ),
                         ),
@@ -202,7 +202,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               width: 64,
                               height: 64,
                               decoration: BoxDecoration(
-                                color: kPrimaryColor.withOpacity(0.1),
+                                color: kPrimaryColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               child: const Icon(
@@ -297,9 +297,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: kErrorColor.withOpacity(0.08),
+                                color: kErrorColor.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: kErrorColor.withOpacity(0.2)),
+                                border: Border.all(color: kErrorColor.withValues(alpha: 0.2)),
                               ),
                               child: Row(
                                 children: [

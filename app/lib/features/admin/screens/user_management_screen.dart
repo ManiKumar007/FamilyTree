@@ -43,7 +43,7 @@ class UserManagementScreen extends ConsumerWidget {
           if (state.roleFilter != null)
             Container(
               padding: const EdgeInsets.all(12),
-              color: theme.colorScheme.surfaceVariant,
+              color: theme.colorScheme.surfaceContainerHighest,
               child: Row(
                 children: [
                   const Text('Filter: '),
@@ -135,7 +135,7 @@ class UserManagementScreen extends ConsumerWidget {
 }
 
 class _UserCard extends StatelessWidget {
-  final user;
+  final dynamic user;
   final Function(String) onRoleChange;
   final Function(bool) onStatusChange;
 
@@ -167,7 +167,7 @@ class _UserCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getRoleColor(user.role).withOpacity(0.2),
+          backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.2),
           child: Icon(
             Icons.person,
             color: _getRoleColor(user.role),
@@ -182,7 +182,7 @@ class _UserCard extends StatelessWidget {
             const SizedBox(width: 8),
             Chip(
               label: Text(user.role.toUpperCase().replaceAll('_', ' ')),
-              backgroundColor: _getRoleColor(user.role).withOpacity(0.2),
+              backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.2),
               labelStyle: TextStyle(
                 color: _getRoleColor(user.role),
                 fontWeight: FontWeight.bold,

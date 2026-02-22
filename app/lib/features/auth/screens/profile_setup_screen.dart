@@ -171,11 +171,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       final user = authService.currentUser;
       if (user != null) {
         print('User Email: ${user.email}');
-        print('Email Confirmed: ${user.confirmedAt != null}');
+        print('Email Confirmed: ${user.emailConfirmedAt != null}');
         print('User Created: ${user.createdAt}');
         
         // If email is not confirmed, show warning
-        if (user.confirmedAt == null) {
+        if (user.emailConfirmedAt == null) {
           print('⚠️ WARNING: Email not confirmed. This may cause token issues.');
         }
       }

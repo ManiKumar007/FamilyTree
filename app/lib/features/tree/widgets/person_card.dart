@@ -11,6 +11,7 @@ class PersonCard extends StatefulWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onInvite;
   final VoidCallback? onFindConnection;
+  final double? cardWidth;
 
   const PersonCard({
     super.key,
@@ -20,6 +21,7 @@ class PersonCard extends StatefulWidget {
     this.onEdit,
     this.onInvite,
     this.onFindConnection,
+    this.cardWidth,
   });
 
   @override
@@ -32,8 +34,8 @@ class _PersonCardState extends State<PersonCard> {
   @override
   Widget build(BuildContext context) {
     final isMale = widget.person.gender == 'male';
-    final genderColor = getGenderColor(widget.person.gender ?? 'other');
-    final genderColorLight = getGenderColor(widget.person.gender ?? 'other', light: true);
+    final genderColor = getGenderColor(widget.person.gender);
+    final effectiveWidth = widget.cardWidth ?? 148.0;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -42,7 +44,7 @@ class _PersonCardState extends State<PersonCard> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: 148,
+          width: effectiveWidth,
           decoration: BoxDecoration(
             color: kSurfaceColor,
             borderRadius: BorderRadius.circular(14),
@@ -50,15 +52,15 @@ class _PersonCardState extends State<PersonCard> {
               color: widget.isCurrentUser
                   ? kAccentColor
                   : _isHovered
-                      ? genderColor.withOpacity(0.6)
+                      ? genderColor.withValues(alpha: 0.6)
                       : kDividerColor,
               width: widget.isCurrentUser ? 2.5 : 1.5,
             ),
             boxShadow: [
               BoxShadow(
                 color: _isHovered
-                    ? genderColor.withOpacity(0.15)
-                    : Colors.black.withOpacity(0.04),
+                    ? genderColor.withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.04),
                 blurRadius: _isHovered ? 12 : 6,
                 offset: Offset(0, _isHovered ? 4 : 2),
               ),
@@ -69,13 +71,13 @@ class _PersonCardState extends State<PersonCard> {
             children: [
               // Gender accent strip + photo area
               Container(
-                height: 60,
+                height: effectiveWidth * 0.4,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [genderColor, genderColor.withOpacity(0.7)],
+                    colors: [genderColor, genderColor.withValues(alpha: 0.7)],
                   ),
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
@@ -99,13 +101,13 @@ class _PersonCardState extends State<PersonCard> {
 
               // Info area
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding: EdgeInsets.symmetric(horizontal: effectiveWidth * 0.05, vertical: effectiveWidth * 0.04),
                 child: Column(
                   children: [
                     Text(
                       widget.person.name,
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: TextStyle(
+                        fontSize: (effectiveWidth * 0.08).clamp(10.0, 14.0),
                         fontWeight: FontWeight.w600,
                         color: kTextPrimary,
                       ),
@@ -116,7 +118,7 @@ class _PersonCardState extends State<PersonCard> {
                     if (widget.person.birthYear != null)
                       Text(
                         '(${widget.person.birthYear} -)',
-                        style: const TextStyle(fontSize: 10, color: kTextSecondary),
+                        style: TextStyle(fontSize: (effectiveWidth * 0.07).clamp(9.0, 12.0), color: kTextSecondary),
                       ),
                   ],
                 ),
@@ -150,7 +152,7 @@ class _PersonCardState extends State<PersonCard> {
       child: Icon(
         isMale ? Icons.person_rounded : Icons.person_2_rounded,
         size: 32,
-        color: Colors.white.withOpacity(0.8),
+        color: Colors.white.withValues(alpha: 0.8),
       ),
     );
   }
@@ -178,11 +180,13 @@ class _PersonCardState extends State<PersonCard> {
 class AddPersonButton extends StatefulWidget {
   final String label;
   final VoidCallback onTap;
+  final double? buttonWidth;
 
   const AddPersonButton({
     super.key,
     required this.label,
     required this.onTap,
+    this.buttonWidth,
   });
 
   @override
@@ -194,6 +198,7 @@ class _AddPersonButtonState extends State<AddPersonButton> {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveWidth = widget.buttonWidth ?? 120.0;
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -201,15 +206,15 @@ class _AddPersonButtonState extends State<AddPersonButton> {
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: 120,
+          width: effectiveWidth,
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
           decoration: BoxDecoration(
             border: Border.all(
-              color: _isHovered ? kPrimaryColor.withOpacity(0.5) : kDividerColor,
+              color: _isHovered ? kPrimaryColor.withValues(alpha: 0.5) : kDividerColor,
               width: 1.5,
             ),
             borderRadius: BorderRadius.circular(14),
-            color: _isHovered ? kPrimaryColor.withOpacity(0.04) : kSurfaceColor,
+            color: _isHovered ? kPrimaryColor.withValues(alpha: 0.04) : kSurfaceColor,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -218,7 +223,7 @@ class _AddPersonButtonState extends State<AddPersonButton> {
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: _isHovered
-                      ? kPrimaryColor.withOpacity(0.1)
+                      ? kPrimaryColor.withValues(alpha: 0.1)
                       : kSurfaceSecondary,
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -268,7 +273,7 @@ class CollapseBadge extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: kPrimaryColor.withOpacity(0.3),
+              color: kPrimaryColor.withValues(alpha: 0.3),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

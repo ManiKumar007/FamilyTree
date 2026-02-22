@@ -62,7 +62,7 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                           Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: kPrimaryColor.withOpacity(0.1),
+                              color: kPrimaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(Icons.account_tree_rounded,
@@ -137,7 +137,7 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: kPrimaryColor.withOpacity(0.08),
+                          color: kPrimaryColor.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -261,7 +261,7 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                   ),
               ],
         ),
-        Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+        Container(height: 1, color: kDividerColor.withValues(alpha: 0.5)),
       ],
     );
   }
@@ -301,8 +301,8 @@ class _NavLinkState extends State<_NavLink> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: widget.isActive
-                ? kPrimaryColor.withOpacity(0.08)
-                : (_isHovered ? kPrimaryColor.withOpacity(0.04) : Colors.transparent),
+                ? kPrimaryColor.withValues(alpha: 0.08)
+                : (_isHovered ? kPrimaryColor.withValues(alpha: 0.04) : Colors.transparent),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -361,7 +361,7 @@ class AppNavDrawer extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
+                          color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Icon(Icons.account_tree_rounded,
@@ -383,7 +383,7 @@ class AppNavDrawer extends ConsumerWidget {
                     Text(
                       authService.currentUser?.email ?? '',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 13,
                       ),
                     ),
@@ -560,7 +560,7 @@ class _DrawerItem extends StatelessWidget {
         ),
       ),
       selected: isActive,
-      selectedTileColor: kPrimaryColor.withOpacity(0.06),
+      selectedTileColor: kPrimaryColor.withValues(alpha: 0.06),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
       ),

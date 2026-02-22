@@ -6,6 +6,7 @@ import '../../../services/api_service.dart';
 import '../../../services/life_events_service.dart';
 import '../../../models/models.dart';
 import '../../../config/theme.dart';
+import '../../../config/responsive.dart';
 import '../../../widgets/common_widgets.dart';
 import '../../../widgets/image_upload_widget.dart';
 
@@ -163,8 +164,9 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
 
   Widget _buildAppBar(Person person) {
     final genderColor = getGenderColor(person.gender);
+    final r = Responsive(context);
     return SliverAppBar(
-      expandedHeight: 280,
+      expandedHeight: r.appBarExpandedHeight,
       pinned: true,
       backgroundColor: kSurfaceColor,
       foregroundColor: kTextPrimary,
@@ -189,8 +191,8 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
               end: Alignment.bottomRight,
               colors: [
                 genderColor,
-                genderColor.withOpacity(0.7),
-                kPrimaryColor.withOpacity(0.6),
+                genderColor.withValues(alpha: 0.7),
+                kPrimaryColor.withValues(alpha: 0.6),
               ],
             ),
           ),
@@ -324,7 +326,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
             Container(
               padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 24),
@@ -774,7 +776,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                   border: Border.all(color: color, width: 2),
                 ),

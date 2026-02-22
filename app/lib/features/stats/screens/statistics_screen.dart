@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../services/stats_service.dart';
 import '../../../config/theme.dart';
+import '../../../config/responsive.dart';
 import '../../../widgets/common_widgets.dart';
 
 class StatisticsScreen extends ConsumerStatefulWidget {
@@ -120,7 +121,8 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
   Widget _buildOverviewGrid() {
     if (_stats == null) return const SizedBox.shrink();
     
-    return Wrap(
+    return ResponsiveGrid(
+      minChildWidth: 140,
       spacing: AppSpacing.md,
       runSpacing: AppSpacing.md,
       children: [
@@ -285,7 +287,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
     
     if (_consistencyIssues!.isEmpty) {
       return Card(
-        color: kSuccessColor.withOpacity(0.1),
+        color: kSuccessColor.withValues(alpha: 0.1),
         child: const Padding(
           padding: EdgeInsets.all(AppSpacing.lg),
           child: Row(
@@ -347,7 +349,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
     required Color color,
   }) {
     return SizedBox(
-      width: 160,
+      width: double.infinity,
       child: Card(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -356,7 +358,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, color: color, size: 28),

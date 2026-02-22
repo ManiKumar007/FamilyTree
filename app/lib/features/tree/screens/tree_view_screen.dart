@@ -5,6 +5,7 @@ import '../../../models/models.dart';
 import '../../../providers/providers.dart';
 import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
+import '../../../config/responsive.dart';
 import '../widgets/person_card.dart';
 import '../widgets/tree_painter.dart';
 
@@ -18,22 +19,17 @@ class TreeViewScreen extends ConsumerStatefulWidget {
 
 class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
   final TransformationController _transformController = TransformationController();
-  bool _checkingProfile = true;
   
   @override
   void initState() {
     super.initState();
-    _checkProfileSetup();
-  }
-
-  Future<void> _checkProfileSetup() async {
-    // Check if user has completed profile setup
-    final profile = await ref.read(myProfileProvider.future);
-    // Don't automatically redirect - let user see tree view even if profile is not set up
-    // The empty tree view will show a prompt to set up profile
-    if (mounted) {
-      setState(() { _checkingProfile = false; });
-    }
+    // Pre-fetch profile data (non-blocking) so it's ready when tree loads
+    Future.microtask(() {
+      ref.read(myProfileProvider.future).timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => null,
+      ).catchError((_) => null);
+    });
   }
 
   void _centerOnUser() {
@@ -48,13 +44,6 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while checking if profile is set up
-    if (_checkingProfile) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     final treeAsync = ref.watch(familyTreeProvider);
     final pendingMerges = ref.watch(pendingMergesProvider);
     final currentUser = ref.watch(currentUserProvider);
@@ -71,7 +60,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+          child: Container(height: 1, color: kDividerColor.withValues(alpha: 0.5)),
         ),
         actions: [
           IconButton(
@@ -184,7 +173,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                   elevation: 2,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    color: kAccentColor.withOpacity(0.9),
+                    color: kAccentColor.withValues(alpha: 0.9),
                     child: Row(
                       children: [
                         const Icon(Icons.merge_type, color: Colors.white),
@@ -363,6 +352,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
   Widget _buildTreeCanvas(TreeResponse tree, String? userId) {
     // Build layout: organize nodes by generation (depth from root)
     final layout = _calculateLayout(tree, userId);
+    final r = Responsive(context);
 
     return InteractiveViewer(
       transformationController: _transformController,
@@ -387,6 +377,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               child: PersonCard(
                 person: pn.person,
                 isCurrentUser: pn.person.id == tree.rootPersonId,
+                cardWidth: r.treeCardWidth,
                 onTap: () => context.push('/person/${pn.person.id}'),
                 onEdit: pn.canEdit
                     ? () => context.push('/edit-profile/${pn.person.id}')
@@ -405,6 +396,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               top: btn.y,
               child: AddPersonButton(
                 label: btn.label,
+                buttonWidth: r.treeAddBtnWidth,
                 onTap: () {
                   _showRelationshipPicker(btn.relativePersonId);
                 },
@@ -414,10 +406,6 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         ),
       ),
     );
-  }
-
-  void _showAddParentChoice(String relativePersonId) {
-    _showRelationshipPicker(relativePersonId);
   }
 
   void _showRelationshipPicker(String relativePersonId) {
@@ -611,7 +599,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
     return Material(
       elevation: 2,
       borderRadius: BorderRadius.circular(12),
-      color: color.withOpacity(0.1),
+      color: color.withValues(alpha: 0.1),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -619,7 +607,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.3)),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
           child: Column(
             children: [
@@ -674,6 +662,8 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
   }
 
   Widget _navButton(IconData icon, VoidCallback onPressed) {
+    final r = Responsive(context);
+    final btnSize = r.value(mobile: 34.0, desktop: 40.0);
     return Material(
       elevation: 2,
       shape: const CircleBorder(),
@@ -681,14 +671,14 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         onTap: onPressed,
         customBorder: const CircleBorder(),
         child: Container(
-          width: 40,
-          height: 40,
+          width: btnSize,
+          height: btnSize,
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
             border: Border.all(color: kDividerColor),
           ),
-          child: Icon(icon, size: 20, color: kTextSecondary),
+          child: Icon(icon, size: btnSize * 0.5, color: kTextSecondary),
         ),
       ),
     );
@@ -786,13 +776,14 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
     }
 
     // Calculate positions with better family grouping
-    const cardWidth = 148.0;  // Must match PersonCard width
-    const addBtnWidth = 120.0; // Must match AddPersonButton width
-    const cardHeight = 140.0;  // Approximate card height with actions
-    const hGap = 60.0;  // Gap between siblings/families
-    const spouseGap = 30.0;  // Gap between spouses
-    const vGap = 100.0;  // Vertical gap between generations
-    const padding = 200.0;
+    final r = Responsive(context);
+    final cardWidth = r.treeCardWidth;
+    final addBtnWidth = r.treeAddBtnWidth;
+    final cardHeight = r.treeCardHeight;
+    final hGap = r.treeHGap;
+    final spouseGap = r.treeSpouseGap;
+    final vGap = r.treeVGap;
+    final padding = r.treePadding;
 
     final positionedNodes = <_PositionedNode>[];
     final nodePositions = <String, Offset>{};
@@ -839,7 +830,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
           
           // Position right person (spouse)
           final spouseX = currentX + cardWidth + spouseGap;
-          nodePositions[rightId!] = Offset(spouseX + cardWidth / 2, y + cardHeight / 2);
+          nodePositions[rightId] = Offset(spouseX + cardWidth / 2, y + cardHeight / 2);
           positionedNodes.add(_PositionedNode(
             person: personMap[rightId]!,
             x: spouseX,

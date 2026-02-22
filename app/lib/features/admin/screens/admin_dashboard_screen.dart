@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../providers/admin_providers.dart';
 import '../../../config/theme.dart';
+import '../../../config/responsive.dart';
 
 class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
@@ -40,21 +41,21 @@ class AdminDashboardScreen extends ConsumerWidget {
             ],
           ),
         ),
-        data: (stats) => SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Overview Cards
-              Text(
-                'Overview',
-                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: [
+        data: (stats) => ResponsiveContent(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Overview Cards
+                Text(
+                  'Overview',
+                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                ResponsiveGrid(
+                  minChildWidth: 240,
+                  children: [
                   _StatCard(
                     title: 'Total Users',
                     value: stats.totalUsers.toString(),
@@ -92,9 +93,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
+              ResponsiveGrid(
+                minChildWidth: 240,
                 children: [
                   _StatCard(
                     title: 'Total Errors',
@@ -124,9 +124,8 @@ class AdminDashboardScreen extends ConsumerWidget {
                 style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
+              ResponsiveGrid(
+                minChildWidth: 140,
                 children: [
                   _ActionButton(
                     label: 'View Users',
@@ -155,6 +154,7 @@ class AdminDashboardScreen extends ConsumerWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -178,7 +178,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SizedBox(
-      width: 280,
+      width: double.infinity,
       child: Card(
         elevation: 2,
         child: Padding(
@@ -189,7 +189,7 @@ class _StatCard extends StatelessWidget {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: color.withOpacity(0.1),
+                    backgroundColor: color.withValues(alpha: 0.1),
                     child: Icon(icon, color: color, size: 24),
                   ),
                   const Spacer(),
@@ -206,7 +206,7 @@ class _StatCard extends StatelessWidget {
               Text(
                 title,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
               ),
               if (subtitle != null) ...[
@@ -214,7 +214,7 @@ class _StatCard extends StatelessWidget {
                 Text(
                   subtitle!,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -240,7 +240,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 140,
+      width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: onPressed,
         icon: Icon(icon),

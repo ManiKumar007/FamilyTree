@@ -171,12 +171,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       ),
       onDismissed: (direction) => _deleteNotification(notification.id),
       child: Card(
-        color: notification.isRead ? null : kPrimaryColor.withOpacity(0.05),
+        color: notification.isRead ? null : kPrimaryColor.withValues(alpha: 0.05),
         child: ListTile(
           leading: Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: _getNotificationColor(notification.notificationType).withOpacity(0.1),
+              color: _getNotificationColor(notification.notificationType).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

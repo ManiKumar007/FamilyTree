@@ -292,7 +292,7 @@ class _PostCard extends StatelessWidget {
                           errorBuilder: (_, __, ___) => Container(
                             width: 100,
                             height: 100,
-                            color: theme.colorScheme.surfaceVariant,
+                            color: theme.colorScheme.surfaceContainerHighest,
                             child: const Icon(Icons.broken_image),
                           ),
                         ),

@@ -118,6 +118,7 @@ class SearchState {
 
 class SearchNotifier extends StateNotifier<SearchState> {
   final ApiService _apiService;
+  // ignore: unused_field
   final AuthService _authService;
 
   SearchNotifier(this._apiService, this._authService) : super(const SearchState());

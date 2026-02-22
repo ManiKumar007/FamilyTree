@@ -306,11 +306,9 @@ final ThemeData appTheme = ThemeData(
     onError: Colors.white,
     errorContainer: Color(0xFFFFDAD6),
     onErrorContainer: Color(0xFF410002),
-    background: kBackgroundColor,
-    onBackground: kTextPrimary,
     surface: kSurfaceColor,
     onSurface: kTextPrimary,
-    surfaceVariant: kSurfaceSecondary,
+    surfaceContainerHighest: kSurfaceSecondary,
     onSurfaceVariant: kTextSecondary,
     outline: kDividerColor,
     outlineVariant: Color(0xFFF0F2F5),
@@ -528,7 +526,7 @@ final ThemeData appTheme = ThemeData(
     unselectedLabelStyle: AppTextStyles.labelLarge,
     indicator: BoxDecoration(
       borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
-      color: kPrimaryColor.withOpacity(0.1),
+      color: kPrimaryColor.withValues(alpha: 0.1),
     ),
   ),
 

@@ -6,6 +6,7 @@ import '../../../providers/providers.dart';
 import '../../../services/auth_service.dart';
 import '../../../models/models.dart';
 import '../../../config/theme.dart';
+import '../../../config/responsive.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -69,7 +70,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+          child: Container(height: 1, color: kDividerColor.withValues(alpha: 0.5)),
         ),
         actions: [
           PopupMenuButton<String>(
@@ -98,7 +99,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: ResponsiveContent(
+        child: Column(
         children: [
           // Search bar
           Padding(
@@ -184,7 +186,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
                           // Marital status filter
                           DropdownButtonFormField<String?>(
-                            value: _selectedMaritalStatus,
+                            initialValue: _selectedMaritalStatus,
                             decoration: const InputDecoration(
                               labelText: 'Marital Status',
                               isDense: true,
@@ -342,6 +344,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -379,7 +382,7 @@ class _SearchResultCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: kPrimaryColor.withOpacity(0.1),
+                    color: kPrimaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(

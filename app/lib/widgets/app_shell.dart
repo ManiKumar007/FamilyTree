@@ -119,7 +119,7 @@ class _DesktopShell extends StatelessWidget {
           // Vertical divider
           Container(
             width: 1,
-            color: kDividerColor.withOpacity(0.5),
+            color: kDividerColor.withValues(alpha: 0.5),
           ),
           // Main content
           Expanded(
@@ -137,8 +137,28 @@ class _MobileShell extends StatelessWidget {
 
   const _MobileShell({required this.navigationShell});
 
+  // On mobile, show only the 5 most important nav items to prevent overflow
+  static const _mobileDestinationIndices = [0, 1, 2, 3, 6]; // Tree, Search, Connection, Invite, Statistics
+
+  int _mapToMobileIndex(int shellIndex) {
+    final idx = _mobileDestinationIndices.indexOf(shellIndex);
+    return idx >= 0 ? idx : 0;
+  }
+
+  int _mapFromMobileIndex(int mobileIndex) {
+    if (mobileIndex < _mobileDestinationIndices.length) {
+      return _mobileDestinationIndices[mobileIndex];
+    }
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final mobileIndex = _mapToMobileIndex(navigationShell.currentIndex);
+    final mobileDestinations = _mobileDestinationIndices
+        .map((i) => _destinations[i])
+        .toList();
+
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: Container(
@@ -148,17 +168,18 @@ class _MobileShell extends StatelessWidget {
           ),
         ),
         child: NavigationBar(
-          selectedIndex: navigationShell.currentIndex,
+          selectedIndex: mobileIndex,
           onDestinationSelected: (index) {
-            navigationShell.goBranch(index, initialLocation: index == navigationShell.currentIndex);
+            final shellIndex = _mapFromMobileIndex(index);
+            navigationShell.goBranch(shellIndex, initialLocation: shellIndex == navigationShell.currentIndex);
           },
           backgroundColor: kSurfaceColor,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           height: 64,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          indicatorColor: kPrimaryColor.withOpacity(0.12),
-          destinations: _destinations
+          indicatorColor: kPrimaryColor.withValues(alpha: 0.12),
+          destinations: mobileDestinations
               .map((d) => NavigationDestination(
                     icon: Icon(d.icon, size: 22),
                     selectedIcon: Icon(d.activeIcon, size: 22, color: kPrimaryColor),
@@ -214,7 +235,7 @@ class _SidebarState extends State<_Sidebar> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: kSidebarActive.withOpacity(0.2),
+                    color: kSidebarActive.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -266,7 +287,7 @@ class _SidebarState extends State<_Sidebar> {
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -278,7 +299,7 @@ class _SidebarState extends State<_Sidebar> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: kSidebarActive.withOpacity(0.25),
+                    color: kSidebarActive.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
@@ -310,7 +331,7 @@ class _SidebarState extends State<_Sidebar> {
                       Text(
                         email,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           fontSize: 11,
                         ),
                         maxLines: 1,
@@ -323,7 +344,7 @@ class _SidebarState extends State<_Sidebar> {
                 IconButton(
                   icon: Icon(
                     Icons.logout_rounded,
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                     size: 18,
                   ),
                   tooltip: 'Sign Out',
@@ -359,14 +380,14 @@ class _SidebarState extends State<_Sidebar> {
             child: InkWell(
               onTap: () => widget.onDestinationSelected(index),
               borderRadius: BorderRadius.circular(10),
-              hoverColor: Colors.white.withOpacity(0.08),
-              splashColor: Colors.white.withOpacity(0.12),
+              hoverColor: Colors.white.withValues(alpha: 0.08),
+              splashColor: Colors.white.withValues(alpha: 0.12),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   color: isSelected
-                      ? Colors.white.withOpacity(0.12)
+                      ? Colors.white.withValues(alpha: 0.12)
                       : Colors.transparent,
                 ),
                 child: Row(
@@ -387,8 +408,8 @@ class _SidebarState extends State<_Sidebar> {
                       color: isSelected
                           ? kSidebarActive
                           : isHovered
-                              ? Colors.white.withOpacity(0.9)
-                              : Colors.white.withOpacity(0.6),
+                              ? Colors.white.withValues(alpha: 0.9)
+                              : Colors.white.withValues(alpha: 0.6),
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -398,8 +419,8 @@ class _SidebarState extends State<_Sidebar> {
                         color: isSelected
                             ? Colors.white
                             : isHovered
-                                ? Colors.white.withOpacity(0.9)
-                                : Colors.white.withOpacity(0.6),
+                                ? Colors.white.withValues(alpha: 0.9)
+                                : Colors.white.withValues(alpha: 0.6),
                         fontSize: 14,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                         letterSpacing: 0.1,
@@ -423,7 +444,7 @@ class _SidebarState extends State<_Sidebar> {
         child: InkWell(
           onTap: () => context.push('/admin'),
           borderRadius: BorderRadius.circular(10),
-          hoverColor: Colors.white.withOpacity(0.08),
+          hoverColor: Colors.white.withValues(alpha: 0.08),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             child: Row(
@@ -431,14 +452,14 @@ class _SidebarState extends State<_Sidebar> {
                 const SizedBox(width: 13),
                 Icon(
                   Icons.admin_panel_settings_outlined,
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                   size: 20,
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'Admin',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.4),
+                    color: Colors.white.withValues(alpha: 0.4),
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
                   ),

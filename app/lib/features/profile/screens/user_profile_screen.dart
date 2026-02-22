@@ -5,6 +5,7 @@ import '../../../models/models.dart';
 import '../../../providers/providers.dart';
 import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
+import '../../../config/responsive.dart';
 import '../../../widgets/common_widgets.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -87,8 +88,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   }
 
   Widget _buildAppBar(Person profile) {
+    final r = Responsive(context);
     return SliverAppBar(
-      expandedHeight: 280,
+      expandedHeight: r.appBarExpandedHeight,
       pinned: true,
       backgroundColor: kPrimaryColor,
       actions: [
@@ -135,7 +137,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
               end: Alignment.bottomCenter,
               colors: [
                 kPrimaryColor,
-                kPrimaryColor.withOpacity(0.8),
+                kPrimaryColor.withValues(alpha: 0.8),
               ],
             ),
           ),
@@ -259,7 +261,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 24),

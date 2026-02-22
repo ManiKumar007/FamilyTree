@@ -84,18 +84,19 @@ void main() {
         await tester.pumpAndSettle();
 
         // Try to submit empty form
-        final saveButton = find.widgetWithText(ElevatedButton, 'Save') | 
-                          find.widgetWithText(ElevatedButton, 'Add Member');
+        final saveButton = find.widgetWithText(ElevatedButton, 'Save').evaluate().isNotEmpty
+            ? find.widgetWithText(ElevatedButton, 'Save')
+            : find.widgetWithText(ElevatedButton, 'Add Member');
         
         if (saveButton.evaluate().isNotEmpty) {
           await tester.tap(saveButton.first);
           await tester.pumpAndSettle();
 
           // Should show validation errors
-          expect(
-            find.textContaining('required') | find.textContaining('Please'),
-            findsAtLeast(0), // May or may not show depending on form state
-          );
+          final hasRequired = find.textContaining('required').evaluate().isNotEmpty;
+          final hasPlease = find.textContaining('Please').evaluate().isNotEmpty;
+          // May or may not show depending on form state
+          expect(hasRequired || hasPlease || true, true);
         }
       }
     });
@@ -132,8 +133,10 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // Look for bottom navigation bar
-      final bottomNav = find.byType(NavigationBar) | find.byType(BottomNavigationBar);
-      if (bottomNav.evaluate().isNotEmpty) {
+      final hasNavBar = find.byType(NavigationBar).evaluate().isNotEmpty;
+      final hasBottomNav = find.byType(BottomNavigationBar).evaluate().isNotEmpty;
+      final bottomNav = hasNavBar ? find.byType(NavigationBar) : find.byType(BottomNavigationBar);
+      if (hasNavBar || hasBottomNav) {
         // Should have navigation options
         expect(bottomNav, findsOneWidget);
       }
@@ -144,8 +147,10 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // Look for invite/share button
-      final shareButton = find.byIcon(Icons.share) | find.byIcon(Icons.person_add);
-      expect(shareButton.evaluate().length, greaterThanOrEqualTo(0));
+      final hasShare = find.byIcon(Icons.share).evaluate().isNotEmpty;
+      final hasPersonAdd = find.byIcon(Icons.person_add).evaluate().isNotEmpty;
+      final shareButton = hasShare ? find.byIcon(Icons.share) : find.byIcon(Icons.person_add);
+      expect(hasShare || hasPersonAdd || true, true);
     });
 
     testWidgets('Edit profile - navigate to edit screen', (WidgetTester tester) async {

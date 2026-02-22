@@ -326,7 +326,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           leading: Container(
             padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: _getEventColor(event.eventType).withOpacity(0.1),
+              color: _getEventColor(event.eventType).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

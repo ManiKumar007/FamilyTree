@@ -106,9 +106,11 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 1));
 
       // Look for login screen elements
+      final hasWelcome = find.text('Welcome back!').evaluate().isNotEmpty;
+      final hasTitle = find.text('MyFamilyTree').evaluate().isNotEmpty;
       expect(
-        find.text('Welcome back!') | find.text('MyFamilyTree'),
-        findsAtLeast(1),
+        hasWelcome || hasTitle,
+        true,
         reason: 'Should be on login screen',
       );
 
@@ -147,9 +149,11 @@ void main() {
         await tester.pumpAndSettle();
 
         // Should show validation errors
+        final hasPleaseEnter = find.textContaining('Please enter').evaluate().isNotEmpty;
+        final hasRequired = find.textContaining('required').evaluate().isNotEmpty;
         expect(
-          find.textContaining('Please enter') | find.textContaining('required'),
-          findsAtLeast(1),
+          hasPleaseEnter || hasRequired,
+          true,
           reason: 'Should show validation error for empty fields',
         );
       }
@@ -172,9 +176,11 @@ void main() {
           await tester.pumpAndSettle();
 
           // Should show validation error
+          final hasValidEmail = find.textContaining('valid email').evaluate().isNotEmpty;
+          final hasAtSign = find.textContaining('@').evaluate().isNotEmpty;
           expect(
-            find.textContaining('valid email') | find.textContaining('@'),
-            findsAtLeast(1),
+            hasValidEmail || hasAtSign,
+            true,
             reason: 'Should show invalid email error',
           );
         }
@@ -205,9 +211,11 @@ void main() {
           await tester.pumpAndSettle();
 
           // Should show validation error
+          final hasAtLeast6 = find.textContaining('at least 6').evaluate().isNotEmpty;
+          final hasCharacters = find.textContaining('characters').evaluate().isNotEmpty;
           expect(
-            find.textContaining('at least 6') | find.textContaining('characters'),
-            findsAtLeast(1),
+            hasAtLeast6 || hasCharacters,
+            true,
             reason: 'Should show password length error',
           );
         }
@@ -234,9 +242,11 @@ void main() {
           await tester.pumpAndSettle();
 
           // Should be back on login screen
+          final hasWelcomeBack = find.text('Welcome back!').evaluate().isNotEmpty;
+          final hasAppTitle = find.text('MyFamilyTree').evaluate().isNotEmpty;
           expect(
-            find.text('Welcome back!') | find.text('MyFamilyTree'),
-            findsAtLeast(1),
+            hasWelcomeBack || hasAppTitle,
+            true,
           );
         }
       }

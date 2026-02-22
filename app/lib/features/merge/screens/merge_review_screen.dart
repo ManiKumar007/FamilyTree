@@ -111,7 +111,7 @@ class _MergeReviewScreenState extends ConsumerState<MergeReviewScreen> {
               children: [
                 // Explanation
                 Card(
-                  color: kAccentColor.withOpacity(0.1),
+                  color: kAccentColor.withValues(alpha: 0.1),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -158,7 +158,7 @@ class _MergeReviewScreenState extends ConsumerState<MergeReviewScreen> {
                 if (_error != null) ...[
                   Container(
                     padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: kErrorColor.withOpacity(0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: kErrorColor.withOpacity(0.2))),
+                    decoration: BoxDecoration(color: kErrorColor.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: kErrorColor.withValues(alpha: 0.2))),
                     child: Text(_error!, style: TextStyle(color: kErrorColor)),
                   ),
                   const SizedBox(height: 16),

@@ -70,7 +70,7 @@ class _ErrorLogsScreenState extends ConsumerState<ErrorLogsScreen> {
           if (_selectedType != null || _selectedSeverity != null)
             Container(
               padding: const EdgeInsets.all(12),
-              color: theme.colorScheme.surfaceVariant,
+              color: theme.colorScheme.surfaceContainerHighest,
               child: Row(
                 children: [
                   const Text('Filters: '),
@@ -237,7 +237,7 @@ class _ErrorLogCard extends StatelessWidget {
               children: [
                 Chip(
                   label: Text(error.severity.toUpperCase()),
-                  backgroundColor: _getSeverityColor(error.severity).withOpacity(0.2),
+                  backgroundColor: _getSeverityColor(error.severity).withValues(alpha: 0.2),
                   labelStyle: TextStyle(
                     color: _getSeverityColor(error.severity),
                     fontWeight: FontWeight.bold,

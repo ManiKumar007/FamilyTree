@@ -94,7 +94,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                 leading: Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: kPrimaryColor.withOpacity(0.1),
+                    color: kPrimaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
                   ),
                   child: const Icon(Icons.camera_alt, color: kPrimaryColor),
@@ -110,7 +110,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                 leading: Container(
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: kSecondaryColor.withOpacity(0.1),
+                    color: kSecondaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
                   ),
                   child: const Icon(Icons.photo_library, color: kSecondaryColor),
@@ -129,7 +129,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                   leading: Container(
                     padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
-                      color: kErrorColor.withOpacity(0.1),
+                      color: kErrorColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppSizing.borderRadiusSm),
                     ),
                     child: const Icon(Icons.delete, color: kErrorColor),
@@ -172,7 +172,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),

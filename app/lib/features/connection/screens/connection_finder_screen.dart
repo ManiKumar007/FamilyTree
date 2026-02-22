@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
+import '../../../config/responsive.dart';
 import '../../../models/models.dart';
 import '../../../providers/providers.dart';
 import '../../../services/api_service.dart';
@@ -160,10 +161,12 @@ class _ConnectionFinderScreenState
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: kDividerColor.withOpacity(0.5)),
+          child: Container(height: 1, color: kDividerColor.withValues(alpha: 0.5)),
         ),
       ),
-      body: SingleChildScrollView(
+      body: ResponsiveContent(
+        maxWidth: 700,
+        child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,14 +175,14 @@ class _ConnectionFinderScreenState
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: kPrimaryColor.withOpacity(0.06),
+                color: kPrimaryColor.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: kPrimaryColor.withOpacity(0.15)),
+                border: Border.all(color: kPrimaryColor.withValues(alpha: 0.15)),
               ),
               child: Row(
                 children: [
                   Icon(Icons.info_outline,
-                      color: kPrimaryColor.withOpacity(0.7), size: 20),
+                      color: kPrimaryColor.withValues(alpha: 0.7), size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -281,7 +284,7 @@ class _ConnectionFinderScreenState
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: kAccentColor.withOpacity(0.1),
+                      color: kAccentColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.swap_vert_rounded,
@@ -411,9 +414,9 @@ class _ConnectionFinderScreenState
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: kErrorColor.withOpacity(0.08),
+                  color: kErrorColor.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: kErrorColor.withOpacity(0.3)),
+                  border: Border.all(color: kErrorColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -434,6 +437,7 @@ class _ConnectionFinderScreenState
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -453,13 +457,13 @@ class _ConnectionFinderScreenState
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: kAccentColor.withOpacity(0.06),
+          color: kAccentColor.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: kAccentColor.withOpacity(0.2)),
+          border: Border.all(color: kAccentColor.withValues(alpha: 0.2)),
         ),
         child: Column(
           children: [
-            Icon(Icons.link_off_rounded, size: 48, color: kAccentColor.withOpacity(0.6)),
+            Icon(Icons.link_off_rounded, size: 48, color: kAccentColor.withValues(alpha: 0.6)),
             const SizedBox(height: 12),
             const Text(
               'No Connection Found',
@@ -488,9 +492,9 @@ class _ConnectionFinderScreenState
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: kPrimaryColor.withOpacity(0.04),
+        color: kPrimaryColor.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: kPrimaryColor.withOpacity(0.2)),
+        border: Border.all(color: kPrimaryColor.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -501,7 +505,7 @@ class _ConnectionFinderScreenState
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: kPrimaryColor.withOpacity(0.12),
+                  color: kPrimaryColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.link_rounded, color: kPrimaryColor, size: 22),
@@ -534,7 +538,7 @@ class _ConnectionFinderScreenState
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: kAccentColor.withOpacity(0.15),
+                              color: kAccentColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -616,9 +620,9 @@ class _ConnectionFinderScreenState
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: kAccentColor.withOpacity(0.08),
+                color: kAccentColor.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: kAccentColor.withOpacity(0.2)),
+                border: Border.all(color: kAccentColor.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
@@ -652,7 +656,7 @@ class _ConnectionFinderScreenState
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: kAccentColor.withOpacity(0.2),
+                        color: kAccentColor.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -692,12 +696,12 @@ class _ConnectionFinderScreenState
                         horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: (isFirst || isLast)
-                          ? genderColor.withOpacity(0.12)
+                          ? genderColor.withValues(alpha: 0.12)
                           : kSurfaceSecondary,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: (isFirst || isLast)
-                            ? genderColor.withOpacity(0.3)
+                            ? genderColor.withValues(alpha: 0.3)
                             : kDividerColor,
                       ),
                     ),
@@ -730,7 +734,7 @@ class _ConnectionFinderScreenState
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: kPrimaryColor.withOpacity(0.15),
+                              color: kPrimaryColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -762,7 +766,7 @@ class _ConnectionFinderScreenState
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: kSecondaryColor.withOpacity(0.08),
+                            color: kSecondaryColor.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

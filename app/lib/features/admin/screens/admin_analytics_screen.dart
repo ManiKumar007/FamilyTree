@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../providers/admin_providers.dart';
 import '../../../config/theme.dart';
+import '../../../config/responsive.dart';
 
 class AdminAnalyticsScreen extends ConsumerStatefulWidget {
   const AdminAnalyticsScreen({super.key});
@@ -44,20 +45,24 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // User Growth Chart
-            Text(
-              'User Growth (Last $_selectedDays days)',
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 300,
-              child: Card(
+      body: ResponsiveContent(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // User Growth Chart
+              Text(
+                'User Growth (Last $_selectedDays days)',
+                style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final r = Responsive(context);
+                  return SizedBox(
+                    height: r.chartHeight,
+                    child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: growthAsync.when(
@@ -101,7 +106,7 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                               dotData: const FlDotData(show: false),
                               belowBarData: BarAreaData(
                                 show: true,
-                                color: kSecondaryColor.withOpacity(0.1),
+                                color: kSecondaryColor.withValues(alpha: 0.1),
                               ),
                             ),
                           ],
@@ -111,7 +116,9 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                   ),
                 ),
               ),
-            ),
+                  );
+                },
+              ),
             const SizedBox(height: 32),
 
             // Tree Size Distribution
@@ -120,9 +127,12 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
               style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              height: 350,
-              child: Card(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final r = Responsive(context);
+                return SizedBox(
+                  height: r.chartHeight,
+                  child: Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: distributionAsync.when(
@@ -196,9 +206,12 @@ class _AdminAnalyticsScreenState extends ConsumerState<AdminAnalyticsScreen> {
                   ),
                 ),
               ),
+                );
+              },
             ),
           ],
         ),
+      ),
       ),
     );
   }
