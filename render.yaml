@@ -35,8 +35,6 @@ services:
   - type: web
     name: familytree-web
     env: static
-    region: oregon  # Same region as backend
-    plan: free
     buildCommand: |
       # Install Flutter
       git clone https://github.com/flutter/flutter.git -b stable --depth 1
