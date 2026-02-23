@@ -16,7 +16,7 @@ statsRouter.get('/family', async (req: AuthenticatedRequest, res: Response) => {
   try {
     // Call the database function with user ID
     const { data, error } = await supabaseAdmin.rpc('get_family_statistics', {
-      p_user_id: req.user.id
+      p_user_id: req.userId!
     });
 
     if (error) throw error;
@@ -34,7 +34,7 @@ statsRouter.get('/consistency', async (req: AuthenticatedRequest, res: Response)
   try {
     // Call the database function with user ID
     const { data, error } = await supabaseAdmin.rpc('check_tree_consistency', {
-      p_user_id: req.user.id
+      p_user_id: req.userId!
     });
 
     if (error) throw error;
