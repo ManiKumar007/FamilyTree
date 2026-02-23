@@ -37,8 +37,18 @@ const app = express();
 
 // Security
 app.use(helmet());
+
+// CORS - Allow multiple origins in production
+const allowedOrigins = env.NODE_ENV === 'production'
+  ? [
+      env.APP_URL,
+      'https://familytree-web.onrender.com', // Render.com production
+      // Add more production URLs here (e.g., custom domains)
+    ].filter(Boolean) // Remove any undefined values
+  : true; // Allow all origins in development
+
 app.use(cors({
-  origin: env.NODE_ENV === 'production' ? env.APP_URL : true, // Allow all origins in development
+  origin: allowedOrigins,
   credentials: true,
 }));
 

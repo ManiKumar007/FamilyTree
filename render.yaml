@@ -1,0 +1,63 @@
+# Render.com Blueprint for MyFamilyTree
+# This file defines the infrastructure for deploying the app on Render.com
+
+services:
+  # ============================================
+  # Backend API (Node.js/Express)
+  # ============================================
+  - type: web
+    name: familytree-backend
+    env: node
+    region: oregon  # Change to your preferred region
+    plan: free  # Change to 'starter' or higher for production
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000  # Render uses port 10000 by default
+      - key: SUPABASE_URL
+        sync: false  # Set manually in Render dashboard
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false  # Set manually in Render dashboard (keep secret!)
+      - key: SUPABASE_ANON_KEY
+        sync: false  # Set manually in Render dashboard
+      - key: APP_URL
+        value: https://familytree-web.onrender.com  # Update with your frontend URL
+      - key: INVITE_BASE_URL
+        value: https://familytree-web.onrender.com/invite
+    healthCheckPath: /api/health
+
+  # ============================================
+  # Frontend (Flutter Web - Static Site)
+  # ============================================
+  - type: web
+    name: familytree-web
+    env: static
+    region: oregon  # Same region as backend
+    plan: free
+    buildCommand: |
+      # Install Flutter
+      git clone https://github.com/flutter/flutter.git -b stable --depth 1
+      export PATH="$PATH:`pwd`/flutter/bin"
+      
+      # Build Flutter web app
+      cd app
+      flutter pub get
+      flutter build web --release --web-renderer canvaskit
+      
+      # Copy build output to Render's expected location
+      cp -r build/web/* ../public/
+    staticPublishPath: ./public
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
