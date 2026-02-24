@@ -39,7 +39,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       return;
     }
 
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
     final name = _nameController.text.trim();
     developer.log('📝 Sign up attempt started', name: 'SignupScreen', error: {'email': email, 'name': name});
     
@@ -289,6 +289,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             ),
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            textCapitalization: TextCapitalization.none,
                             enabled: !_isLoading,
                             validator: (value) {
                               if (value == null || value.isEmpty) return 'Please enter your email';

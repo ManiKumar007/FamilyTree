@@ -36,7 +36,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    final email = _emailController.text.trim();
+    final email = _emailController.text.trim().toLowerCase();
     developer.log('🔐 Sign in attempt started', name: 'LoginScreen', error: {'email': email});
     
     setState(() { _isLoading = true; _error = null; });
@@ -140,13 +140,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String _formatErrorMessage(String error) {
     final cleanError = error.replaceAll('Exception: ', '');
     if (cleanError.contains('Invalid login credentials')) {
-      return 'Invalid email or password. Please try again.';
+      return 'Invalid email or password. Please check your credentials and try again.';
     } else if (cleanError.contains('Email not confirmed')) {
-      return 'Please verify your email address before signing in.';
+      return 'Please verify your email address before signing in. Check your inbox for the confirmation email.';
     } else if (cleanError.toLowerCase().contains('network') || cleanError.contains('SocketException')) {
-      return 'No internet connection. Please check your network.';
+      return 'No internet connection. Please check your network and try again.';
     } else if (cleanError.toLowerCase().contains('timeout')) {
-      return 'Request timed out. Please try again.';
+      return 'Request timed out. Please check your connection and try again.';
+    } else if (cleanError.toLowerCase().contains('too many requests') || cleanError.contains('rate')) {
+      return 'Too many sign-in attempts. Please wait a moment and try again.';
+    } else if (cleanError.toLowerCase().contains('user not found')) {
+      return 'No account found with this email. Please sign up first.';
     }
     return cleanError;
   }
@@ -415,6 +419,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
+                            autocorrect: false,
+                            enableSuggestions: false,
+                            textCapitalization: TextCapitalization.none,
                             autofocus: true,
                             enabled: !_isLoading,
                             validator: (value) {

@@ -89,9 +89,10 @@ class _LandingScreenState extends State<LandingScreen>
   Widget _buildHeroSection(bool isMobile, bool isTablet, Size size) {
     final heroHeight = isMobile ? size.height * 0.85 : size.height * 0.9;
 
-    return SizedBox(
-      height: heroHeight.clamp(500.0, 900.0),
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: heroHeight.clamp(500.0, 900.0)),
       child: Stack(
+        alignment: Alignment.center,
         children: [
           // Base gradient
           Positioned.fill(
@@ -130,20 +131,20 @@ class _LandingScreenState extends State<LandingScreen>
           // Floating orbs
           ..._buildFloatingOrbs(isMobile),
 
-          // Main content
-          Positioned.fill(
-            child: SafeArea(
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? AppSpacing.lg : AppSpacing.xxl,
-                ),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+          // Main content — non-positioned so the Stack sizes to fit content
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? AppSpacing.lg : AppSpacing.xxl,
+                vertical: AppSpacing.xl,
+              ),
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                         // Animated tree icon with concentric rings
                         AnimatedBuilder(
                           animation: _floatAnimation,
@@ -240,7 +241,6 @@ class _LandingScreenState extends State<LandingScreen>
                 ),
               ),
             ),
-          ),
 
           // Bottom wave transition
           Positioned(
