@@ -1,0 +1,98 @@
+{
+  "@@locale": "hi",
+  
+  "appName": "वंश",
+  "appTagline": "अपने परिवार की विरासत को सुरक्षित रखें",
+  
+  "continueWithGoogle": "Google के साथ जारी रखें",
+  "continueWithPhone": "फ़ोन के साथ जारी रखें",
+  "continueWithEmail": "ईमेल के साथ जारी रखें",
+  "signIn": "साइन इन करें",
+  "signUp": "साइन अप करें",
+  "email": "ईमेल",
+  "password": "पासवर्ड",
+  "confirmPassword": "पासवर्ड की पुष्टि करें",
+  "name": "नाम",
+  "phone": "फ़ोन", 
+  "forgotPassword": "पासवर्ड भूल गए?",
+  "dontHaveAccount": "खाता नहीं है?",
+  "alreadyHaveAccount": "पहले से खाता है?",
+  "sendResetLink": "रीसेट लिंक भेजें",
+  "backToSignIn": "साइन इन पर वापस जाएं",
+  
+  "selectLanguage": "अपनी भाषा चुनें",
+  
+  "languageEnglish": "English",
+  "languageHindi": "हिन्दी",
+  "languageTamil": "தமிழ்",
+  "languageTelugu": "తెలుగు",
+  "languageBengali": "বাংলা",
+  "languageMarathi": "मराठी",
+  "languageGujarati": "ગુજરાતી",
+  "languageKannada": "ಕನ್ನಡ",
+  
+  "yourVanshYourLegacy": "आपका वंश, आपकी विरासत",
+  "preserveHeritage": "आने वाली पीढ़ियों के लिए अपने परिवार की विरासत को सुरक्षित रखें",
+  "grandmotherStories": "आपकी दादी की कहानियां। आपके दादा का ज्ञान। आपके परिवार की विरासत। इन्हें मिटने न दें।",
+  
+  "getStarted": "शुरू करें",
+  "signUpFree": "मुफ्त साइन अप करें",
+  "shareOnWhatsApp": "WhatsApp पर शेयर करें",
+  
+  "familyTree": "फैमिली ट्री",
+  "profile": "प्रोफाइल",
+  "settings": "सेटिंग्स",
+  "signOut": "साइन आउट",
+  
+  "addFamilyMember": "परिवार का सदस्य जोड़ें",
+  "editProfile": "प्रोफाइल संपादित करें",
+  "share": "शेयर करें",
+  "save": "सेव करें",
+  "cancel": "रद्द करें",
+  "delete": "हटाएं",
+  "edit": "संपादित करें",
+  
+  "father": "पिता",
+  "mother": "माता",
+  "son": "बेटा",
+  "daughter": "बेटी",
+  "brother": "भाई",
+  "sister": "बहन",
+  "husband": "पति",
+  "wife": "पत्नी",
+  "grandfather": "दादा",
+  "grandmother": "दादी",
+  "grandson": "पोता",
+  "granddaughter": "पोती",
+  
+  "dateOfBirth": "जन्म तिथि",
+  "dateOfDeath": "मृत्यु तिथि",
+  "placeOfDeath": "मृत्यु का स्थान",
+  "occupation": "व्यवसाय",
+  "city": "शहर",
+  "state": "राज्य",
+  "community": "समुदाय",
+  "maritalStatus": "वैवाहिक स्थिति",
+  
+  "single": "अविवाहित",
+  "married": "विवाहित",
+  "divorced": "तलाकशुदा",
+  "widowed": "विधवा/विधुर",
+  
+  "male": "पुरुष",
+  "female": "महिला",
+  "other": "अन्य",
+  
+  "profileCreatedSuccess": "प्रोफाइल सफलतापूर्वक बनाया गया!",
+  "profileUpdatedSuccess": "प्रोफाइल सफलतापूर्वक अपडेट किया गया!",
+  "errorOccurred": "एक त्रुटि हुई",
+  "tryAgain": "पुनः प्रयास करें",
+  
+  "loading": "लोड हो रहा है...",
+  "refreshTree": "ट्री रीफ्रेश करें",
+  "centerOnUser": "उपयोगकर्ता पर केंद्रित करें",
+  
+  "whatsappInviteMessage": "नमस्ते {name}! हमारे परिवार की विरासत को एक साथ सुरक्षित रखने के लिए Vansh पर मेरे साथ शामिल हों।",
+  "treeMilestone": "मैंने Vansh पर {count} परिवार के सदस्यों को जोड़ा है! अपने परिवार की विरासत सुरक्षित रखें।",
+  "birthdayWish": "जन्मदिन मुबारक {name}! आज {age} साल के हो गए!"
+}

@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
@@ -1356,14 +1357,7 @@ class _FeatureCardState extends State<_FeatureCard> {
         curve: Curves.easeOut,
         transform: Matrix4.translationValues(0, _isHovered ? -6 : 0, 0),
         decoration: BoxDecoration(
-          color: Colors.white,
           borderRadius: BorderRadius.circular(AppSizing.borderRadiusLg),
-          border: Border.all(
-            color: _isHovered
-                ? widget.feature.gradient.colors.first.withValues(alpha: 0.3)
-                : kDividerColor,
-            width: 1,
-          ),
           boxShadow: [
             BoxShadow(
               color: _isHovered
@@ -1374,57 +1368,99 @@ class _FeatureCardState extends State<_FeatureCard> {
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Animated gradient icon container
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: _isHovered ? widget.feature.gradient : null,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppSizing.borderRadiusLg),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: _isHovered ? 15 : 10,
+              sigmaY: _isHovered ? 15 : 10,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: _isHovered
+                      ? [
+                          Colors.white.withValues(alpha: 0.95),
+                          widget.feature.gradient.colors.first.withValues(alpha: 0.05),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.85),
+                          Colors.white.withValues(alpha: 0.75),
+                        ],
+                ),
+                border: Border.all(
                   color: _isHovered
-                      ? null
-                      : widget.feature.gradient.colors.first.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(14),
+                      ? widget.feature.gradient.colors.first.withValues(alpha: 0.4)
+                      : Colors.white.withValues(alpha: 0.5),
+                  width: 1.5,
                 ),
-                child: Icon(
-                  widget.feature.icon,
-                  size: 28,
-                  color: _isHovered
-                      ? Colors.white
-                      : widget.feature.gradient.colors.first,
+                borderRadius: BorderRadius.circular(AppSizing.borderRadiusLg),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Animated gradient icon container
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: _isHovered ? widget.feature.gradient : null,
+                        color: _isHovered
+                            ? null
+                            : widget.feature.gradient.colors.first.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: _isHovered
+                            ? [
+                                BoxShadow(
+                                  color: widget.feature.gradient.colors.first.withValues(alpha: 0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Icon(
+                        widget.feature.icon,
+                        size: 28,
+                        color: _isHovered
+                            ? Colors.white
+                            : widget.feature.gradient.colors.first,
+                      ),
+                    ),
+                    SizedBox(height: AppSpacing.sm),
+                    Text(
+                      widget.feature.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: kTextPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    SizedBox(height: AppSpacing.xs),
+                    Flexible(
+                      child: Text(
+                        widget.feature.description,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: kTextSecondary,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              SizedBox(height: AppSpacing.sm),
-              Text(
-                widget.feature.title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: kTextPrimary,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              SizedBox(height: AppSpacing.xs),
-              Flexible(
-                child: Text(
-                  widget.feature.description,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: kTextSecondary,
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

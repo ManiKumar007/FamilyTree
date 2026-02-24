@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/whatsapp_share_service.dart';
@@ -9,6 +10,8 @@ import '../../../providers/providers.dart';
 import '../../../config/constants.dart';
 import '../../../config/theme.dart';
 import '../../../widgets/form_fields.dart';
+import '../../../widgets/language_selector.dart';
+import '../../../app.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -34,6 +37,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   DateTime? _dateOfBirth;
   bool _isLoading = false;
   String? _error;
+  String? _selectedLanguage = 'en';
 
   // Username availability state
   bool _isCheckingUsername = false;
@@ -425,6 +429,22 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     style: TextStyle(color: kTextSecondary),
                   ),
                   const SizedBox(height: AppSpacing.lg),
+
+                  // Language Selector
+                  LanguageSelector(
+                    selectedLocale: _selectedLanguage,
+                    onLanguageSelected: (languageCode) async {
+                      setState(() {
+                        _selectedLanguage = languageCode;
+                      });
+                      // Update app locale
+                      ref.read(localeProvider.notifier).state = Locale(languageCode);
+                      // Persist to SharedPreferences
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString('preferred_language', languageCode);
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
 
                   // Username field with real-time availability check
                   TextFormField(

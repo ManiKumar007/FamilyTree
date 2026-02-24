@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 
 Future<void> main() async {
@@ -45,9 +46,17 @@ Future<void> main() async {
     }
   });
 
+  // Load persisted language preference
+  final prefs = await SharedPreferences.getInstance();
+  final savedLanguage = prefs.getString('preferred_language') ?? 'en';
+  debugPrint('🌐 Loaded language preference: $savedLanguage');
+
   runApp(
-    const ProviderScope(
-      child: MyFamilyTreeApp(),
+    ProviderScope(
+      overrides: [
+        initialLocaleProvider.overrideWithValue(Locale(savedLanguage)),
+      ],
+      child: const MyFamilyTreeApp(),
     ),
   );
 }

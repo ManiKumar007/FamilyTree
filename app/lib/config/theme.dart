@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ==================== COLOR PALETTE ====================
 
@@ -178,103 +179,104 @@ class AppGradients {
 // ==================== TYPOGRAPHY ====================
 
 class AppTextStyles {
-  static const String fontFamily = 'Roboto';
+  // Using Playfair Display for elegant headings (heritage feel)
+  // Using Inter for modern, readable body text
   
-  static const TextStyle displayLarge = TextStyle(
+  static TextStyle displayLarge = GoogleFonts.playfairDisplay(
     fontSize: 57,
-    fontWeight: FontWeight.w300,
+    fontWeight: FontWeight.w400,
     letterSpacing: -0.25,
     height: 1.12,
   );
   
-  static const TextStyle displayMedium = TextStyle(
+  static TextStyle displayMedium = GoogleFonts.playfairDisplay(
     fontSize: 45,
-    fontWeight: FontWeight.w300,
+    fontWeight: FontWeight.w400,
     height: 1.16,
   );
   
-  static const TextStyle displaySmall = TextStyle(
+  static TextStyle displaySmall = GoogleFonts.playfairDisplay(
     fontSize: 36,
-    fontWeight: FontWeight.w400,
+    fontWeight: FontWeight.w500,
     height: 1.22,
   );
   
-  static const TextStyle headlineLarge = TextStyle(
+  static TextStyle headlineLarge = GoogleFonts.playfairDisplay(
     fontSize: 32,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     height: 1.25,
     letterSpacing: -0.5,
   );
   
-  static const TextStyle headlineMedium = TextStyle(
+  static TextStyle headlineMedium = GoogleFonts.playfairDisplay(
     fontSize: 28,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     height: 1.29,
     letterSpacing: -0.3,
   );
   
-  static const TextStyle headlineSmall = TextStyle(
+  static TextStyle headlineSmall = GoogleFonts.playfairDisplay(
     fontSize: 24,
     fontWeight: FontWeight.w600,
     height: 1.33,
   );
   
-  static const TextStyle titleLarge = TextStyle(
+  static TextStyle titleLarge = GoogleFonts.inter(
     fontSize: 22,
     fontWeight: FontWeight.w600,
     height: 1.27,
   );
   
-  static const TextStyle titleMedium = TextStyle(
+  static TextStyle titleMedium = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.15,
     height: 1.50,
   );
   
-  static const TextStyle titleSmall = TextStyle(
+  static TextStyle titleSmall = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.1,
     height: 1.43,
   );
   
-  static const TextStyle bodyLarge = TextStyle(
+  static TextStyle bodyLarge = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w400,
     letterSpacing: 0.5,
     height: 1.50,
   );
   
-  static const TextStyle bodyMedium = TextStyle(
+  static TextStyle bodyMedium = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     letterSpacing: 0.25,
     height: 1.43,
   );
   
-  static const TextStyle bodySmall = TextStyle(
+  static TextStyle bodySmall = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w400,
     letterSpacing: 0.4,
     height: 1.33,
   );
   
-  static const TextStyle labelLarge = TextStyle(
+  static TextStyle labelLarge = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.1,
     height: 1.43,
   );
   
-  static const TextStyle labelMedium = TextStyle(
+  static TextStyle labelMedium = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.5,
     height: 1.33,
   );
   
-  static const TextStyle labelSmall = TextStyle(
+  static TextStyle labelSmall = GoogleFonts.inter(
     fontSize: 11,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.5,
@@ -321,7 +323,7 @@ final ThemeData appTheme = ThemeData(
   ),
   
   // Typography
-  textTheme: const TextTheme(
+  textTheme: TextTheme(
     displayLarge: AppTextStyles.displayLarge,
     displayMedium: AppTextStyles.displayMedium,
     displaySmall: AppTextStyles.displaySmall,
@@ -340,7 +342,7 @@ final ThemeData appTheme = ThemeData(
   ),
   
   // AppBar Theme — Modern white with subtle border
-  appBarTheme: const AppBarTheme(
+  appBarTheme: AppBarTheme(
     centerTitle: false,
     elevation: 0,
     scrolledUnderElevation: 0,
@@ -348,14 +350,14 @@ final ThemeData appTheme = ThemeData(
     foregroundColor: kTextPrimary,
     surfaceTintColor: Colors.transparent,
     systemOverlayStyle: SystemUiOverlayStyle.dark,
-    titleTextStyle: TextStyle(
+    titleTextStyle: GoogleFonts.inter(
       fontSize: 20,
       fontWeight: FontWeight.w600,
       color: kTextPrimary,
       letterSpacing: -0.3,
     ),
-    iconTheme: IconThemeData(color: kTextSecondary, size: 22),
-    actionsIconTheme: IconThemeData(color: kTextSecondary, size: 22),
+    iconTheme: const IconThemeData(color: kTextSecondary, size: 22),
+    actionsIconTheme: const IconThemeData(color: kTextSecondary, size: 22),
   ),
   
   // Card Theme — Flat with subtle border, modern feel

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../config/theme.dart';
 import '../config/responsive.dart';
+import 'shimmer_widgets.dart';
 
 /// A beautiful avatar widget with gender-based colors and image support
 class AppAvatar extends StatelessWidget {
@@ -34,7 +35,7 @@ class AppAvatar extends StatelessWidget {
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => const CircularProgressIndicator(),
+                placeholder: (context, url) => ShimmerAvatar(size: size),
                 errorWidget: (context, url, error) => _buildPlaceholder(),
               ),
             )

@@ -544,11 +544,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               onPressed: _isLoading ? null : _signInWithGoogle,
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size(double.infinity, 50),
-                                side: const BorderSide(
-                                  color: Color(0xFF4285F4),
+                                side: BorderSide(
+                                  color: Colors.grey.shade400,
                                   width: 1.5,
                                 ),
-                                backgroundColor: const Color(0xFFFAFAFA),
+                                backgroundColor: Colors.white,
                                 elevation: 0,
                                 shadowColor: Colors.black.withValues(alpha: 0.1),
                               ),
