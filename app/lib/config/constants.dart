@@ -29,6 +29,9 @@ class AppConfig {
   }
   
   static String get googleWebClientId => dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
+
+  /// App URL for auth redirects (production or local)
+  static String get appUrl => dotenv.env['APP_URL'] ?? 'http://localhost:5500';
 }
 
 /// Shared form-related constants to avoid duplication across screens.

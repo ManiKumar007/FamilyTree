@@ -42,7 +42,8 @@ app.use(helmet());
 const allowedOrigins = env.NODE_ENV === 'production'
   ? [
       env.APP_URL,
-      'https://familytree-web.onrender.com', // Render.com production
+      'https://familytree-web.vercel.app',
+      'https://familytree-web-manikumar007s-projects.vercel.app',
       // Vercel preview & production URLs
       /https:\/\/.*\.vercel\.app$/,
     ].filter(Boolean) // Remove any undefined values
