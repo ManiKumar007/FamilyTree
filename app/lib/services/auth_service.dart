@@ -21,6 +21,32 @@ class AuthService {
   /// Auth state stream
   Stream<AuthState> get authStateChanges => _supabase.auth.onAuthStateChange;
 
+  /// Get the authentication provider(s) used by the current user
+  /// Returns list of provider names (e.g., ['email'], ['google'], ['email', 'google'])
+  List<String> get authProviders {
+    final user = currentUser;
+    if (user == null) return [];
+    
+    // Get all identity providers from user identities
+    return user.identities?.map((identity) => identity.provider ?? 'unknown').toList() ?? [];
+  }
+
+  /// Check if user signed up with email/password
+  bool get hasEmailPasswordAuth {
+    return authProviders.contains('email');
+  }
+
+  /// Check if user signed up with social login (OAuth)
+  bool get hasSocialAuth {
+    final providers = authProviders;
+    return providers.any((p) => p == 'google' || p == 'facebook' || p == 'apple' || p == 'github');
+  }
+
+  /// Check if user can update password (only email/password users can)
+  bool get canUpdatePassword {
+    return hasEmailPasswordAuth;
+  }
+
   /// Sign up with email and password
   Future<AuthResponse> signUpWithPassword({
     required String email,
@@ -349,10 +375,25 @@ class AuthService {
   }
 
   /// Update password for currently logged-in user
+  /// Note: Only works for users who signed up with email/password
+  /// Users who signed up with social login (Google, Facebook) cannot update password
   Future<void> updatePassword(String newPassword) async {
     developer.log('🔑 Updating password', name: 'AuthService');
 
     try {
+      // Check if user can update password (email/password auth only)
+      if (!canUpdatePassword) {
+        final providers = authProviders.join(', ');
+        developer.log(
+          '🚫 Cannot update password - user signed in via: $providers',
+          name: 'AuthService',
+        );
+        throw Exception(
+          'Cannot update password. You signed in with ${providers}. '
+          'Password updates are only available for email/password accounts.'
+        );
+      }
+
       if (newPassword.isEmpty) {
         throw Exception('Password cannot be empty');
       }

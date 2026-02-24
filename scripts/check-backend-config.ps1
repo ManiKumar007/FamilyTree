@@ -143,7 +143,7 @@ try {
 }
 catch {
     Write-Host "❌ Backend is not running!" -ForegroundColor Red
-    Write-Host "   Start it with: .\\start-backend.ps1" -ForegroundColor Yellow
+    Write-Host "   Start it with: .\\scripts\\start-backend.ps1" -ForegroundColor Yellow
     Write-Host ""
 }
 

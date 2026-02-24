@@ -13,6 +13,7 @@ import '../features/tree/screens/tree_view_screen.dart';
 import '../features/tree/screens/add_member_screen.dart';
 import '../features/profile/screens/person_detail_screen.dart';
 import '../features/profile/screens/edit_profile_screen.dart';
+import '../features/profile/screens/account_settings_screen.dart';
 import '../features/search/screens/search_screen.dart';
 import '../features/invite/screens/invite_screen.dart';
 import '../features/connection/screens/connection_finder_screen.dart';
@@ -213,6 +214,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => EditProfileScreen(
           personId: state.pathParameters['id']!,
         ),
+      ),
+      GoRoute(
+        path: '/account-settings',
+        builder: (context, state) => const AccountSettingsScreen(),
       ),
       GoRoute(
         path: '/merge/:id',

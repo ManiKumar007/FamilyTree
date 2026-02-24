@@ -4,7 +4,7 @@
 
 ### Option 1: Start Everything at Once (Recommended)
 
-Right-click on `start-all.ps1` and select **Run with PowerShell**
+Right-click on `.\scripts\start-all.ps1` and select **Run with PowerShell**
 
 This will:
 
@@ -38,7 +38,7 @@ This will kill all Node.js and Flutter/Dart processes.
 
 | Script                       | Purpose                                              | Load Time      |
 | ---------------------------- | ---------------------------------------------------- | -------------- |
-| `start-all.ps1`              | Starts both backend and frontend in separate windows | 3+ min (debug) |
+| `.\scripts\start-all.ps1`              | Starts both backend and frontend in separate windows | 3+ min (debug) |
 | `start-backend.ps1`          | Starts only the backend server                       | ~5 sec         |
 | `start-frontend.ps1`         | Starts Flutter app in DEBUG mode (slow, hot reload)  | 3+ min         |
 | `start-frontend-fast.ps1`    | Starts Flutter app in PROFILE mode ⚡                | 30-60 sec      |

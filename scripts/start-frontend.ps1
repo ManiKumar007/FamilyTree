@@ -34,5 +34,24 @@ if (Get-Command flutter -ErrorAction SilentlyContinue) {
 
 Write-Host "Using Flutter: $flutterCmd" -ForegroundColor Cyan
 
-Set-Location app
-& $flutterCmd run -d chrome --web-port=5500
+# Load .env file and pass as dart-define
+$envFile = "app\.env"
+if (Test-Path $envFile) {
+    Write-Host "Loading environment variables from .env..." -ForegroundColor Cyan
+    $envVars = Get-Content $envFile | Where-Object { $_ -match '^\s*[^#]' -and $_ -match '=' } | ForEach-Object {
+        $parts = $_ -split '=', 2
+        @{Key = $parts[0].Trim(); Value = $parts[1].Trim()}
+    }
+    
+    $dartDefines = @()
+    foreach ($var in $envVars) {
+        $dartDefines += "--dart-define=$($var.Key)=$($var.Value)"
+    }
+    
+    Set-Location app
+    & $flutterCmd run -d chrome --web-port=5500 @dartDefines
+} else {
+    Write-Host "Warning: .env file not found, starting without environment variables" -ForegroundColor Yellow
+    Set-Location app
+    & $flutterCmd run -d chrome --web-port=5500
+}

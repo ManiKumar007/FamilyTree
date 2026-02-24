@@ -4,15 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConfig {
-  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
-  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  // Use dart-define values if available, fallback to .env
+  static String get supabaseUrl => 
+      const String.fromEnvironment('SUPABASE_URL', defaultValue: '') != '' 
+          ? const String.fromEnvironment('SUPABASE_URL') 
+          : dotenv.env['SUPABASE_URL'] ?? '';
+  
+  static String get supabaseAnonKey => 
+      const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '') != '' 
+          ? const String.fromEnvironment('SUPABASE_ANON_KEY') 
+          : dotenv.env['SUPABASE_ANON_KEY'] ?? '';
   
   /// API Base URL with platform-aware resolution:
   /// - Web: uses localhost (same machine)
   /// - Android emulator with adb reverse: uses localhost  
   /// - Real Android device: uses the host machine's WiFi IP
   static String get apiBaseUrl {
-    var url = dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
+    var url = const String.fromEnvironment('API_BASE_URL', defaultValue: '') != '' 
+        ? const String.fromEnvironment('API_BASE_URL')
+        : dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
     
     // On a real Android device (not emulator), replace localhost with the
     // host machine's local-network IP so the phone can reach the backend.
@@ -28,10 +38,16 @@ class AppConfig {
     return url;
   }
   
-  static String get googleWebClientId => dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
+  static String get googleWebClientId => 
+      const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID', defaultValue: '') != '' 
+          ? const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID') 
+          : dotenv.env['GOOGLE_WEB_CLIENT_ID'] ?? '';
 
   /// App URL for auth redirects (production or local)
-  static String get appUrl => dotenv.env['APP_URL'] ?? 'http://localhost:5500';
+  static String get appUrl => 
+      const String.fromEnvironment('APP_URL', defaultValue: '') != '' 
+          ? const String.fromEnvironment('APP_URL') 
+          : dotenv.env['APP_URL'] ?? 'http://localhost:5500';
 }
 
 /// Shared form-related constants to avoid duplication across screens.

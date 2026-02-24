@@ -141,7 +141,7 @@ Start-Sleep -Seconds 2
 
 # Start services
 Write-Host "Starting services..." -ForegroundColor Cyan
-& ".\start-all.ps1"
+& "$PSScriptRoot\start-all.ps1"
 Write-Host ""
 
 Write-Host "================================" -ForegroundColor Green

@@ -7,13 +7,28 @@ import 'app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: '.env');
+  // Load environment variables (fallback, dart-define takes precedence)
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    debugPrint('⚠️  .env file not found, using dart-define or defaults: $e');
+  }
 
   // Initialize Supabase with persistent session
+  // Use dart-define values first, then .env as fallback
+  final supabaseUrl = const String.fromEnvironment('SUPABASE_URL', defaultValue: '') != ''
+      ? const String.fromEnvironment('SUPABASE_URL')
+      : dotenv.env['SUPABASE_URL'] ?? '';
+  final supabaseAnonKey = const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '') != ''
+      ? const String.fromEnvironment('SUPABASE_ANON_KEY')
+      : dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  
+  debugPrint('🔧 Supabase URL: $supabaseUrl');
+  debugPrint('🔧 Anon Key length: ${supabaseAnonKey.length}');
+  
   await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL'] ?? '',
-    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+    url: supabaseUrl,
+    anonKey: supabaseAnonKey,
     authOptions: const FlutterAuthClientOptions(
       authFlowType: AuthFlowType.pkce,
       // Session will be persisted automatically using SharedPreferences

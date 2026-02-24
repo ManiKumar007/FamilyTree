@@ -19,7 +19,7 @@ try {
 }
 catch {
     Write-Host "✗ Backend is not running!" -ForegroundColor Red
-    Write-Host "  Please run .\start-backend.ps1 first" -ForegroundColor Yellow
+    Write-Host "  Please run .\scripts\start-backend.ps1 first" -ForegroundColor Yellow
     exit 1
 }
 

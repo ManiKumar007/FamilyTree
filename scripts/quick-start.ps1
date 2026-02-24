@@ -97,19 +97,19 @@ Write-Host "   📱 Phone: +919876543210" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "🧪 Testing Commands:" -ForegroundColor Yellow
 Write-Host "   Test API:  " -NoNewline -ForegroundColor Gray
-Write-Host ".\test-api.ps1" -ForegroundColor Cyan
+Write-Host ".\scripts\test-api.ps1" -ForegroundColor Cyan
 Write-Host "   Run Tests: " -NoNewline -ForegroundColor Gray
 Write-Host "cd backend; npm test" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "📚 Documentation:" -ForegroundColor Yellow
-Write-Host "   • SEED_DATA.md - Sample data documentation" -ForegroundColor Gray
-Write-Host "   • QUICK_REFERENCE.md - Quick commands reference" -ForegroundColor Gray
-Write-Host "   • TESTING_BEST_PRACTICES.md - Testing guide" -ForegroundColor Gray
-Write-Host "   • API_TROUBLESHOOTING.md - Debug help" -ForegroundColor Gray
+Write-Host "   • doc/SEED_DATA.md - Sample data documentation" -ForegroundColor Gray
+Write-Host "   • doc/QUICK_REFERENCE.md - Quick commands reference" -ForegroundColor Gray
+Write-Host "   • doc/TESTING_BEST_PRACTICES.md - Testing guide" -ForegroundColor Gray
+Write-Host "   • doc/API_TROUBLESHOOTING.md - Debug help" -ForegroundColor Gray
 Write-Host ""
 Write-Host "🛑 To Stop:" -ForegroundColor Yellow
 Write-Host "   Run: " -NoNewline -ForegroundColor Gray
-Write-Host ".\stop-all.ps1" -ForegroundColor Cyan
+Write-Host ".\scripts\stop-all.ps1" -ForegroundColor Cyan
 Write-Host "   Or press Ctrl+C to view job status, then run:" -ForegroundColor Gray
 Write-Host "   " -NoNewline
 Write-Host "Stop-Job $($backendJob.Id), $($frontendJob.Id); Remove-Job $($backendJob.Id), $($frontendJob.Id)" -ForegroundColor Cyan

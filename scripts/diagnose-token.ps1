@@ -55,7 +55,7 @@ try {
 }
 catch {
     Write-Host "❌ Backend is not running or not accessible" -ForegroundColor Red
-    Write-Host "   Please start the backend with .\start-backend.ps1`n" -ForegroundColor Yellow
+    Write-Host "   Please start the backend with .\scripts\start-backend.ps1`n" -ForegroundColor Yellow
     exit 1
 }
 

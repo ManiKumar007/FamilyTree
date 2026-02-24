@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
-import '../widgets/phone_auth_dialog.dart';
+// import '../widgets/phone_auth_dialog.dart'; // Disabled - enable when phone auth is configured
 import 'dart:developer' as developer;
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -596,6 +596,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ),
+
+                          // Phone auth disabled (no SMS provider configured)
+                          // To enable: Set up Twilio in Supabase and uncomment below
+                          // const SizedBox(height: 16),
+                          // SizedBox(
+                          //   width: double.infinity,
+                          //   child: OutlinedButton.icon(
+                          //     onPressed: _isLoading ? null : _signInWithPhone,
+                          //     style: OutlinedButton.styleFrom(
+                          //       minimumSize: const Size(double.infinity, 50),
+                          //       side: BorderSide(color: Colors.grey.shade300),
+                          //       backgroundColor: Colors.white,
+                          //     ),
+                          //     icon: const Icon(
+                          //       Icons.phone_android_rounded,
+                          //       size: 22,
+                          //       color: kPrimaryColor,
+                          //     ),
+                          //     label: const Text(
+                          //       'Continue with Phone',
+                          //       style: TextStyle(
+                          //         fontSize: 15,
+                          //         fontWeight: FontWeight.w600,
+                          //         color: kTextPrimary,
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
 
                           const SizedBox(height: 24),
                           // Sign up link

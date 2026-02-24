@@ -13,7 +13,7 @@ try {
 }
 catch {
     Write-Host "✗ Backend is NOT running" -ForegroundColor Red
-    Write-Host "  Start backend with: .\start-backend.ps1" -ForegroundColor Yellow
+    Write-Host "  Start backend with: .\scripts\start-backend.ps1" -ForegroundColor Yellow
     Write-Host ""
     $startBackend = Read-Host "Would you like to start the backend now? (y/n)"
     if ($startBackend -eq 'y') {
@@ -35,7 +35,7 @@ try {
 }
 catch {
     Write-Host "✗ Frontend is NOT running" -ForegroundColor Red
-    Write-Host "  Start frontend with: .\start-frontend.ps1" -ForegroundColor Yellow
+    Write-Host "  Start frontend with: .\scripts\start-frontend.ps1" -ForegroundColor Yellow
     Write-Host ""
     $startFrontend = Read-Host "Would you like to start the frontend now? (y/n)"
     if ($startFrontend -eq 'y') {

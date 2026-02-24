@@ -108,7 +108,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           icon: const Icon(Icons.more_vert_rounded),
           tooltip: 'More options',
           onSelected: (value) async {
-            if (value == 'logout') {
+            if (value == 'settings') {
+              context.push('/account-settings');
+            } else if (value == 'logout') {
               await ref.read(authServiceProvider).signOut();
               if (context.mounted) {
                 context.go('/login');
@@ -116,6 +118,16 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
             }
           },
           itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'settings',
+              child: Row(
+                children: [
+                  Icon(Icons.settings_rounded, color: kAccentColor),
+                  SizedBox(width: 12),
+                  Text('Account Settings'),
+                ],
+              ),
+            ),
             const PopupMenuItem(
               value: 'logout',
               child: Row(
