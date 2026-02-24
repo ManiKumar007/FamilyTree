@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
-// import '../widgets/phone_auth_dialog.dart'; // Disabled - enable when phone auth is configured
+import '../widgets/phone_auth_dialog.dart';
 import 'dart:developer' as developer;
 
 class LoginScreen extends ConsumerStatefulWidget {

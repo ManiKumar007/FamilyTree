@@ -890,7 +890,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
             person.name,
             age,
           );
-          WhatsAppShareService.shareMilestone(message);
+          WhatsAppShareService.shareMilestone(message: message);
           return;
         }
       } catch (e) {
@@ -903,7 +903,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
       inviterName: 'me',
       recipientName: person.name,
     );
-    WhatsAppShareService.shareMilestone(message, phoneNumber: person.phone);
+    WhatsAppShareService.shareMilestone(message: message, phoneNumber: person.phone);
   }
 }
 

@@ -242,8 +242,7 @@ $appUrl
       
       case MilestoneType.generations:
         final gens = data['generations'] as int;
-        return '📜 Discovered $gens generations!\n\nConnect with ancestors: 
-$appUrl';
+        return '📜 Discovered $gens generations!\n\nConnect with ancestors: $appUrl';
       
       case MilestoneType.birthday:
         final name = data['name'] as String;

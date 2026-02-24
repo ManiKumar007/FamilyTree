@@ -465,7 +465,7 @@ class _LandingScreenState extends State<LandingScreen>
               inviterName: 'a friend',
               recipientName: 'your family',
             );
-            WhatsAppShareService.shareMilestone(message);
+            WhatsAppShareService.shareMilestone(message: message);
           },
           child: Row(
             mainAxisSize: MainAxisSize.min,

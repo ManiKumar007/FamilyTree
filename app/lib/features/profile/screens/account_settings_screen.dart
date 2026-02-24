@@ -6,6 +6,7 @@ import '../../../providers/providers.dart';
 import '../../../config/theme.dart';
 import '../../../config/constants.dart';
 import '../../../widgets/common_widgets.dart';
+import '../../../widgets/form_fields.dart';
 
 /// Account settings screen for managing authentication settings
 class AccountSettingsScreen extends ConsumerStatefulWidget {

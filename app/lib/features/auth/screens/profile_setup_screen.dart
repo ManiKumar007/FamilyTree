@@ -354,7 +354,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                 inviterName: _givenNameController.text,
                 recipientName: 'your family',
               );
-              WhatsAppShareService.shareMilestone(message);
+              WhatsAppShareService.shareMilestone(message: message);
             },
             icon: const Icon(Icons.share, size: 18),
             label: const Text('Share Now'),

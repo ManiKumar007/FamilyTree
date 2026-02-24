@@ -75,6 +75,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         ),
         actions: [
           // WhatsApp share button
+          ...[
           treeAsync.maybeWhen(
             data: (tree) => tree != null && tree.nodes.isNotEmpty
                 ? IconButton(
@@ -84,7 +85,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                     onPressed: () {
                       final memberCount = tree.nodes.length;
                       final message = WhatsAppShareService.generateTreeSizeMilestone(memberCount);
-                      WhatsAppShareService.shareMilestone(message);
+                      WhatsAppShareService.shareMilestone(message: message);
                       
                       // Show confirmation
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -105,6 +106,7 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                 : null,
             orElse: () => null,
           ),
+          ].whereType<Widget>(),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh Tree',

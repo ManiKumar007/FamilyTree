@@ -35,7 +35,7 @@ Write-Host ""
 Write-Host "Starting Backend Server..." -ForegroundColor Green
 
 # Start backend in a new window
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\backend'; npm run dev"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\..\backend'; npm run dev"
 
 Write-Host "Waiting 3 seconds for backend to initialize..." -ForegroundColor Yellow
 Start-Sleep -Seconds 3
@@ -62,7 +62,7 @@ else {
 Write-Host "Using Flutter: $flutterCmd" -ForegroundColor Cyan
 
 # Start frontend in a new window with fixed port 5500
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\app'; & '$flutterCmd' run -d chrome --web-port=5500"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot\..\app'; & '$flutterCmd' run -d chrome --web-port=5500"
 
 Write-Host ""
 Write-Host "=====================================" -ForegroundColor Green
