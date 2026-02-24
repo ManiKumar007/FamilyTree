@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../services/api_service.dart';
 import '../../../services/life_events_service.dart';
+import '../../../services/whatsapp_share_service.dart';
 import '../../../models/models.dart';
 import '../../../config/theme.dart';
 import '../../../config/responsive.dart';
@@ -179,8 +180,9 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
         ),
         IconButton(
           icon: const Icon(Icons.share_outlined, size: 20),
-          onPressed: () => _sharePerson(person),
-          tooltip: 'Share',
+          color: const Color(0xFF25D366), // WhatsApp green
+          onPressed: () => _sharePersonOnWhatsApp(person),
+          tooltip: 'Share on WhatsApp',
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
@@ -872,6 +874,36 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
       'Check out ${person.name} on MyFamilyTree!\nPhone: ${person.phone}',
       subject: 'MyFamilyTree - ${person.name}',
     );
+  }
+
+  void _sharePersonOnWhatsApp(Person person) {
+    // Check if it's their birthday
+    if (person.dateOfBirth != null) {
+      try {
+        final dob = DateTime.parse(person.dateOfBirth!);
+        final now = DateTime.now();
+        final isBirthday = dob.month == now.month && dob.day == now.day;
+        
+        if (isBirthday) {
+          final age = now.year - dob.year;
+          final message = WhatsAppShareService.generateBirthdayMilestone(
+            person.name,
+            age,
+          );
+          WhatsAppShareService.shareMilestone(message);
+          return;
+        }
+      } catch (e) {
+        // If date parsing fails, fall through to regular invite
+      }
+    }
+    
+    // Regular invite message
+    final message = WhatsAppShareService.generateInviteMessage(
+      inviterName: 'me',
+      recipientName: person.name,
+    );
+    WhatsAppShareService.shareMilestone(message, phoneNumber: person.phone);
   }
 }
 

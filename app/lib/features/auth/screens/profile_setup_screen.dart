@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/whatsapp_share_service.dart';
 import '../../../providers/providers.dart';
 import '../../../config/constants.dart';
 import '../../../config/theme.dart';
@@ -262,6 +263,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile created successfully!')),
         );
+        
+        // Show WhatsApp sharing dialog
+        _showShareDialog();
+        
         context.go('/tree');
       }
     } catch (e, stackTrace) {
@@ -291,6 +296,76 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     } finally {
       if (mounted) setState(() { _isLoading = false; });
     }
+  }
+
+  void _showShareDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Text('🎉'),
+            SizedBox(width: 8),
+            Text('Profile Created!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Your Vansh journey begins! Invite family members to join and grow your family tree.',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF25D366).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFF25D366).withValues(alpha: 0.3),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.share, color: Color(0xFF25D366), size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Share your tree on WhatsApp to invite family',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Later'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              final message = WhatsAppShareService.generateInviteMessage(
+                inviterName: _givenNameController.text,
+                recipientName: 'your family',
+              );
+              WhatsAppShareService.shareMilestone(message);
+            },
+            icon: const Icon(Icons.share, size: 18),
+            label: const Text('Share Now'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

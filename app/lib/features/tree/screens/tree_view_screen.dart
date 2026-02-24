@@ -5,6 +5,7 @@ import '../../../models/models.dart';
 import '../../../providers/providers.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/api_service.dart';
+import '../../../services/whatsapp_share_service.dart';
 import '../../../config/theme.dart';
 import '../../../config/responsive.dart';
 import '../../../widgets/app_shell.dart';
@@ -73,6 +74,37 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
           child: Container(height: 1, color: kDividerColor.withValues(alpha: 0.5)),
         ),
         actions: [
+          // WhatsApp share button
+          treeAsync.maybeWhen(
+            data: (tree) => tree != null && tree.nodes.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.share_rounded),
+                    tooltip: 'Share on WhatsApp',
+                    color: const Color(0xFF25D366), // WhatsApp green
+                    onPressed: () {
+                      final memberCount = tree.nodes.length;
+                      final message = WhatsAppShareService.generateTreeSizeMilestone(memberCount);
+                      WhatsAppShareService.shareMilestone(message);
+                      
+                      // Show confirmation
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.white),
+                              SizedBox(width: 8),
+                              Text('Opening WhatsApp...'),
+                            ],
+                          ),
+                          backgroundColor: Color(0xFF25D366),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  )
+                : null,
+            orElse: () => null,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Refresh Tree',
