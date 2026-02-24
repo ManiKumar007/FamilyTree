@@ -208,6 +208,103 @@ class AuthService {
     }
   }
 
+  /// Sign in with phone number (sends OTP)
+  Future<void> signInWithPhone(String phoneNumber) async {
+    developer.log('📱 Attempting phone sign in', name: 'AuthService', error: {'phone': phoneNumber});
+    
+    try {
+      // Validate phone number format
+      if (phoneNumber.isEmpty) {
+        developer.log('❌ Phone number is empty', name: 'AuthService');
+        throw Exception('Phone number cannot be empty');
+      }
+      if (!phoneNumber.startsWith('+')) {
+        developer.log('❌ Invalid phone number format', name: 'AuthService', error: {'phone': phoneNumber});
+        throw Exception('Phone number must include country code (e.g., +1234567890)');
+      }
+      if (phoneNumber.length < 10) {
+        developer.log('❌ Phone number too short', name: 'AuthService');
+        throw Exception('Please enter a valid phone number');
+      }
+
+      developer.log('📡 Calling Supabase auth.signInWithOtp', name: 'AuthService');
+      await _supabase.auth.signInWithOtp(
+        phone: phoneNumber,
+      );
+      
+      developer.log('✅ OTP sent successfully', name: 'AuthService', error: {'phone': phoneNumber});
+    } on AuthException catch (e) {
+      developer.log(
+        '🚫 Supabase AuthException',
+        name: 'AuthService',
+        error: {'message': e.message, 'statusCode': e.statusCode},
+      );
+      throw Exception('Failed to send OTP: ${e.message}');
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Unexpected error during phone sign in',
+        name: 'AuthService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  /// Verify OTP code for phone authentication
+  Future<AuthResponse> verifyPhoneOTP({
+    required String phoneNumber,
+    required String otpCode,
+  }) async {
+    developer.log('🔐 Verifying phone OTP', name: 'AuthService', error: {'phone': phoneNumber});
+    
+    try {
+      // Validate inputs
+      if (phoneNumber.isEmpty) {
+        developer.log('❌ Phone number is empty', name: 'AuthService');
+        throw Exception('Phone number cannot be empty');
+      }
+      if (otpCode.isEmpty) {
+        developer.log('❌ OTP code is empty', name: 'AuthService');
+        throw Exception('OTP code cannot be empty');
+      }
+      if (otpCode.length != 6) {
+        developer.log('❌ Invalid OTP length', name: 'AuthService');
+        throw Exception('OTP code must be 6 digits');
+      }
+
+      developer.log('📡 Calling Supabase auth.verifyOTP', name: 'AuthService');
+      final response = await _supabase.auth.verifyOTP(
+        phone: phoneNumber,
+        token: otpCode,
+        type: OtpType.sms,
+      );
+      
+      developer.log('✅ Phone verification successful', name: 'AuthService', error: {
+        'user_id': response.user?.id,
+        'phone': response.user?.phone,
+        'has_session': response.session != null,
+      });
+      
+      return response;
+    } on AuthException catch (e) {
+      developer.log(
+        '🚫 Supabase AuthException',
+        name: 'AuthService',
+        error: {'message': e.message, 'statusCode': e.statusCode},
+      );
+      throw Exception('OTP verification failed: ${e.message}');
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Unexpected error during OTP verification',
+        name: 'AuthService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
   /// Sign out
   Future<void> signOut() async {
     developer.log('👋 Signing out', name: 'AuthService');

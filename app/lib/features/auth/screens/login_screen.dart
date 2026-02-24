@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
+import '../widgets/phone_auth_dialog.dart';
 import 'dart:developer' as developer;
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -121,6 +122,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } finally {
       if (mounted) setState(() { _isLoading = false; });
     }
+  }
+
+  Future<void> _signInWithPhone() async {
+    developer.log('📱 Phone sign in initiated', name: 'LoginScreen');
+    
+    await showDialog(
+      context: context,
+      builder: (context) => const PhoneAuthDialog(),
+    );
   }
 
   void _goToSignUp() {
