@@ -46,13 +46,13 @@ class GlassmorphicCard extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.white.withOpacity(opacity),
-                      Colors.white.withOpacity(opacity * 0.5),
+                      Colors.white.withValues(alpha: opacity),
+                      Colors.white.withValues(alpha: opacity * 0.5),
                     ],
                   ),
               borderRadius: BorderRadius.circular(borderRadius),
               border: Border.all(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 width: 1.5,
               ),
             ),
@@ -101,7 +101,7 @@ class FeatureCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizing.borderRadiusXl),
         boxShadow: [
           BoxShadow(
-            color: kPrimaryColor.withOpacity(0.1),
+            color: kPrimaryColor.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -117,12 +117,12 @@ class FeatureCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withOpacity(0.2),
-                  Colors.white.withOpacity(0.05),
+                  Colors.white.withValues(alpha: 0.2),
+                  Colors.white.withValues(alpha: 0.05),
                 ],
               ),
               border: Border.all(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 width: 1.5,
               ),
               borderRadius: BorderRadius.circular(AppSizing.borderRadiusXl),
@@ -147,17 +147,17 @@ class FeatureCard extends StatelessWidget {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              (iconColor ?? kPrimaryColor).withOpacity(0.2),
-                              (iconColor ?? kPrimaryColor).withOpacity(0.1),
+                              (iconColor ?? kPrimaryColor).withValues(alpha: 0.2),
+                              (iconColor ?? kPrimaryColor).withValues(alpha: 0.1),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: (iconColor ?? kPrimaryColor).withOpacity(0.3),
+                            color: (iconColor ?? kPrimaryColor).withValues(alpha: 0.3),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: (iconColor ?? kPrimaryColor).withOpacity(0.3),
+                              color: (iconColor ?? kPrimaryColor).withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -226,8 +226,8 @@ class GlassStatsCard extends StatelessWidget {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          cardColor.withOpacity(0.15),
-          cardColor.withOpacity(0.05),
+          cardColor.withValues(alpha: 0.15),
+          cardColor.withValues(alpha: 0.05),
         ],
       ),
       child: Column(
@@ -298,13 +298,13 @@ class GlassInfoCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  (iconColor ?? kPrimaryColor).withOpacity(0.2),
-                  (iconColor ?? kPrimaryColor).withOpacity(0.1),
+                  (iconColor ?? kPrimaryColor).withValues(alpha: 0.2),
+                  (iconColor ?? kPrimaryColor).withValues(alpha: 0.1),
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: (iconColor ?? kPrimaryColor).withOpacity(0.3),
+                color: (iconColor ?? kPrimaryColor).withValues(alpha: 0.3),
               ),
             ),
             child: Icon(
@@ -383,12 +383,12 @@ class GlassButton extends StatelessWidget {
               gradient: gradient ?? AppGradients.primaryButton,
               borderRadius: BorderRadius.circular(AppSizing.borderRadius),
               border: Border.all(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: kPrimaryColor.withOpacity(0.3),
+                  color: kPrimaryColor.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 6),
                 ),
