@@ -107,6 +107,32 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     }
   }
 
+  Future<void> _signUpWithFacebook() async {
+    developer.log('🔐 Facebook sign up attempt started', name: 'SignupScreen');
+    
+    setState(() { _isLoading = true; _error = null; });
+    try {
+      final authService = ref.read(authServiceProvider);
+      developer.log('📞 Calling authService.signInWithFacebook', name: 'SignupScreen');
+      
+      await authService.signInWithFacebook();
+      
+      developer.log('✅ Facebook sign up initiated', name: 'SignupScreen');
+      
+      // Navigation will be handled by auth state listener
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Facebook sign up failed',
+        name: 'SignupScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      setState(() { _error = e.toString().replaceAll('Exception: ', ''); });
+    } finally {
+      if (mounted) setState(() { _isLoading = false; });
+    }
+  }
+
   void _goToLogin() {
     context.go('/login');
   }
@@ -404,6 +430,34 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: kTextPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Facebook Sign-Up Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: _isLoading ? null : _signUpWithFacebook,
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 50),
+                                side: BorderSide(color: Colors.grey.shade300),
+                                backgroundColor: const Color(0xFF1877F2),
+                              ),
+                              icon: const Icon(
+                                Icons.facebook_rounded,
+                                size: 24,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                'Continue with Facebook',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
                                 ),
                               ),
                             ),

@@ -173,6 +173,41 @@ class AuthService {
     }
   }
 
+  /// Sign in with Facebook OAuth
+  Future<bool> signInWithFacebook() async {
+    developer.log('🔐 Attempting Facebook OAuth sign in', name: 'AuthService');
+    
+    try {
+      developer.log('📡 Calling Supabase auth.signInWithOAuth', name: 'AuthService');
+      // Set explicit redirect URL to frontend
+      final response = await _supabase.auth.signInWithOAuth(
+        OAuthProvider.facebook,
+        redirectTo: kIsWeb ? AppConfig.appUrl : null,
+      );
+      
+      developer.log('✅ Facebook OAuth initiated', name: 'AuthService', error: {
+        'success': response,
+      });
+      
+      return response;
+    } on AuthException catch (e) {
+      developer.log(
+        '🚫 Supabase AuthException',
+        name: 'AuthService',
+        error: {'message': e.message, 'statusCode': e.statusCode},
+      );
+      throw Exception('Facebook sign in failed: ${e.message}');
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Unexpected error during Facebook sign in',
+        name: 'AuthService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
   /// Sign out
   Future<void> signOut() async {
     developer.log('👋 Signing out', name: 'AuthService');

@@ -5,6 +5,7 @@ import { authMiddleware, AuthenticatedRequest } from '../middleware/auth';
 import { LifeEventTypeEnum } from '../models/types';
 import { successResponse, errorResponse, ErrorCodes } from '../utils/response';
 import { sanitizeObject } from '../utils/sanitize';
+import { canUserAccessPerson } from '../services/authorizationService';
 
 export const lifeEventsRouter = Router();
 
@@ -15,10 +16,12 @@ lifeEventsRouter.use(authMiddleware);
 const createLifeEventSchema = z.object({
   person_id: z.string().uuid(),
   event_type: LifeEventTypeEnum,
-  event_date: z.string(),
-  location: z.string().max(200).optional(),
+  title: z.string().min(1).max(200),
   description: z.string().optional(),
-  photos: z.array(z.string().url()).optional(),
+  event_date: z.string().optional(), // ISO date string
+  event_place: z.string().max(200).optional(),
+  photo_url: z.string().url().optional(),
+  metadata: z.record(z.any()).optional(),
 });
 
 const updateLifeEventSchema = createLifeEventSchema.partial().omit({ person_id: true });
@@ -47,7 +50,7 @@ lifeEventsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
       return;
     }
 
-    const sanitized = sanitizeObject(parsed, ['location', 'description']);
+    const sanitized = sanitizeObject(parsed, ['title', 'description', 'event_place']);
 
     const eventData = {
       ...sanitized,
@@ -77,6 +80,16 @@ lifeEventsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
  */
 lifeEventsRouter.get('/person/:personId', async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // Authorization check: verify user can access this person
+    const hasAccess = await canUserAccessPerson(req.userId!, req.params.personId);
+    if (!hasAccess) {
+      res.status(403).json(errorResponse(
+        ErrorCodes.FORBIDDEN,
+        'You do not have permission to view this person\'s life events.'
+      ));
+      return;
+    }
+
     const { data, error } = await supabaseAdmin
       .from('life_events')
       .select('*')
@@ -137,7 +150,7 @@ lifeEventsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) =>
       return;
     }
 
-    const sanitized = sanitizeObject(parsed, ['location', 'description']);
+    const sanitized = sanitizeObject(parsed, ['title', 'description', 'event_place']);
 
     const { data, error } = await supabaseAdmin
       .from('life_events')
