@@ -4,6 +4,8 @@
   "buildCommand": "export PATH=\"$PATH:$HOME/flutter/bin\" && chmod +x build.sh && bash build.sh",
   "outputDirectory": "build/web",
   "framework": null,
+  "cleanUrls": true,
+  "trailingSlash": false,
   "rewrites": [
     {
       "source": "/(.*)",
