@@ -43,7 +43,8 @@ const allowedOrigins = env.NODE_ENV === 'production'
   ? [
       env.APP_URL,
       'https://familytree-web.onrender.com', // Render.com production
-      // Add more production URLs here (e.g., custom domains)
+      // Vercel preview & production URLs
+      /https:\/\/.*\.vercel\.app$/,
     ].filter(Boolean) // Remove any undefined values
   : true; // Allow all origins in development
 
@@ -116,11 +117,14 @@ app.use('/api/documents', documentsRouter);            // Person documents
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
-  logger.info(`MyFamilyTree API running on port ${env.PORT}`, { env: env.NODE_ENV });
-  if (env.AUTH_BYPASS) {
-    logger.warn('AUTH_BYPASS is enabled. Authentication is disabled for development.');
-  }
-});
+// Only start the server when running locally (not on Vercel serverless)
+if (process.env.VERCEL !== '1') {
+  app.listen(env.PORT, () => {
+    logger.info(`MyFamilyTree API running on port ${env.PORT}`, { env: env.NODE_ENV });
+    if (env.AUTH_BYPASS) {
+      logger.warn('AUTH_BYPASS is enabled. Authentication is disabled for development.');
+    }
+  });
+}
 
 export default app;

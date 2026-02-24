@@ -7,6 +7,7 @@ import 'dart:async';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
 import '../features/auth/screens/profile_setup_screen.dart';
+import '../features/auth/screens/reset_password_screen.dart';
 import '../features/landing/screens/landing_screen.dart';
 import '../features/tree/screens/tree_view_screen.dart';
 import '../features/tree/screens/add_member_screen.dart';
@@ -63,11 +64,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoginRoute = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
       final isLandingRoute = state.matchedLocation == '/landing';
       final isInviteRoute = state.matchedLocation.startsWith('/invite');
+      final isResetPasswordRoute = state.matchedLocation == '/reset-password';
 
       debugPrint('🔄 Router redirect: ${state.matchedLocation}, isLoggedIn: $isLoggedIn, user: ${user?.email ?? "null"}, hasSession: ${session != null}');
 
-      // Allow landing, login, signup, and invite routes without auth
-      if (isLandingRoute || isLoginRoute || isInviteRoute) return null;
+      // Allow landing, login, signup, reset-password, and invite routes without auth
+      if (isLandingRoute || isLoginRoute || isInviteRoute || isResetPasswordRoute) return null;
 
       // If not logged in and trying to access protected route, redirect to login
       if (!isLoggedIn) return '/login';
@@ -92,6 +94,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
       ),
       GoRoute(
         path: '/profile-setup',

@@ -190,7 +190,11 @@ class AuthService {
         throw Exception('Invalid email format');
       }
 
-      await _supabase.auth.resetPasswordForEmail(email);
+      // Set explicit redirect URL to password reset page
+      await _supabase.auth.resetPasswordForEmail(
+        email,
+        redirectTo: kIsWeb ? 'http://localhost:5500/#/reset-password' : null,
+      );
 
       developer.log('✅ Password reset email sent', name: 'AuthService', error: {'email': email});
     } on AuthException catch (e) {
@@ -203,6 +207,45 @@ class AuthService {
     } catch (e, stackTrace) {
       developer.log(
         '❌ Unexpected error during password reset',
+        name: 'AuthService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  /// Update password for currently logged-in user
+  Future<void> updatePassword(String newPassword) async {
+    developer.log('🔑 Updating password', name: 'AuthService');
+
+    try {
+      if (newPassword.isEmpty) {
+        throw Exception('Password cannot be empty');
+      }
+      if (newPassword.length < 6) {
+        throw Exception('Password must be at least 6 characters');
+      }
+
+      final response = await _supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
+
+      if (response.user == null) {
+        throw Exception('Failed to update password');
+      }
+
+      developer.log('✅ Password updated successfully', name: 'AuthService');
+    } on AuthException catch (e) {
+      developer.log(
+        '🚫 Supabase AuthException during password update',
+        name: 'AuthService',
+        error: {'message': e.message, 'statusCode': e.statusCode},
+      );
+      throw Exception('Password update failed: ${e.message}');
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Unexpected error during password update',
         name: 'AuthService',
         error: e,
         stackTrace: stackTrace,
