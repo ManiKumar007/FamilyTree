@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../services/api_service.dart';
 import '../../../providers/providers.dart';
 import '../../../config/constants.dart';
 import '../../../config/theme.dart';
 import '../../../widgets/form_fields.dart';
+import '../../../widgets/image_upload_widget.dart';
 
 class AddMemberScreen extends ConsumerStatefulWidget {
   final String? relativePersonId;
@@ -46,7 +45,9 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   String? _error;
   Map<String, dynamic>? _mergeResult;
   XFile? _imageFile;
-  final ImagePicker _imagePicker = ImagePicker();
+  String? _uploadedImageUrl;
+  bool _imageRemoved = false;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -146,9 +147,21 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         'community': _communityController.text.trim().isEmpty ? null : _communityController.text.trim(),
         'gotra': _gotraController.text.trim().isEmpty ? null : _gotraController.text.trim(),
         'marital_status': _maritalStatus,
+        'photo_url': _uploadedImageUrl,
       });
 
       final newPersonId = result['person']?['id'];
+
+      // Upload image if selected but not yet uploaded (fallback)
+      if (newPersonId != null && _imageFile != null && _uploadedImageUrl == null) {
+        try {
+          final imageUrl = await apiService.uploadProfileImage(newPersonId, _imageFile!);
+          await apiService.updatePerson(newPersonId, {'photo_url': imageUrl});
+        } catch (e) {
+          // Don't fail the whole operation if image upload fails
+          print('Warning: Image upload failed: $e');
+        }
+      }
 
       // 2. Create relationship - only if we have an anchor person
       if (newPersonId != null && anchorPersonId != null) {
@@ -495,83 +508,54 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     return Center(
       child: Column(
         children: [
-          GestureDetector(
-            onTap: _pickImage,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey[200],
-                border: Border.all(color: kDividerColor, width: 2),
-              ),
-              child: _imageFile != null
-                  ? ClipOval(
-                      child: kIsWeb
-                          ? Image.network(
-                              _imageFile!.path,
-                              fit: BoxFit.cover,
-                              width: 120,
-                              height: 120,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.error, size: 40, color: Colors.red);
-                              },
-                            )
-                          : FutureBuilder<Uint8List>(
-                              future: _imageFile!.readAsBytes(),
-                              builder: (context, snapshot) {
-                                if (snapshot.hasData) {
-                                  return Image.memory(
-                                    snapshot.data!,
-                                    fit: BoxFit.cover,
-                                    width: 120,
-                                    height: 120,
-                                  );
-                                }
-                                return const CircularProgressIndicator();
-                              },
-                            ),
-                    )
-                  : Icon(
-                      Icons.add_a_photo,
-                      size: 40,
-                      color: Colors.grey[400],
-                    ),
-            ),
+          ImageUploadWidget(
+            currentImageUrl: _imageRemoved ? null : _uploadedImageUrl,
+            gender: _gender,
+            onImageSelected: _handleImageSelected,
+            onImageRemoved: _handleImageRemoved,
+            size: 120,
           ),
           const SizedBox(height: 8),
-          TextButton.icon(
-            onPressed: _pickImage,
-            icon: const Icon(Icons.photo_camera),
-            label: Text(_imageFile != null ? 'Change Photo' : 'Add Photo'),
-          ),
-          if (_imageFile != null)
-            TextButton(
-              onPressed: () => setState(() => _imageFile = null),
-              child: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
+          Text(
+            _uploadedImageUrl != null ? 'Photo uploaded' : 'Tap to add photo',
+            style: TextStyle(
+              fontSize: 13,
+              color: _uploadedImageUrl != null ? kPrimaryColor : Colors.grey[500],
+              fontWeight: _uploadedImageUrl != null ? FontWeight.w500 : FontWeight.normal,
             ),
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _pickImage() async {
-    try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
-      );
-      if (image != null) {
-        setState(() => _imageFile = image);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: $e')),
-        );
-      }
+  Future<void> _handleImageSelected(XFile imageFile) async {
+    setState(() {
+      _imageFile = imageFile;
+      _imageRemoved = false;
+      _isUploadingImage = true;
+      _error = null;
+    });
+
+    // We can't upload yet since the person doesn't exist.
+    // We'll upload after createPerson in _submit().
+    // But to support the ImageUploadWidget UX, we mark upload as done.
+    setState(() {
+      _isUploadingImage = false;
+    });
+  }
+
+  void _handleImageRemoved() {
+    // If a URL was already uploaded (unlikely during add, but defensive)
+    if (_uploadedImageUrl != null) {
+      final api = ref.read(apiServiceProvider);
+      api.deleteProfileImage(_uploadedImageUrl!).catchError((_) {});
     }
+
+    setState(() {
+      _imageFile = null;
+      _uploadedImageUrl = null;
+      _imageRemoved = true;
+    });
   }
 }

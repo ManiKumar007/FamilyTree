@@ -53,11 +53,13 @@ class AuthService {
     required String password,
     Map<String, dynamic>? metadata,
   }) async {
-    developer.log('📝 Attempting sign up', name: 'AuthService', error: {'email': email, 'metadata': metadata});
+    // Normalize email to lowercase to prevent case-mismatch issues (especially on iOS)
+    final normalizedEmail = email.trim().toLowerCase();
+    developer.log('📝 Attempting sign up', name: 'AuthService', error: {'email': normalizedEmail, 'metadata': metadata});
     
     try {
       // Validate inputs
-      if (email.isEmpty) {
+      if (normalizedEmail.isEmpty) {
         developer.log('❌ Email is empty', name: 'AuthService');
         throw Exception('Email cannot be empty');
       }
@@ -65,8 +67,8 @@ class AuthService {
         developer.log('❌ Password is empty', name: 'AuthService');
         throw Exception('Password cannot be empty');
       }
-      if (!email.contains('@')) {
-        developer.log('❌ Invalid email format', name: 'AuthService', error: {'email': email});
+      if (!normalizedEmail.contains('@')) {
+        developer.log('❌ Invalid email format', name: 'AuthService', error: {'email': normalizedEmail});
         throw Exception('Invalid email format');
       }
       if (password.length < 6) {
@@ -76,7 +78,7 @@ class AuthService {
 
       developer.log('📡 Calling Supabase auth.signUp', name: 'AuthService');
       final response = await _supabase.auth.signUp(
-        email: email,
+        email: normalizedEmail,
         password: password,
         data: metadata,
       );
@@ -111,11 +113,13 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    developer.log('🔑 Attempting password sign in', name: 'AuthService', error: {'email': email});
+    // Normalize email to lowercase to prevent case-mismatch issues (especially on iOS)
+    final normalizedEmail = email.trim().toLowerCase();
+    developer.log('🔑 Attempting password sign in', name: 'AuthService', error: {'email': normalizedEmail});
     
     try {
       // Validate inputs
-      if (email.isEmpty) {
+      if (normalizedEmail.isEmpty) {
         developer.log('❌ Email is empty', name: 'AuthService');
         throw Exception('Email cannot be empty');
       }
@@ -123,8 +127,8 @@ class AuthService {
         developer.log('❌ Password is empty', name: 'AuthService');
         throw Exception('Password cannot be empty');
       }
-      if (!email.contains('@')) {
-        developer.log('❌ Invalid email format', name: 'AuthService', error: {'email': email});
+      if (!normalizedEmail.contains('@')) {
+        developer.log('❌ Invalid email format', name: 'AuthService', error: {'email': normalizedEmail});
         throw Exception('Invalid email format');
       }
       if (password.length < 6) {
@@ -134,7 +138,7 @@ class AuthService {
 
       developer.log('📡 Calling Supabase auth.signInWithPassword', name: 'AuthService');
       final response = await _supabase.auth.signInWithPassword(
-        email: email,
+        email: normalizedEmail,
         password: password,
       );
       
@@ -339,19 +343,20 @@ class AuthService {
 
   /// Send password reset email
   Future<void> resetPasswordForEmail(String email) async {
-    developer.log('🔑 Sending password reset email', name: 'AuthService', error: {'email': email});
+    final normalizedEmail = email.trim().toLowerCase();
+    developer.log('🔑 Sending password reset email', name: 'AuthService', error: {'email': normalizedEmail});
 
     try {
-      if (email.isEmpty) {
+      if (normalizedEmail.isEmpty) {
         throw Exception('Email cannot be empty');
       }
-      if (!email.contains('@')) {
+      if (!normalizedEmail.contains('@')) {
         throw Exception('Invalid email format');
       }
 
       // Set explicit redirect URL to password reset page
       await _supabase.auth.resetPasswordForEmail(
-        email,
+        normalizedEmail,
         redirectTo: kIsWeb ? '${AppConfig.appUrl}/#/reset-password' : null,
       );
 
