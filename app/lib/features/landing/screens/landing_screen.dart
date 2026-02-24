@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../config/theme.dart';
 import '../../../widgets/app_layout.dart';
+import '../../../services/whatsapp_share_service.dart';
 
 /// Rich, visually appealing landing page with depth and polish
 class LandingScreen extends StatefulWidget {
@@ -163,21 +164,54 @@ class _LandingScreenState extends State<LandingScreen>
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                           ).createShader(bounds),
-                          child: Text(
-                            'Connect Your\nFamily Tree',
-                            style: TextStyle(
-                              fontSize: isMobile ? 36 : (isTablet ? 48 : 60),
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              height: 1.1,
-                              letterSpacing: -1.5,
-                            ),
+                          child: RichText(
                             textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: TextStyle(
+                                fontSize: isMobile ? 36 : (isTablet ? 48 : 60),
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                height: 1.1,
+                                letterSpacing: -1.5,
+                              ),
+                              children: [
+                                const TextSpan(text: 'Your '),
+                                TextSpan(
+                                  text: 'Vansh',
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 42 : (isTablet ? 56 : 70),
+                                    fontWeight: FontWeight.w900,
+                                    color: const Color(0xFFFFD700), // Gold color
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black.withValues(alpha: 0.3),
+                                        offset: const Offset(0, 2),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const TextSpan(text: ',\nYour Legacy'),
+                              ],
+                            ),
                           ),
                         ),
                         SizedBox(height: AppSpacing.md),
+                        
+                        // Hindi subtitle
+                        Text(
+                          'अपने वंश की विरासत को सुरक्षित रखें',
+                          style: TextStyle(
+                            fontSize: isMobile ? 16 : 20,
+                            color: const Color(0xFFFFD700).withValues(alpha: 0.9),
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: AppSpacing.md),
 
-                        // Subheadline with accent bar
+                        // Emotional subheadline
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.lg,
@@ -192,7 +226,7 @@ class _LandingScreenState extends State<LandingScreen>
                             ),
                           ),
                           child: Text(
-                            'Discover, connect, and preserve your family legacy\nwith India\'s most powerful family tree platform',
+                            'Your dadi\'s stories. Your nani\'s recipes. Your family\'s legacy.\nDon\'t let them fade away.',
                             style: TextStyle(
                               fontSize: isMobile ? 14 : 18,
                               color: Colors.white.withValues(alpha: 0.85),
@@ -343,78 +377,122 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Widget _buildHeroCTAs(bool isMobile) {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: AppSpacing.md,
-      runSpacing: AppSpacing.md,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Primary CTA with glow
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSizing.borderRadius),
-            boxShadow: [
-              BoxShadow(
-                color: kAccentColor.withValues(alpha: 0.4),
-                blurRadius: 20,
-                offset: const Offset(0, 4),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: AppSpacing.md,
+          runSpacing: AppSpacing.md,
+          children: [
+            // Primary CTA with glow
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppSizing.borderRadius),
+                boxShadow: [
+                  BoxShadow(
+                    color: kAccentColor.withValues(alpha: 0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () => context.go('/login'),
+                icon: const Icon(Icons.rocket_launch, size: 20),
+                label: const Text('Get Started'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kAccentColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? AppSpacing.xl : AppSpacing.xxl,
+                    vertical: AppSpacing.md + 4,
+                  ),
+                  textStyle: TextStyle(
+                    fontSize: isMobile ? 16 : 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.5,
+                  ),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizing.borderRadius),
+                  ),
+                ),
+              ),
+            ),
+            // Secondary CTA - glassmorphism style
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppSizing.borderRadius),
+                border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3), width: 1.5),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.1),
+                    Colors.white.withValues(alpha: 0.05),
+                  ],
+                ),
+              ),
+              child: TextButton.icon(
+                onPressed: () => context.go('/signup'),
+                icon: const Icon(Icons.person_add, size: 20),
+                label: const Text('Sign Up Free'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? AppSpacing.xl : AppSpacing.xxl,
+                    vertical: AppSpacing.md + 4,
+                  ),
+                  textStyle: TextStyle(
+                    fontSize: isMobile ? 16 : 18,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizing.borderRadius),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        
+        // WhatsApp share button
+        const SizedBox(height: 16),
+        GestureDetector(
+          onTap: () {
+            final message = WhatsAppShareService.generateInviteMessage(
+              inviterName: 'a friend',
+              recipientName: 'your family',
+            );
+            WhatsAppShareService.shareMilestone(message);
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '💚',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Share on WhatsApp',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: isMobile ? 13 : 14,
+                  fontWeight: FontWeight.w500,
+                  decoration: TextDecoration.underline,
+                  decorationColor: Colors.white.withValues(alpha: 0.5),
+                  decorationThickness: 1,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_forward,
+                size: 14,
+                color: Colors.white.withValues(alpha: 0.7),
               ),
             ],
-          ),
-          child: ElevatedButton.icon(
-            onPressed: () => context.go('/login'),
-            icon: const Icon(Icons.rocket_launch, size: 20),
-            label: const Text('Get Started'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kAccentColor,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? AppSpacing.xl : AppSpacing.xxl,
-                vertical: AppSpacing.md + 4,
-              ),
-              textStyle: TextStyle(
-                fontSize: isMobile ? 16 : 18,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.5,
-              ),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizing.borderRadius),
-              ),
-            ),
-          ),
-        ),
-        // Secondary CTA - glassmorphism style
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSizing.borderRadius),
-            border:
-                Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withValues(alpha: 0.1),
-                Colors.white.withValues(alpha: 0.05),
-              ],
-            ),
-          ),
-          child: TextButton.icon(
-            onPressed: () => context.go('/signup'),
-            icon: const Icon(Icons.person_add, size: 20),
-            label: const Text('Sign Up Free'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(
-                horizontal: isMobile ? AppSpacing.xl : AppSpacing.xxl,
-                vertical: AppSpacing.md + 4,
-              ),
-              textStyle: TextStyle(
-                fontSize: isMobile ? 16 : 18,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.3,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizing.borderRadius),
-              ),
-            ),
           ),
         ),
       ],
@@ -422,39 +500,167 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   Widget _buildTrustBadges(bool isMobile) {
-    final badges = [
-      ('🔒', 'Secure'),
-      ('🇮🇳', 'Made for India'),
-      ('⚡', 'Fast & Free'),
-    ];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: badges.map((badge) {
-        return Container(
-          margin: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 12),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    return Column(
+      children: [
+        // Social proof stats
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildStatBadge('12,847', 'Families', isMobile),
+            SizedBox(width: isMobile ? 12 : 24),
+            _buildStatBadge('247K+', 'Members', isMobile),
+            SizedBox(width: isMobile ? 12 : 24),
+            _buildStatBadge('8', 'Generations', isMobile),
+          ],
+        ),
+        SizedBox(height: AppSpacing.lg),
+        
+        // Founding Families offer
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withValues(alpha: 0.08),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFFFFD700).withValues(alpha: 0.2),
+                const Color(0xFFFF6B35).withValues(alpha: 0.2),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(badge.$1, style: TextStyle(fontSize: isMobile ? 12 : 14)),
-              const SizedBox(width: 4),
-              Text(
-                badge.$2,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: isMobile ? 11 : 13,
-                  fontWeight: FontWeight.w500,
-                ),
+              const Text(
+                '👑',
+                style: TextStyle(fontSize: 20),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        'Founding Families',
+                        style: TextStyle(
+                          color: const Color(0xFFFFD700),
+                          fontSize: isMobile ? 13 : 15,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'LIMITED',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: isMobile ? 9 : 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'First 1,000 get Lifetime Premium • ${847} spots left',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      fontSize: isMobile ? 10 : 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        );
-      }).toList(),
+        ),
+        SizedBox(height: AppSpacing.md),
+        
+        // Original trust badges
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ('🔒', 'Secure & Private'),
+            ('🇮🇳', 'Made for India'),
+            ('⚡', '100% Free'),
+          ].map((badge) {
+            return Container(
+              margin: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: Colors.white.withValues(alpha: 0.08),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(badge.$1, style: TextStyle(fontSize: isMobile ? 12 : 14)),
+                  const SizedBox(width: 4),
+                  Text(
+                    badge.$2,
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: isMobile ? 11 : 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatBadge(String value, String label, bool isMobile) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: isMobile ? 24 : 32,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFFFFD700),
+            shadows: [
+              Shadow(
+                color: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isMobile ? 11 : 13,
+            color: Colors.white.withValues(alpha: 0.7),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 
@@ -489,7 +695,7 @@ class _LandingScreenState extends State<LandingScreen>
           SizedBox(height: AppSpacing.md),
 
           Text(
-            'Powerful Features for\nIndian Families',
+            'Built for Your Vansh',
             style: TextStyle(
               fontSize: isMobile ? 28 : 40,
               fontWeight: FontWeight.w800,
@@ -501,7 +707,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           SizedBox(height: AppSpacing.sm),
           Text(
-            'Everything you need to build and connect your family tree',
+            'Made with love for Indian families. No complex settings, just pure connection.',
             style: TextStyle(
               fontSize: isMobile ? 14 : 16,
               color: kTextSecondary,
@@ -636,7 +842,7 @@ class _LandingScreenState extends State<LandingScreen>
           ),
           SizedBox(height: AppSpacing.md),
           Text(
-            'Get Started in Minutes',
+            'Start Your Vansh Journey',
             style: TextStyle(
               fontSize: isMobile ? 28 : 40,
               fontWeight: FontWeight.w800,
@@ -739,32 +945,32 @@ class _LandingScreenState extends State<LandingScreen>
                 ? Column(
                     children: [
                       _buildStatItem(
-                          '10K+', 'Family Members', Icons.people_alt_rounded),
+                          '247K+', 'Stories Preserved', Icons.auto_stories_rounded),
                       SizedBox(height: AppSpacing.lg),
                       _buildStatItem(
-                          '500+', 'Family Trees', Icons.account_tree_rounded),
+                          '12,847', 'Families Reunited', Icons.diversity_3_rounded),
                       SizedBox(height: AppSpacing.lg),
-                      _buildStatItem('50+', 'Cities Connected',
-                          Icons.location_on_rounded),
+                      _buildStatItem('8', 'Generations Discovered',
+                          Icons.history_edu_rounded),
                       SizedBox(height: AppSpacing.lg),
                       _buildStatItem(
-                          '99.9%', 'Uptime', Icons.verified_rounded),
+                          '127', 'Cities Across India', Icons.location_city_rounded),
                     ],
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       _buildStatItem(
-                          '10K+', 'Family Members', Icons.people_alt_rounded),
+                          '247K+', 'Stories Preserved', Icons.auto_stories_rounded),
                       _buildStatDivider(),
                       _buildStatItem(
-                          '500+', 'Family Trees', Icons.account_tree_rounded),
+                          '12,847', 'Families Reunited', Icons.diversity_3_rounded),
                       _buildStatDivider(),
-                      _buildStatItem('50+', 'Cities Connected',
-                          Icons.location_on_rounded),
+                      _buildStatItem('8', 'Generations Discovered',
+                          Icons.history_edu_rounded),
                       _buildStatDivider(),
                       _buildStatItem(
-                          '99.9%', 'Uptime', Icons.verified_rounded),
+                          '127', 'Cities Across India', Icons.location_city_rounded),
                     ],
                   ),
           ),
@@ -862,7 +1068,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               SizedBox(height: AppSpacing.xl),
               Text(
-                'Start Building Your\nFamily Legacy Today',
+                'Your Vansh Awaits',
                 style: TextStyle(
                   fontSize: isMobile ? 28 : 40,
                   fontWeight: FontWeight.w800,
@@ -874,7 +1080,7 @@ class _LandingScreenState extends State<LandingScreen>
               ),
               SizedBox(height: AppSpacing.md),
               Text(
-                'Join families across India who are preserving their heritage',
+                'Don\'t let your stories fade. Start preserving your family legacy in 2 minutes.',
                 style: TextStyle(
                   fontSize: isMobile ? 14 : 18,
                   color: Colors.white.withValues(alpha: 0.8),
