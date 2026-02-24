@@ -11,6 +11,12 @@ fi
 
 export PATH="$PATH:$HOME/flutter/bin"
 
+# Enable web platform if not already configured
+if [ ! -d "web" ]; then
+  echo "Enabling web platform..."
+  flutter create . --platforms web
+fi
+
 # Create .env file from Vercel environment variables
 cat > .env << EOF
 SUPABASE_URL=$SUPABASE_URL
