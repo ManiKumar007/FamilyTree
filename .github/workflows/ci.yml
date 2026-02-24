@@ -1,0 +1,74 @@
+# CI Pipeline - Runs on every push and PR to prevent broken deployments
+name: CI - Build Validation
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  # ─── Flutter Frontend Build ───────────────────────────────────────
+  flutter-build:
+    name: Flutter Web Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosheep/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co
+          SUPABASE_ANON_KEY=placeholder_for_ci
+          API_BASE_URL=https://backend-five-blue-16.vercel.app/api
+          APP_URL=https://familytree-web.vercel.app
+          GOOGLE_CLIENT_ID=placeholder_for_ci
+          EOF
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Flutter analyze (errors only)
+        run: |
+          # Fail only on errors, not warnings/info
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build Flutter Web (release)
+        run: flutter build web --release
+
+  # ─── Backend Build ────────────────────────────────────────────────
+  backend-build:
+    name: Backend Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript compile check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
