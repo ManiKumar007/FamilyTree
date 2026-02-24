@@ -35,6 +35,13 @@ jobs:
           GOOGLE_CLIENT_ID=placeholder_for_ci
           EOF
 
+      - name: Enable web platform
+        run: |
+          if [ ! -d "web" ]; then
+            echo "Enabling web platform..."
+            flutter create . --platforms web
+          fi
+
       - name: Install dependencies
         run: flutter pub get
 
