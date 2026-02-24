@@ -1,15 +1,13 @@
 {
   "version": 2,
-  "buildCommand": "echo \"SUPABASE_URL=$SUPABASE_URL\nSUPABASE_ANON_KEY=$SUPABASE_ANON_KEY\nAPI_BASE_URL=$API_BASE_URL\nGOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID\" > .env && flutter pub get && flutter build web --release --web-renderer canvaskit",
+  "installCommand": "git clone https://github.com/flutter/flutter.git -b stable --depth 1 ~/flutter",
+  "buildCommand": "export PATH=\"$PATH:$HOME/flutter/bin\" && chmod +x build.sh && bash build.sh",
   "outputDirectory": "build/web",
   "framework": null,
-  "routes": [
+  "rewrites": [
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [

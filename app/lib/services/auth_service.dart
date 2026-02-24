@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:developer' as developer;
+import 'package:myfamilytree/config/constants.dart';
 
 final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 
@@ -146,7 +147,7 @@ class AuthService {
       // Set explicit redirect URL to frontend
       final response = await _supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: kIsWeb ? 'http://localhost:5500' : null,
+        redirectTo: kIsWeb ? AppConfig.appUrl : null,
       );
       
       developer.log('✅ Google OAuth initiated', name: 'AuthService', error: {
@@ -193,7 +194,7 @@ class AuthService {
       // Set explicit redirect URL to password reset page
       await _supabase.auth.resetPasswordForEmail(
         email,
-        redirectTo: kIsWeb ? 'http://localhost:5500/#/reset-password' : null,
+        redirectTo: kIsWeb ? '${AppConfig.appUrl}/#/reset-password' : null,
       );
 
       developer.log('✅ Password reset email sent', name: 'AuthService', error: {'email': email});
