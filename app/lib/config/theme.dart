@@ -496,7 +496,7 @@ final ThemeData appTheme = ThemeData(
   ),
   
   // Bottom Navigation Bar Theme
-  bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+  bottomNavigationBarTheme: BottomNavigationBarThemeData(
     backgroundColor: kSurfaceColor,
     selectedItemColor: kPrimaryColor,
     unselectedItemColor: kTextDisabled,
