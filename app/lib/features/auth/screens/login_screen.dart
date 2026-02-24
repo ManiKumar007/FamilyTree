@@ -544,12 +544,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               onPressed: _isLoading ? null : _signInWithGoogle,
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size(double.infinity, 50),
-                                side: BorderSide(color: Colors.grey.shade300),
-                                backgroundColor: Colors.white,
+                                side: const BorderSide(
+                                  color: Color(0xFF4285F4),
+                                  width: 1.5,
+                                ),
+                                backgroundColor: const Color(0xFFFAFAFA),
+                                elevation: 0,
+                                shadowColor: Colors.black.withValues(alpha: 0.1),
                               ),
                               icon: Container(
                                 padding: const EdgeInsets.all(2),
                                 decoration: BoxDecoration(
+                                  color: Colors.white,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: const Icon(
@@ -563,7 +569,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: kTextPrimary,
+                                  color: Color(0xFF4285F4),
                                 ),
                               ),
                             ),

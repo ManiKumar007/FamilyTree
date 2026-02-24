@@ -62,10 +62,10 @@ class WhatsAppShareService {
     return '''
 $emoji $message
 
-मैंने $memberCount परिवार के सदस्यों को Vansh पर जोड़ा है! 🌳
+I've added $memberCount family members to Vansh! 🌳
 
-अपने परिवार की विरासत को सुरक्षित रखें। 
-आज ही अपना family tree बनाएं:
+Preserve your family's heritage.
+Start your family tree today:
 $appUrl
 
 #Vansh #FamilyTree #Heritage #Legacy
@@ -78,12 +78,12 @@ $appUrl
     final emoji = emojis[generationCount.clamp(0, emojis.length - 1)];
 
     return '''
-📜 $emoji मैंने अपनी $generationCount पीढ़ियों को खोज लिया!
+📜 $emoji Discovered $generationCount generations of my family!
 
 From my great-great-grandparents to today's generation,
 our family's story is preserved on Vansh! 
 
-अपने पूर्वजों से जुड़ें:
+Connect with your ancestors:
 $appUrl
 
 #Vansh #FamilyHistory #Generations #Heritage
@@ -93,11 +93,11 @@ $appUrl
   /// Generate birthday reminder milestone
   static String generateBirthdayMilestone(String personName, int age) {
     return '''
-🎂 Happy Birthday $personName! $age साल के हो गए!
+🎂 Happy Birthday $personName! Turning $age today!
 
-Vansh पर सभी family members के birthdays याद रखें और celebrate करें! 🎉
+Remember and celebrate all family birthdays on Vansh! 🎉
 
-अपने परिवार को organize करें:
+Organize your family:
 $appUrl
 
 #HappyBirthday #FamilyFirst #Vansh
@@ -113,9 +113,9 @@ $appUrl
     return '''
 💍 $years years of love!
 
-$person1 ❤️ $person2 की शादी की $years वीं सालगिरह! 🎊
+$person1 ❤️ $person2 celebrating $years years of marriage! 🎊
 
-Vansh पर सभी family milestones celebrate करें।
+Celebrate all family milestones on Vansh.
 
 $appUrl
 
@@ -128,9 +128,9 @@ $appUrl
     return '''
 📸 $photoCount family photos uploaded!
 
-यादें हमेशा के लिए सुरक्षित! 
+Memories preserved forever! 
 
-अपनी family की stories और photos को preserve करें Vansh पर:
+Preserve your family's stories and photos on Vansh:
 $appUrl
 
 #Memories #FamilyPhotos #Vansh #Heritage
@@ -148,18 +148,18 @@ $appUrl
         : '';
 
     return '''
-नमस्ते $recipientName! 🙏
+Hello $recipientName! 👋
 
-$inviterName ने आपको Vansh family tree में जोड़ा है$relationship!
+$inviterName has added you to the Vansh family tree$relationship!
 
-🌳 अपनी profile claim करें और पूरा परिवार देखें
-📸 Photos और memories share करें
-👨‍👩‍👧‍👦 सभी relatives से connect हों
+🌳 Claim your profile and see your whole family
+📸 Share photos and memories
+👨‍👩‍👧‍👦 Connect with all relatives
 
-अभी join करें:
+Join now:
 $appUrl
 
-- Vansh Family Tree टीम
+- Vansh Family Tree Team
 ''';
   }
 
@@ -170,13 +170,13 @@ $appUrl
     int newFamilySize,
   ) {
     return '''
-🤝 परिवार और बड़ा हो गया!
+🤝 Family just got bigger!
 
-$person1 की family tree $person2 के साथ merge हो गई!
+$person1's family tree merged with $person2!
 
-अब कुल $newFamilySize family members! 🎊
+Now $newFamilySize total family members! 🎊
 
-Vansh पर अपने पूरे परिवार को connect करें:
+Connect your whole family on Vansh:
 $appUrl
 
 #FamilyReunion #Vansh #TogetherAgain
@@ -188,9 +188,9 @@ $appUrl
     return '''
 ✅ Profile Complete!
 
-मैंने अपनी complete family profile Vansh पर बना ली है! 
+I've created my complete family profile on Vansh! 
 
-घर बैठे अपनी family tree बनाएं:
+Build your family tree from home:
 $appUrl
 
 #ProfileComplete #FamilyTree #Vansh
@@ -209,7 +209,7 @@ $icon $title
 
 $description
 
-जानें अपनी family की कहानी:
+Discover your family's story:
 $appUrl
 
 #Vansh #FamilyStories
@@ -219,14 +219,14 @@ $appUrl
   /// Share app download link
   static String generateAppShareMessage() {
     return '''
-🌳 Vansh - अपने परिवार की विरासत सुरक्षित रखें
+🌳 Vansh - Preserve Your Family's Heritage
 
-✨ आसानी से family tree बनाएं
-📱 Phone number से relatives को ढूंढें
-🔒 Secure और private
-🇮🇳 भारतीय परिवारों के लिए specially designed
+✨ Easily build your family tree
+📱 Find relatives by phone number
+🔒 Secure and private
+🇮🇳 Specially designed for Indian families
 
-अभी free में शुरू करें:
+Start free now:
 $appUrl
 
 #Vansh #FamilyTree #Heritage

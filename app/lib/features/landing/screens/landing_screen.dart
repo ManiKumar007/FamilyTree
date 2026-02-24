@@ -196,20 +196,7 @@ class _LandingScreenState extends State<LandingScreen>
                             ),
                           ),
                         ),
-                        SizedBox(height: AppSpacing.md),
-                        
-                        // Hindi subtitle
-                        Text(
-                          'अपने वंश की विरासत को सुरक्षित रखें',
-                          style: TextStyle(
-                            fontSize: isMobile ? 16 : 20,
-                            color: const Color(0xFFFFD700).withValues(alpha: 0.9),
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: AppSpacing.md),
+                        SizedBox(height: AppSpacing.lg),
 
                         // Emotional subheadline
                         Container(
@@ -226,7 +213,7 @@ class _LandingScreenState extends State<LandingScreen>
                             ),
                           ),
                           child: Text(
-                            'Your dadi\'s stories. Your nani\'s recipes. Your family\'s legacy.\nDon\'t let them fade away.',
+                            'Your grandmother\'s stories. Your grandfather\'s wisdom. Your family\'s legacy.\nDon\'t let them fade away.',
                             style: TextStyle(
                               fontSize: isMobile ? 14 : 18,
                               color: Colors.white.withValues(alpha: 0.85),
