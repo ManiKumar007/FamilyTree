@@ -189,7 +189,10 @@ class _MobileShell extends StatelessWidget {
                           color: kSidebarActive.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.account_tree_rounded, color: kSidebarActive, size: 16),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       const Expanded(
@@ -447,10 +450,12 @@ class _SidebarState extends State<_Sidebar> {
                     color: kSidebarActive.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
-                    Icons.account_tree_rounded,
-                    color: kSidebarActive,
-                    size: 22,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),

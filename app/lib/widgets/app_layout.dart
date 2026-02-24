@@ -65,8 +65,12 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                               color: kPrimaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(Icons.account_tree_rounded,
-                                size: 20, color: kPrimaryColor),
+                            child: Image.asset(
+                              'assets/images/logo.png',
+                              width: 20,
+                              height: 20,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           const Text(
@@ -94,17 +98,13 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                         label: 'Blog',
                         icon: Icons.article_outlined,
                         isActive: currentPath.startsWith('/blog'),
-                        onTap: () {
-                          // TODO: Navigate to blog
-                        },
+                        onTap: () => context.go('/landing'),
                       ),
                       _NavLink(
                         label: 'Family Forum',
                         icon: Icons.forum_outlined,
                         isActive: currentPath.startsWith('/forum'),
-                        onTap: () {
-                          // TODO: Navigate to forum
-                        },
+                        onTap: () => context.go('/forum'),
                       ),
                     ],
                   ],
@@ -364,8 +364,12 @@ class AppNavDrawer extends ConsumerWidget {
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.account_tree_rounded,
-                            size: 24, color: Colors.white),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          width: 24,
+                          height: 24,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       const Text(
@@ -421,7 +425,7 @@ class AppNavDrawer extends ConsumerWidget {
                     isActive: currentPath.startsWith('/blog'),
                     onTap: () {
                       Navigator.pop(context);
-                      // TODO: Navigate to blog
+                      context.go('/landing');
                     },
                   ),
                   _DrawerItem(
@@ -430,7 +434,7 @@ class AppNavDrawer extends ConsumerWidget {
                     isActive: currentPath.startsWith('/forum'),
                     onTap: () {
                       Navigator.pop(context);
-                      // TODO: Navigate to forum
+                      context.go('/forum');
                     },
                   ),
                   if (isLoggedIn) ...[
