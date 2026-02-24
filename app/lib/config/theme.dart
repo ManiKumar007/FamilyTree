@@ -4,20 +4,20 @@ import 'package:google_fonts/google_fonts.dart';
 
 // ==================== COLOR PALETTE ====================
 
-/// Primary brand colors - sophisticated muted green family
-const Color kPrimaryColor = Color(0xFF2D6A4F);        // Deep Sage Green
-const Color kPrimaryLight = Color(0xFF52B788);        // Fresh Mint
-const Color kPrimaryDark = Color(0xFF1B4332);         // Deep Forest
+/// Primary brand colors - Deep Indigo (Premium Heritage)
+const Color kPrimaryColor = Color(0xFF4A5899);        // Royal Indigo
+const Color kPrimaryLight = Color(0xFF7B86C8);        // Soft Periwinkle
+const Color kPrimaryDark = Color(0xFF2D3561);         // Midnight Indigo
 
-/// Secondary colors - warm slate
-const Color kSecondaryColor = Color(0xFF3D5A80);      // Slate Blue
-const Color kSecondaryLight = Color(0xFF98C1D9);      // Light Slate Blue
-const Color kSecondaryDark = Color(0xFF293241);       // Dark Navy
+/// Secondary colors - Rose Gold & Copper
+const Color kSecondaryColor = Color(0xFFB87E85);      // Dusty Rose
+const Color kSecondaryLight = Color(0xFFE5B5BA);      // Pale Blush
+const Color kSecondaryDark = Color(0xFF8A5A5F);       // Deep Mauve
 
-/// Accent colors for highlights and CTAs
-const Color kAccentColor = Color(0xFFE76F51);         // Warm Coral
-const Color kAccentLight = Color(0xFFF4A261);         // Sandy Gold
-const Color kAccentDark = Color(0xFFD4440F);          // Deep Coral
+/// Accent colors - Vibrant Amber & Teal
+const Color kAccentColor = Color(0xFFFF8C42);         // Warm Amber
+const Color kAccentLight = Color(0xFFFFB976);         // Golden Peach
+const Color kAccentDark = Color(0xFFE66A1E);          // Deep Orange
 
 /// Gender-based colors (softer, more modern)
 const Color kMaleColor = Color(0xFF5B9BD5);           // Soft Blue
@@ -27,14 +27,14 @@ const Color kFemaleColorLight = Color(0xFFFCE4EC);    // Pale Rose
 const Color kOtherColor = Color(0xFF9575CD);          // Soft Violet
 const Color kOtherColorLight = Color(0xFFEDE7F6);     // Pale Violet
 
-/// Neutral colors - warmer tones
-const Color kBackgroundColor = Color(0xFFF8F9FA);     // Warm Off-White
-const Color kSurfaceColor = Color(0xFFFFFFFF);        // White
-const Color kSurfaceSecondary = Color(0xFFF0F2F5);   // Secondary Surface
-const Color kDividerColor = Color(0xFFE8ECF0);        // Soft Divider
-const Color kTextPrimary = Color(0xFF1A1D21);         // Near Black
-const Color kTextSecondary = Color(0xFF6C757D);       // Warm Gray
-const Color kTextDisabled = Color(0xFFADB5BD);        // Muted Gray
+/// Neutral colors - Rich sophisticated tones
+const Color kBackgroundColor = Color(0xFFFAF9F8);     // Creamy White
+const Color kSurfaceColor = Color(0xFFFFFFFF);        // Pure White
+const Color kSurfaceSecondary = Color(0xFFF5F3F2);   // Warm Linen
+const Color kDividerColor = Color(0xFFE6E3E1);        // Soft Taupe
+const Color kTextPrimary = Color(0xFF1C1917);         // Rich Black
+const Color kTextSecondary = Color(0xFF78716C);       // Warm Stone
+const Color kTextDisabled = Color(0xFFA8A29E);        // Light Stone
 
 /// Status colors (refined)
 const Color kSuccessColor = Color(0xFF40C057);        // Fresh Green
@@ -49,10 +49,10 @@ const Color kRelationshipSpouse = Color(0xFFE8549A);  // Deep Rose
 const Color kRelationshipSibling = Color(0xFF5C7CFA); // Periwinkle
 
 /// Sidebar colors
-const Color kSidebarBg = Color(0xFF1B4332);           // Deep Forest (sidebar bg)
-const Color kSidebarBgLight = Color(0xFF2D6A4F);      // Sage (sidebar hover)
-const Color kSidebarText = Color(0xFFE8F5E9);         // Pale Green Text
-const Color kSidebarActive = Color(0xFF52B788);       // Active indicator
+const Color kSidebarBg = Color(0xFF2D3561);           // Midnight Indigo (sidebar bg)
+const Color kSidebarBgLight = Color(0xFF4A5899);      // Royal Indigo (sidebar hover)
+const Color kSidebarText = Color(0xFFE8E7F3);         // Pale Lavender Text
+const Color kSidebarActive = Color(0xFF7B86C8);       // Active Periwinkle
 
 // ==================== SPACING & SIZING ====================
 
@@ -103,11 +103,11 @@ class AppSizing {
 // ==================== GRADIENTS ====================
 
 class AppGradients {
-  /// Sidebar gradient — deep forest to sage green
+  /// Sidebar gradient — midnight to royal indigo
   static const LinearGradient sidebar = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [kSidebarBg, Color(0xFF264E3C)],
+    colors: [kSidebarBg, Color(0xFF3A4478)],
   );
 
   /// Header accent gradient
@@ -117,25 +117,25 @@ class AppGradients {
     colors: [kPrimaryDark, kPrimaryColor],
   );
 
-  /// Primary button gradient
+  /// Primary button gradient - Indigo to Periwinkle
   static const LinearGradient primaryButton = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [kPrimaryColor, Color(0xFF3A7D5C)],
+    colors: [kPrimaryColor, Color(0xFF6875B0)],
   );
 
-  /// Card header gradient (subtle)
+  /// Card header gradient (subtle lavender)
   static const LinearGradient cardHeader = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFF0F7F4), Color(0xFFFFFFFF)],
+    colors: [Color(0xFFF8F7FC), Color(0xFFFFFFFF)],
   );
 
-  /// Hero section gradient for landing
+  /// Hero section gradient for landing - Deep indigo to rose
   static const LinearGradient hero = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0D2818), kPrimaryDark, kPrimaryColor, Color(0xFF40916C)],
+    colors: [Color(0xFF1A1F3D), kPrimaryDark, kPrimaryColor, Color(0xFF7B86C8)],
     stops: [0.0, 0.3, 0.7, 1.0],
   );
 
@@ -143,22 +143,22 @@ class AppGradients {
   static const LinearGradient heroRich = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFF0A1F13), Color(0xFF1B4332), Color(0xFF2D6A4F), Color(0xFF40916C)],
+    colors: [Color(0xFF151A2E), Color(0xFF2D3561), Color(0xFF4A5899), Color(0xFF7B86C8)],
     stops: [0.0, 0.35, 0.65, 1.0],
   );
 
-  /// Sunset warm gradient for CTA sections
+  /// Sunset warm gradient for CTA sections - Indigo to amber
   static const LinearGradient ctaGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF1B4332), Color(0xFF2D6A4F), Color(0xFF52B788)],
+    colors: [Color(0xFF2D3561), Color(0xFF4A5899), Color(0xFFFF8C42)],
   );
 
-  /// Features section subtle gradient
+  /// Features section subtle gradient - Lavender to blush
   static const LinearGradient featuresBg = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFF0F7F4), Color(0xFFE8F5E9), Color(0xFFF8F9FA)],
+    colors: [Color(0xFFF8F7FC), Color(0xFFFAF5F6), Color(0xFFFAF9F8)],
   );
 
   /// Glass overlay gradient
@@ -168,7 +168,7 @@ class AppGradients {
     colors: [Color(0x30FFFFFF), Color(0x10FFFFFF)],
   );
 
-  /// Warm accent gradient (for CTAs)
+  /// Warm accent gradient (amber to peach)
   static const LinearGradient warmAccent = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
