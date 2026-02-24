@@ -7,6 +7,7 @@ import { normalizePhone, isValidPhone } from '../utils/phone';
 import { detectMergeByPhone, detectConflicts, createMergeRequest } from '../services/mergeService';
 import { successResponse, errorResponse, paginatedResponse, ErrorCodes } from '../utils/response';
 import { sanitizeObject, PERSON_SANITIZE_FIELDS } from '../utils/sanitize';
+import { canUserAccessPerson } from '../services/authorizationService';
 
 export const personsRouter = Router();
 
@@ -146,6 +147,16 @@ personsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
  */
 personsRouter.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // Authorization check: verify user can access this person
+    const hasAccess = await canUserAccessPerson(req.userId!, req.params.id);
+    if (!hasAccess) {
+      res.status(403).json(errorResponse(
+        ErrorCodes.FORBIDDEN,
+        'You do not have permission to view this person. They must be connected to your family tree.'
+      ));
+      return;
+    }
+
     const { data, error } = await supabaseAdmin
       .from('persons')
       .select('*')

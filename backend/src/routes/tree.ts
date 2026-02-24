@@ -4,6 +4,7 @@ import { getFullTree, getPersonByAuthUser, findConnection } from '../services/gr
 import { calculateRelationship, RelationshipPath } from '../services/relationshipCalculator';
 import { supabaseAdmin } from '../config/supabase';
 import { successResponse, errorResponse, ErrorCodes } from '../utils/response';
+import { canUserAccessTree } from '../services/authorizationService';
 
 export const treeRouter = Router();
 
@@ -156,6 +157,16 @@ treeRouter.get('/connection/:personAId/:personBId', async (req: AuthenticatedReq
  */
 treeRouter.get('/:personId', async (req: AuthenticatedRequest, res: Response) => {
   try {
+    // Authorization check: verify user can access this tree
+    const hasAccess = await canUserAccessTree(req.userId!, req.params.personId);
+    if (!hasAccess) {
+      res.status(403).json(errorResponse(
+        ErrorCodes.FORBIDDEN,
+        'You do not have permission to view this family tree. The person must be connected to your tree.'
+      ));
+      return;
+    }
+
     const tree = await getFullTree(req.params.personId);
 
     if (tree.nodes.length === 0) {
