@@ -8,25 +8,26 @@ services:
   - type: web
     name: familytree-backend
     env: node
-    region: oregon  # Change to your preferred region
-    plan: free  # Change to 'starter' or higher for production
-    buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && npm start
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
-        value: 10000  # Render uses port 10000 by default
+        value: 10000
       - key: SUPABASE_URL
-        sync: false  # Set manually in Render dashboard
+        sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false  # Set manually in Render dashboard (keep secret!)
+        sync: false
       - key: SUPABASE_ANON_KEY
-        sync: false  # Set manually in Render dashboard
+        sync: false
       - key: APP_URL
-        value: https://familytree-web.onrender.com  # Update with your frontend URL
+        value: https://familytree-web-v5xn.onrender.com
       - key: INVITE_BASE_URL
-        value: https://familytree-web.onrender.com/invite
+        value: https://familytree-web-v5xn.onrender.com/invite
     healthCheckPath: /api/health
 
   # ============================================
@@ -39,12 +40,12 @@ services:
       # Install Flutter
       git clone https://github.com/flutter/flutter.git -b stable --depth 1
       export PATH="$PATH:`pwd`/flutter/bin"
-      
+
       # Build Flutter web app
       cd app
       flutter pub get
       flutter build web --release --web-renderer canvaskit
-      
+
       # Copy build output to Render's expected location
       cp -r build/web/* ../public/
     staticPublishPath: ./public

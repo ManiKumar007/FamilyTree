@@ -1,4 +1,10 @@
 {
+  "name": "familytree-root",
+  "private": true,
+  "scripts": {
+    "build": "cd backend && npm install && npm run build",
+    "start": "cd backend && npm start"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.97.0",
     "dotenv": "^17.3.1"
