@@ -39,6 +39,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   XFile? _selectedImage;
   String _countryCode = '+91';
   String? _uploadedImageUrl;
+  bool _imageRemoved = false;
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isUploadingImage = false;
@@ -107,6 +108,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Future<void> _handleImageSelected(XFile imageFile) async {
     setState(() {
       _selectedImage = imageFile;
+      _imageRemoved = false;
       _isUploadingImage = true;
       _error = null;
     });
@@ -134,10 +136,28 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 
   Future<void> _handleImageRemoved() async {
+    // Delete old image from storage if one exists
+    final existingUrl = _uploadedImageUrl ?? _currentPerson?.photoUrl;
+    if (existingUrl != null && existingUrl.isNotEmpty) {
+      try {
+        final api = ref.read(apiServiceProvider);
+        await api.deleteProfileImage(existingUrl);
+      } catch (_) {
+        // Silently ignore storage deletion errors
+      }
+    }
+
     setState(() {
       _selectedImage = null;
       _uploadedImageUrl = null;
+      _imageRemoved = true;
     });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profile photo removed')),
+      );
+    }
   }
 
   Future<void> _save() async {
@@ -173,8 +193,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       // Add uploaded image URL if available
       if (_uploadedImageUrl != null) {
         updateData['photo_url'] = _uploadedImageUrl;
-      } else if (_selectedImage == null && _uploadedImageUrl == null) {
-        // User removed the image
+      } else if (_imageRemoved) {
+        // User explicitly removed the image
         updateData['photo_url'] = null;
       }
 
@@ -271,7 +291,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     // Profile Image Upload
                     Center(
                       child: ImageUploadWidget(
-                        currentImageUrl: _uploadedImageUrl ?? _currentPerson?.photoUrl,
+                        currentImageUrl: _imageRemoved ? null : (_uploadedImageUrl ?? _currentPerson?.photoUrl),
                         gender: _gender,
                         onImageSelected: _handleImageSelected,
                         onImageRemoved: _handleImageRemoved,
