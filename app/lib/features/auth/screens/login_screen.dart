@@ -18,7 +18,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _isSendingReset = false;
   String? _error;
+  String? _resetMessage;
 
   @override
   void dispose() {
@@ -111,6 +113,145 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return 'Request timed out. Please try again.';
     }
     return cleanError;
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  Icon(Icons.lock_reset_rounded, color: kPrimaryColor, size: 24),
+                  const SizedBox(width: 8),
+                  const Text('Reset Password'),
+                ],
+              ),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Enter your email address and we\'ll send you a link to reset your password.',
+                      style: TextStyle(color: kTextSecondary, fontSize: 14, height: 1.5),
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: resetEmailController,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                        hintText: 'you@example.com',
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      enabled: !_isSendingReset,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) return 'Please enter your email';
+                        if (!value.contains('@')) return 'Please enter a valid email';
+                        return null;
+                      },
+                    ),
+                    if (_resetMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _resetMessage!.startsWith('Error')
+                              ? kErrorColor.withValues(alpha: 0.08)
+                              : Colors.green.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _resetMessage!.startsWith('Error')
+                                ? kErrorColor.withValues(alpha: 0.2)
+                                : Colors.green.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _resetMessage!.startsWith('Error')
+                                  ? Icons.error_outline
+                                  : Icons.check_circle_outline,
+                              size: 16,
+                              color: _resetMessage!.startsWith('Error')
+                                  ? kErrorColor
+                                  : Colors.green,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _resetMessage!,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: _resetMessage!.startsWith('Error')
+                                      ? kErrorColor
+                                      : Colors.green.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() { _resetMessage = null; });
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: _isSendingReset
+                      ? null
+                      : () async {
+                          if (!formKey.currentState!.validate()) return;
+                          setDialogState(() {});
+                          setState(() { _isSendingReset = true; _resetMessage = null; });
+                          try {
+                            final authService = ref.read(authServiceProvider);
+                            await authService.resetPasswordForEmail(
+                              resetEmailController.text.trim(),
+                            );
+                            setState(() {
+                              _resetMessage = 'Password reset link sent! Check your email.';
+                            });
+                            setDialogState(() {});
+                          } catch (e) {
+                            setState(() {
+                              _resetMessage = 'Error: ${e.toString().replaceAll('Exception: ', '')}';
+                            });
+                            setDialogState(() {});
+                          } finally {
+                            setState(() { _isSendingReset = false; });
+                          }
+                        },
+                  child: _isSendingReset
+                      ? const SizedBox(
+                          height: 18, width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text('Send Reset Link'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -272,7 +413,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 8),
+
+                          // Forgot Password link
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _isLoading ? null : _showForgotPasswordDialog,
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: kPrimaryColor,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
 
                           // Sign in button
                           SizedBox(

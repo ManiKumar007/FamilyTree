@@ -175,11 +175,11 @@ class Responsive {
   double get treeCardHeight {
     switch (deviceType) {
       case DeviceType.mobile:
-        return 110;
+        return 135;
       case DeviceType.tablet:
-        return 130;
+        return 145;
       case DeviceType.desktop:
-        return 150;
+        return 160;
     }
   }
 

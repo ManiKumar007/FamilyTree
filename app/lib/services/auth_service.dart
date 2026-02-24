@@ -178,6 +178,39 @@ class AuthService {
     await _supabase.auth.signOut();
   }
 
+  /// Send password reset email
+  Future<void> resetPasswordForEmail(String email) async {
+    developer.log('🔑 Sending password reset email', name: 'AuthService', error: {'email': email});
+
+    try {
+      if (email.isEmpty) {
+        throw Exception('Email cannot be empty');
+      }
+      if (!email.contains('@')) {
+        throw Exception('Invalid email format');
+      }
+
+      await _supabase.auth.resetPasswordForEmail(email);
+
+      developer.log('✅ Password reset email sent', name: 'AuthService', error: {'email': email});
+    } on AuthException catch (e) {
+      developer.log(
+        '🚫 Supabase AuthException during password reset',
+        name: 'AuthService',
+        error: {'message': e.message, 'statusCode': e.statusCode},
+      );
+      throw Exception('Password reset failed: ${e.message}');
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Unexpected error during password reset',
+        name: 'AuthService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
+
   /// Get access token for API calls
   String? get accessToken => currentSession?.accessToken;
 

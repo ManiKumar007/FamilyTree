@@ -95,9 +95,12 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
     switch (_relationshipType) {
       case 'FATHER_OF': return 'Father';
       case 'MOTHER_OF': return 'Mother';
-      case 'SPOUSE_OF': return 'Spouse';
-      case 'SIBLING_OF': return 'Sibling';
-      case 'CHILD_OF': return 'Child';
+      case 'SPOUSE_OF': 
+        return _gender == 'male' ? 'Husband' : (_gender == 'female' ? 'Wife' : 'Spouse');
+      case 'SIBLING_OF': 
+        return _gender == 'male' ? 'Brother' : (_gender == 'female' ? 'Sister' : 'Sibling');
+      case 'CHILD_OF': 
+        return _gender == 'male' ? 'Son' : (_gender == 'female' ? 'Daughter' : 'Child');
       default: return 'Family Member';
     }
   }

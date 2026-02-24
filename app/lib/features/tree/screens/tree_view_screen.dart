@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import '../../../models/models.dart';
 import '../../../providers/providers.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/api_service.dart';
 import '../../../config/theme.dart';
 import '../../../config/responsive.dart';
 import '../../../widgets/app_shell.dart';
 import '../widgets/person_card.dart';
 import '../widgets/tree_painter.dart';
+import '../widgets/add_family_dialog.dart';
 
 /// The main tree view screen with a Geni-style pannable/zoomable canvas.
 class TreeViewScreen extends ConsumerStatefulWidget {
@@ -265,7 +267,14 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/tree/add-member'),
+        onPressed: () async {
+          final profile = await ref.read(myProfileProvider.future);
+          if (profile != null && mounted) {
+            showAddFamilyDialog(context, profile);
+          } else if (mounted) {
+            context.push('/profile-setup');
+          }
+        },
         tooltip: 'Add Family Member',
         child: const Icon(Icons.person_add_rounded, color: Colors.white),
       ),
@@ -396,20 +405,24 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                 onFindConnection: pn.person.username != null
                     ? () => _navigateToConnectionFinder(pn.person.username!)
                     : null,
+                onAddFamily: () => showAddFamilyDialog(context, pn.person),
+                onDelete: pn.person.id != tree.rootPersonId
+                    ? () => _showDeleteDialog(pn.person)
+                    : null,
               ),
             )),
-            // Add buttons for missing relatives
-            ...layout.addButtons.map((btn) => Positioned(
-              left: btn.x,
-              top: btn.y,
-              child: AddPersonButton(
-                label: btn.label,
-                buttonWidth: r.treeAddBtnWidth,
-                onTap: () {
-                  _showRelationshipPicker(btn.relativePersonId);
-                },
-              ),
-            )),
+            // Add buttons for missing relatives - REMOVED: Use + button on cards instead
+            // ...layout.addButtons.map((btn) => Positioned(
+            //   left: btn.x,
+            //   top: btn.y,
+            //   child: AddPersonButton(
+            //     label: btn.label,
+            //     buttonWidth: r.treeAddBtnWidth,
+            //     onTap: () {
+            //       _showRelationshipPicker(btn.relativePersonId);
+            //     },
+            //   ),
+            // )),
           ],
         ),
       ),
@@ -417,224 +430,19 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
   }
 
   void _showRelationshipPicker(String relativePersonId) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[100],
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
-      builder: (ctx) => SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Add Family Member',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                
-                // Parents Row
-                Row(
-                children: [
-                  Expanded(
-                    child: _relationshipButton(
-                      'Add Father',
-                      Icons.person,
-                      kMaleColor,
-                      () {
-                        Navigator.pop(ctx);
-                        context.push('/tree/add-member', extra: {
-                          'relativePersonId': relativePersonId,
-                          'relationshipType': 'FATHER_OF',
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _relationshipButton(
-                      'Add Mother',
-                      Icons.person,
-                      kFemaleColor,
-                      () {
-                        Navigator.pop(ctx);
-                        context.push('/tree/add-member', extra: {
-                          'relativePersonId': relativePersonId,
-                          'relationshipType': 'MOTHER_OF',
-                        });
-                      },
-                    ),
-                  ),
-                ],
-                ),
-                const SizedBox(height: 10),
-                
-                // Siblings Row
-                Row(
-                children: [
-                  Expanded(
-                    child: _relationshipButton(
-                      'Add Brother',
-                      Icons.person,
-                      kMaleColor,
-                      () {
-                        Navigator.pop(ctx);
-                        context.push('/tree/add-member', extra: {
-                          'relativePersonId': relativePersonId,
-                          'relationshipType': 'SIBLING_OF',
-                          'gender': 'male',
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _relationshipButton(
-                      'Add Sister',
-                      Icons.person,
-                      kFemaleColor,
-                      () {
-                        Navigator.pop(ctx);
-                        context.push('/tree/add-member', extra: {
-                          'relativePersonId': relativePersonId,
-                          'relationshipType': 'SIBLING_OF',
-                          'gender': 'female',
-                        });
-                      },
-                    ),
-                  ),
-                ],
-                ),
-                const SizedBox(height: 10),
-                
-                // Spouse Row
-                Row(
-                children: [
-                  Expanded(
-                    child: _relationshipButton(
-                      'Add Husband',
-                      Icons.person,
-                      kMaleColor,
-                      () {
-                        Navigator.pop(ctx);
-                        context.push('/tree/add-member', extra: {
-                          'relativePersonId': relativePersonId,
-                          'relationshipType': 'SPOUSE_OF',
-                          'gender': 'male',
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _relationshipButton(
-                      'Add Wife',
-                      Icons.person,
-                      kFemaleColor,
-                      () {
-                        Navigator.pop(ctx);
-                        context.push('/tree/add-member', extra: {
-                          'relativePersonId': relativePersonId,
-                          'relationshipType': 'SPOUSE_OF',
-                          'gender': 'female',
-                        });
-                      },
-                    ),
-                  ),
-                ],
-                ),
-                const SizedBox(height: 10),
-                
-                // Children Row
-                Row(
-                children: [
-                  Expanded(
-                    child: _relationshipButton(
-                      'Add Son',
-                      Icons.person,
-                      kMaleColor,
-                      () {
-                        Navigator.pop(ctx);
-                        context.push('/tree/add-member', extra: {
-                          'relativePersonId': relativePersonId,
-                          'relationshipType': 'CHILD_OF',
-                          'gender': 'male',
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _relationshipButton(
-                      'Add Daughter',
-                      Icons.person,
-                      kFemaleColor,
-                      () {
-                        Navigator.pop(ctx);
-                        context.push('/tree/add-member', extra: {
-                          'relativePersonId': relativePersonId,
-                          'relationshipType': 'CHILD_OF',
-                          'gender': 'female',
-                        });
-                      },
-                    ),
-                  ),
-                ],
-                ),
-                const SizedBox(height: 16),
-                
-                // Cancel Button
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-                  ),
-                  child: const Text('Cancel', style: TextStyle(fontSize: 16)),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _relationshipButton(String label, IconData icon, Color color, VoidCallback onTap) {
-    return Material(
-      elevation: 2,
-      borderRadius: BorderRadius.circular(12),
-      color: color.withValues(alpha: 0.1),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 28),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    // Find the person from the tree
+    final treeAsync = ref.read(familyTreeProvider);
+    treeAsync.whenData((tree) {
+      if (tree != null) {
+        final personNode = tree.nodes.firstWhere(
+          (node) => node.person.id == relativePersonId,
+          orElse: () => tree.nodes.first,
+        );
+        if (mounted) {
+          showAddFamilyDialog(context, personNode.person);
+        }
+      }
+    });
   }
 
   void _showInviteDialog(Person person) {
@@ -656,6 +464,56 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
               context.push('/invite');
             },
             child: const Text('Send Invite'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDialog(Person person) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Person?'),
+        content: Text(
+          'Are you sure you want to delete ${person.name} from the family tree? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kErrorColor,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                await ref.read(apiServiceProvider).deletePerson(person.id);
+                // Refresh the tree
+                ref.invalidate(familyTreeProvider);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${person.name} has been deleted'),
+                      backgroundColor: kSuccessColor,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete: $e'),
+                      backgroundColor: kErrorColor,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -796,97 +654,277 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
     final positionedNodes = <_PositionedNode>[];
     final nodePositions = <String, Offset>{};
     final lines = <ConnectionLine>[];
-
-    final sortedGens = genGroups.keys.toList()..sort();
     final positioned = <String>{};
-    
-    for (final gen in sortedGens) {
-      final members = genGroups[gen]!;
-      final y = padding + (gen * (cardHeight + vGap));
-      double currentX = padding;
-      
-      for (final personId in members) {
-        if (positioned.contains(personId)) continue;
-        
-        final person = personMap[personId];
-        if (person == null) continue;
-        
-        // Check if this person has a spouse in the same generation
-        final spouseId = spouseOf[personId];
-        final hasSpouseInGen = spouseId != null && genGroups[gen]?.contains(spouseId) == true;
-        
-        if (hasSpouseInGen && !positioned.contains(spouseId)) {
-          // Position this person and spouse together
-          final spouse = personMap[spouseId];
-          
-          // Determine order by gender (male on left, female on right by convention)
-          final leftPerson = person.gender == 'male' ? person : spouse;
-          final rightPerson = person.gender == 'male' ? spouse : person;
-          final leftId = leftPerson?.id ?? personId;
-          final rightId = rightPerson?.id ?? spouseId;
-          
-          // Position left person
-          nodePositions[leftId] = Offset(currentX + cardWidth / 2, y + cardHeight / 2);
-          positionedNodes.add(_PositionedNode(
-            person: personMap[leftId]!,
-            x: currentX,
-            y: y,
-            canEdit: personMap[leftId]!.createdByUserId == userId || 
-                     personMap[leftId]!.authUserId == userId,
-          ));
-          positioned.add(leftId);
-          
-          // Position right person (spouse)
-          final spouseX = currentX + cardWidth + spouseGap;
-          nodePositions[rightId] = Offset(spouseX + cardWidth / 2, y + cardHeight / 2);
-          positionedNodes.add(_PositionedNode(
-            person: personMap[rightId]!,
-            x: spouseX,
-            y: y,
-            canEdit: personMap[rightId]!.createdByUserId == userId || 
-                     personMap[rightId]!.authUserId == userId,
-          ));
-          positioned.add(rightId);
-          
-          currentX = spouseX + cardWidth + hGap;
-        } else if (!positioned.contains(personId)) {
-          // Position single person
-          nodePositions[personId] = Offset(currentX + cardWidth / 2, y + cardHeight / 2);
-          positionedNodes.add(_PositionedNode(
-            person: person,
-            x: currentX,
-            y: y,
-            canEdit: person.createdByUserId == userId || person.authUserId == userId,
-          ));
-          positioned.add(personId);
-          currentX += cardWidth + hGap;
+
+    // === Recursive layout: center children under their parent couple ===
+
+    // Helper: Get deduplicated children of a person (merging both parents in a couple)
+    List<String> getChildrenOf(String personId) {
+      final result = <String>{};
+      result.addAll(childrenOf[personId] ?? []);
+      final sid = spouseOf[personId];
+      if (sid != null) {
+        result.addAll(childrenOf[sid] ?? []);
+      }
+      return result.toList();
+    }
+
+    // Bottom-up: compute the width each subtree needs
+    final Map<String, double> _stCache = {};
+    final Set<String> _stVisited = {};
+
+    double getSubtreeWidth(String personId) {
+      if (_stCache.containsKey(personId)) return _stCache[personId]!;
+      if (_stVisited.contains(personId)) {
+        final sid = spouseOf[personId];
+        return (sid != null && personMap.containsKey(sid))
+            ? (cardWidth * 2 + spouseGap)
+            : cardWidth;
+      }
+      _stVisited.add(personId);
+
+      final sid = spouseOf[personId];
+      final hasSpouse = sid != null && personMap.containsKey(sid);
+      final coupleW = hasSpouse ? (cardWidth * 2 + spouseGap) : cardWidth;
+
+      final kids = getChildrenOf(personId);
+      if (kids.isEmpty) {
+        _stCache[personId] = coupleW;
+        if (hasSpouse) _stCache[sid!] = coupleW;
+        return coupleW;
+      }
+
+      double kidsW = 0;
+      for (final kid in kids) {
+        kidsW += getSubtreeWidth(kid);
+      }
+      kidsW += (kids.length - 1) * hGap;
+
+      final w = kidsW > coupleW ? kidsW : coupleW;
+      _stCache[personId] = w;
+      if (hasSpouse) _stCache[sid!] = w;
+      return w;
+    }
+
+    // Top-down: place each node (and its spouse) centred inside its subtree band
+    void positionAt(String personId, double startX) {
+      if (positioned.contains(personId)) return;
+      final person = personMap[personId];
+      if (person == null) return;
+
+      final gen = generations[personId] ?? 2;
+      final y = padding + gen * (cardHeight + vGap);
+
+      final sid = spouseOf[personId];
+      final hasSpouse = sid != null && personMap.containsKey(sid);
+      final coupleW = hasSpouse ? (cardWidth * 2 + spouseGap) : cardWidth;
+      final stw = getSubtreeWidth(personId);
+
+      // Centre the couple inside its subtree band
+      final coupleX = startX + (stw - coupleW) / 2;
+
+      // Male on left, female on right
+      String leftId = personId;
+      String? rightId = hasSpouse ? sid : null;
+      if (hasSpouse) {
+        if (person.gender == 'female' && personMap[sid]?.gender == 'male') {
+          leftId = sid!;
+          rightId = personId;
+        }
+      }
+
+      // Place left card
+      if (!positioned.contains(leftId) && personMap.containsKey(leftId)) {
+        nodePositions[leftId] = Offset(coupleX + cardWidth / 2, y + cardHeight / 2);
+        positionedNodes.add(_PositionedNode(
+          person: personMap[leftId]!,
+          x: coupleX,
+          y: y,
+          canEdit: personMap[leftId]!.createdByUserId == userId ||
+                   personMap[leftId]!.authUserId == userId,
+        ));
+        positioned.add(leftId);
+      }
+
+      // Place right card (spouse)
+      if (rightId != null && !positioned.contains(rightId) && personMap.containsKey(rightId)) {
+        final spX = coupleX + cardWidth + spouseGap;
+        nodePositions[rightId] = Offset(spX + cardWidth / 2, y + cardHeight / 2);
+        positionedNodes.add(_PositionedNode(
+          person: personMap[rightId]!,
+          x: spX,
+          y: y,
+          canEdit: personMap[rightId]!.createdByUserId == userId ||
+                   personMap[rightId]!.authUserId == userId,
+        ));
+        positioned.add(rightId);
+      }
+
+      // Recursively position children, centred under this couple
+      final kids = getChildrenOf(personId);
+      if (kids.isNotEmpty) {
+        double kidsW = 0;
+        for (final kid in kids) {
+          kidsW += getSubtreeWidth(kid);
+        }
+        kidsW += (kids.length - 1) * hGap;
+
+        double kidX = startX + (stw - kidsW) / 2;
+        for (final kid in kids) {
+          positionAt(kid, kidX);
+          kidX += getSubtreeWidth(kid) + hGap;
         }
       }
     }
 
-    // Draw connection lines
+    // Walk up from root to find the topmost ancestor
+    String topAncestor = rootId;
+    {
+      final upVisited = <String>{rootId};
+      var current = rootId;
+      while (true) {
+        final pars = parentOf[current] ?? [];
+        final next = pars.where((p) => !upVisited.contains(p)).firstOrNull;
+        if (next == null) break;
+        upVisited.add(next);
+        current = next;
+      }
+      topAncestor = current;
+    }
+    // Convention: if topmost ancestor is female with a male spouse, use the male
+    if (personMap[topAncestor]?.gender == 'female') {
+      final s = spouseOf[topAncestor];
+      if (s != null && personMap[s]?.gender == 'male') topAncestor = s;
+    }
+
+    // Compute widths then position the main tree
+    getSubtreeWidth(topAncestor);
+    positionAt(topAncestor, padding);
+
+    // Position any remaining nodes that weren't reached (e.g. in-law ancestors)
     for (final node in nodes) {
-      final fromPos = nodePositions[node.person.id];
-      if (fromPos == null) continue;
+      if (!positioned.contains(node.person.id)) {
+        double maxRight = padding;
+        for (final pos in nodePositions.values) {
+          final right = pos.dx + cardWidth / 2;
+          if (right > maxRight) maxRight = right;
+        }
+        getSubtreeWidth(node.person.id);
+        positionAt(node.person.id, maxRight + hGap);
+      }
+    }
 
-      for (final rel in node.relationships) {
-        final toPos = nodePositions[rel.relatedPersonId];
-        if (toPos == null) continue;
+    // === Connection lines: T-junction from couple to children ===
+    final drawnCoupleLines = <String>{};
 
-        if (rel.type == 'SPOUSE_OF') {
-          // Horizontal line for spouse
+    for (final personId in positioned) {
+      final pos = nodePositions[personId];
+      if (pos == null) continue;
+
+      final sid = spouseOf[personId];
+      final spousePos = sid != null ? nodePositions[sid] : null;
+
+      // --- Spouse line (once per couple) ---
+      if (sid != null && spousePos != null) {
+        final coupleKey = ([personId, sid]..sort()).join('|');
+        if (!drawnCoupleLines.contains(coupleKey)) {
+          drawnCoupleLines.add(coupleKey);
+          final leftX = pos.dx < spousePos.dx ? pos.dx : spousePos.dx;
+          final rightX = pos.dx > spousePos.dx ? pos.dx : spousePos.dx;
           lines.add(ConnectionLine(
-            start: fromPos,
-            end: toPos,
+            start: Offset(leftX + cardWidth / 2, pos.dy),
+            end: Offset(rightX - cardWidth / 2, pos.dy),
             type: LineType.straight,
           ));
-        } else if (rel.type == 'FATHER_OF' || rel.type == 'MOTHER_OF') {
-          // Elbow line from parent to child
+        }
+      }
+
+      // --- Parent-to-children T-junction (once per couple) ---
+      final kids = getChildrenOf(personId);
+      if (kids.isNotEmpty) {
+        final coupleKey = sid != null
+            ? ([personId, sid]..sort()).join('|')
+            : personId;
+        final linesKey = 'ch_$coupleKey';
+        if (!drawnCoupleLines.contains(linesKey)) {
+          drawnCoupleLines.add(linesKey);
+
+          // Midpoint X between the couple (or single parent centre)
+          double midX;
+          if (spousePos != null) {
+            midX = (pos.dx + spousePos.dx) / 2;
+          } else {
+            midX = pos.dx;
+          }
+
+          final parentBottomY = pos.dy + cardHeight / 2;
+
+          // Only draw for children that are actually positioned
+          final posKids = kids.where((k) => nodePositions.containsKey(k)).toList();
+          if (posKids.isEmpty) continue;
+
+          final childTopY = nodePositions[posKids.first]!.dy - cardHeight / 2;
+          final bracketY = (parentBottomY + childTopY) / 2;
+
+          // T-junction: vertical connector starts from spouse line (pos.dy)
+          // so the line visually joins the horizontal spouse connector.
+          // For single parents the hidden portion behind the card is harmless.
+          final verticalStartY = pos.dy;
+
+          // 1. Vertical drop from couple midpoint to bracket level
           lines.add(ConnectionLine(
-            start: Offset(fromPos.dx, fromPos.dy + cardHeight / 2),
-            end: Offset(toPos.dx, toPos.dy - cardHeight / 2),
-            type: LineType.elbow,
+            start: Offset(midX, verticalStartY),
+            end: Offset(midX, bracketY),
+            type: LineType.straight,
           ));
+
+          if (posKids.length == 1) {
+            final kidPos = nodePositions[posKids.first]!;
+            if ((kidPos.dx - midX).abs() < 1) {
+              // Child directly below — straight vertical
+              lines.add(ConnectionLine(
+                start: Offset(midX, bracketY),
+                end: Offset(kidPos.dx, childTopY),
+                type: LineType.straight,
+              ));
+            } else {
+              // Child offset — horizontal jog then vertical
+              lines.add(ConnectionLine(
+                start: Offset(midX, bracketY),
+                end: Offset(kidPos.dx, bracketY),
+                type: LineType.straight,
+              ));
+              lines.add(ConnectionLine(
+                start: Offset(kidPos.dx, bracketY),
+                end: Offset(kidPos.dx, childTopY),
+                type: LineType.straight,
+              ));
+            }
+          } else {
+            // 2. Horizontal bracket across all children
+            double leftmostX = double.infinity;
+            double rightmostX = double.negativeInfinity;
+            for (final kid in posKids) {
+              final kp = nodePositions[kid]!;
+              if (kp.dx < leftmostX) leftmostX = kp.dx;
+              if (kp.dx > rightmostX) rightmostX = kp.dx;
+            }
+            lines.add(ConnectionLine(
+              start: Offset(leftmostX, bracketY),
+              end: Offset(rightmostX, bracketY),
+              type: LineType.straight,
+            ));
+
+            // 3. Vertical drop from bracket to each child
+            for (final kid in posKids) {
+              final kp = nodePositions[kid]!;
+              lines.add(ConnectionLine(
+                start: Offset(kp.dx, bracketY),
+                end: Offset(kp.dx, childTopY),
+                type: LineType.straight,
+              ));
+            }
+          }
         }
       }
     }

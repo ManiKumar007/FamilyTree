@@ -119,6 +119,17 @@ class ApiService {
     return Person.fromJson(wrapper['data']);
   }
 
+  /// Delete person
+  Future<void> deletePerson(String id) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/persons/$id'),
+      headers: _headers,
+    );
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw _handleError(response);
+    }
+  }
+
   // ==================== IMAGE UPLOAD ====================
 
   /// Upload profile image to Supabase Storage

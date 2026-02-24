@@ -11,6 +11,8 @@ class PersonCard extends StatefulWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onInvite;
   final VoidCallback? onFindConnection;
+  final VoidCallback? onAddFamily;
+  final VoidCallback? onDelete;
   final double? cardWidth;
 
   const PersonCard({
@@ -21,6 +23,8 @@ class PersonCard extends StatefulWidget {
     this.onEdit,
     this.onInvite,
     this.onFindConnection,
+    this.onAddFamily,
+    this.onDelete,
     this.cardWidth,
   });
 
@@ -84,19 +88,59 @@ class _PersonCardState extends State<PersonCard> {
                     topRight: Radius.circular(12),
                   ),
                 ),
-                child: widget.person.photoUrl != null
-                    ? ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          topRight: Radius.circular(12),
+                child: Stack(
+                  children: [
+                    // Photo or default avatar
+                    widget.person.photoUrl != null
+                        ? ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              topRight: Radius.circular(12),
+                            ),
+                            child: Image.network(
+                              widget.person.photoUrl!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (_, __, ___) => _defaultAvatar(isMale),
+                            ),
+                          )
+                        : _defaultAvatar(isMale),
+                    
+                    // Add family button (top-right)
+                    if (widget.onAddFamily != null)
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: widget.onAddFamily,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.add_rounded,
+                                size: 16,
+                                color: kPrimaryColor,
+                              ),
+                            ),
+                          ),
                         ),
-                        child: Image.network(
-                          widget.person.photoUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => _defaultAvatar(isMale),
-                        ),
-                      )
-                    : _defaultAvatar(isMale),
+                      ),
+                  ],
+                ),
               ),
 
               // Info area
@@ -125,7 +169,7 @@ class _PersonCardState extends State<PersonCard> {
               ),
 
               // Action buttons
-              if (widget.onEdit != null || (!widget.person.verified && widget.onInvite != null) || widget.onFindConnection != null)
+              if (widget.onEdit != null || (!widget.person.verified && widget.onInvite != null) || widget.onFindConnection != null || widget.onDelete != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6, left: 6, right: 6),
                   child: Row(
@@ -137,6 +181,8 @@ class _PersonCardState extends State<PersonCard> {
                         _actionIcon(Icons.send_outlined, widget.onInvite!, 'Invite'),
                       if (widget.onFindConnection != null && !widget.isCurrentUser)
                         _actionIcon(Icons.link_rounded, widget.onFindConnection!, 'Find Connection'),
+                      if (widget.onDelete != null && !widget.isCurrentUser)
+                        _actionIcon(Icons.delete_outline, widget.onDelete!, 'Delete', isDestructive: true),
                     ],
                   ),
                 ),
@@ -157,7 +203,7 @@ class _PersonCardState extends State<PersonCard> {
     );
   }
 
-  Widget _actionIcon(IconData icon, VoidCallback onPressed, String tooltip) {
+  Widget _actionIcon(IconData icon, VoidCallback onPressed, String tooltip, {bool isDestructive = false}) {
     return Tooltip(
       message: tooltip,
       child: InkWell(
@@ -166,10 +212,14 @@ class _PersonCardState extends State<PersonCard> {
         child: Container(
           padding: const EdgeInsets.all(5),
           decoration: BoxDecoration(
-            color: kSurfaceSecondary,
+            color: isDestructive ? kErrorColor.withValues(alpha: 0.1) : kSurfaceSecondary,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 14, color: kTextSecondary),
+          child: Icon(
+            icon, 
+            size: 14, 
+            color: isDestructive ? kErrorColor : kTextSecondary,
+          ),
         ),
       ),
     );

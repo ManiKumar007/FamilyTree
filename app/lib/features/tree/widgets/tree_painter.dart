@@ -13,8 +13,8 @@ class TreeLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = kDividerColor
-      ..strokeWidth = 2
+      ..color = Colors.black
+      ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke;
 
     for (final line in lines) {
