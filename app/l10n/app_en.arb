@@ -1,0 +1,137 @@
+{
+  "@@locale": "en",
+  
+  "appName": "Vansh",
+  "@appName": {
+    "description": "The application name"
+  },
+  
+  "appTagline": "Preserve Your Family's Heritage",
+  "@appTagline": {
+    "description": "Application tagline"
+  },
+  
+  "continueWithGoogle": "Continue with Google",
+  "continueWithPhone": "Continue with Phone",
+  "continueWithEmail": "Continue with Email",
+  "signIn": "Sign In",
+  "signUp": "Sign Up",
+  "email": "Email",
+  "password": "Password",
+  "confirmPassword": "Confirm Password",
+  "name": "Name",
+  "phone": "Phone",
+  "forgotPassword": "Forgot Password?",
+  "dontHaveAccount": "Don't have an account?",
+  "alreadyHaveAccount": "Already have an account?",
+  "sendResetLink": "Send Reset Link",
+  "backToSignIn": "Back to Sign In",
+  
+  "selectLanguage": "Select Your Language",
+  "@selectLanguage": {
+    "description": "Language selection prompt"
+  },
+  
+  "languageEnglish": "English",
+  "languageHindi": "हिन्दी",
+  "languageTamil": "தமிழ்",
+  "languageTelugu": "తెలుగు",
+  "languageBengali": "বাংলা",
+  "languageMarathi": "मराठी",
+  "languageGujarati": "ગુજરાતી",
+  "languageKannada": "ಕನ್ನಡ",
+  
+  "yourVanshYourLegacy": "Your Vansh, Your Legacy",
+  "preserveHeritage": "Preserve your family's heritage for generations to come",
+  "grandmotherStories": "Your grandmother's stories. Your grandfather's wisdom. Your family's legacy. Don't let them fade away.",
+  
+  "getStarted": "Get Started",
+  "signUpFree": "Sign Up Free",
+  "shareOnWhatsApp": "Share on WhatsApp",
+  
+  "familyTree": "Family Tree",
+  "profile": "Profile",
+  "settings": "Settings",
+  "signOut": "Sign Out",
+  
+  "addFamilyMember": "Add Family Member",
+  "editProfile": "Edit Profile",
+  "share": "Share",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  
+  "father": "Father",
+  "mother": "Mother",
+  "son": "Son",
+  "daughter": "Daughter",
+  "brother": "Brother",
+  "sister": "Sister",
+  "husband": "Husband",
+  "wife": "Wife",
+  "grandfather": "Grandfather",
+  "grandmother": "Grandmother",
+  "grandson": "Grandson",
+  "granddaughter": "Granddaughter",
+  
+  "dateOfBirth": "Date of Birth",
+  "dateOfDeath": "Date of Death",
+  "placeOfDeath": "Place of Death",
+  "occupation": "Occupation",
+  "city": "City",
+  "state": "State",
+  "community": "Community",
+  "maritalStatus": "Marital Status",
+  
+  "single": "Single",
+  "married": "Married",
+  "divorced": "Divorced",
+  "widowed": "Widowed",
+  
+  "male": "Male",
+  "female": "Female",
+  "other": "Other",
+  
+  "profileCreatedSuccess": "Profile created successfully!",
+  "profileUpdatedSuccess": "Profile updated successfully!",
+  "errorOccurred": "An error occurred",
+  "tryAgain": "Try Again",
+  
+  "loading": "Loading...",
+  "refreshTree": "Refresh Tree",
+  "centerOnUser": "Center on User",
+  
+  "whatsappInviteMessage": "Hello {name}! Join me on Vansh to preserve our family heritage together.",
+  "@whatsappInviteMessage": {
+    "description": "WhatsApp invitation message",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  
+  "treeMilestone": "I've added {count} family members to Vansh! Preserve your family's heritage.",
+  "@treeMilestone": {
+    "description": "Tree size milestone message",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "birthdayWish": "Happy Birthday {name}! Turning {age} today!",
+  "@birthdayWish": {
+    "description": "Birthday wish message",
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "age": {
+        "type": "int"
+      }
+    }
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "@@locale": "ta",
+  
+  "appName": "வம்சம்",
+  "appTagline": "உங்கள் குடும்ப மரபை பாதுகாக்கவும்",
+  
+  "continueWithGoogle": "Google உடன் தொடரவும்",
+  "continueWithPhone": "ஃபோன் மூலம் தொடரவும்",
+  "continueWithEmail": "மின்னஞ்சல் மூலம் தொடரவும்",
+  "signIn": "உள்நுழைக",
+  "signUp": "பதிவு செய்க",
+  "email": "மின்னஞ்சல்",
+  "password": "கடவுச்சொல்",
+  "confirmPassword": "கடவுச்சொல்லை உறுதிப்படுத்தவும்",
+  "name": "பெயர்",
+  "phone": "தொலைபேசி",
+  "forgotPassword": "கடவுச்சொல்லை மறந்துவிட்டீர்களா?",
+  "dontHaveAccount": "கணக்கு இல்லையா?",
+  "alreadyHaveAccount": "ஏற்கனவே கணக்கு உள்ளதா?",
+  "sendResetLink": "மீட்டமைப்பு இணைப்பை அனுப்பவும்",
+  "backToSignIn": "உள்நுழைவுக்கு திரும்பு",
+  
+  "selectLanguage": "உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்",
+  
+  "languageEnglish": "English",
+  "languageHindi": "हिन्दी",
+  "languageTamil": "தமிழ்",
+  "languageTelugu": "తెలుగు",
+  "languageBengali": "বাংলা",
+  "languageMarathi": "मराठी",
+  "languageGujarati": "ગુજરાતી",
+  "languageKannada": "ಕನ್ನಡ",
+  
+  "yourVanshYourLegacy": "உங்கள் வம்சம், உங்கள் மரபு",
+  "preserveHeritage": "வரும் தலைமுறைகளுக்கு உங்கள் குடும்ப மரபைப் பாதுகாக்கவும்",
+  "grandmotherStories": "உங்கள் பாட்டியின் கதைகள். உங்கள் தாத்தாவின் ஞானம். உங்கள் குடும்ப மரபு. அவை மறைய விடாதீர்கள்.",
+  
+  "getStarted": "தொடங்குக",
+  "signUpFree": "இலவசமாக பதிவு செய்க",
+  "shareOnWhatsApp": "WhatsApp இல் பகிரவும்",
+  
+  "familyTree": "குடும்ப மரம்",
+  "profile": "சுயவிவரம்",
+  "settings": "அமைப்புகள்",
+  "signOut": "வெளியேறு",
+  
+  "addFamilyMember": "குடும்ப உறுப்பினரைச் சேர்க்கவும்",
+  "editProfile": "சுயவிவரத்தை திருத்து",
+  "share": "பகிர்",
+  "save": "சேமி",
+  "cancel": "ரத்து செய்",
+  "delete": "நீக்கு",
+  "edit": "திருத்து",
+  
+  "father": "தந்தை",
+  "mother": "தாய்",
+  "son": "மகன்",
+  "daughter": "மகள்",
+  "brother": "சகோதரன்",
+  "sister": "சகோதரி",
+  "husband": "கணவர்",
+  "wife": "மனைவி",
+  "grandfather": "தாத்தா",
+  "grandmother": "பாட்டி",
+  "grandson": "பேரன்",
+  "granddaughter": "பேத்தி",
+  
+  "dateOfBirth": "பிறந்த தேதி",
+  "dateOfDeath": "இறந்த தேதி",
+  "placeOfDeath": "இறந்த இடம்",
+  "occupation": "தொழில்",
+  "city": "நகரம்",
+  "state": "மாநிலம்",
+  "community": "சமூகம்",
+  "maritalStatus": "திருமண நிலை",
+  
+  "single": "திருமணமாகாதவர்",
+  "married": "திருமணமானவர்",
+  "divorced": "விவாகரத்து",
+  "widowed": "விதவை",
+  
+  "male": "ஆண்",
+  "female": "பெண்",
+  "other": "மற்றவை",
+  
+  "profileCreatedSuccess": "சுயவிவரம் வெற்றிகரமாக உருவாக்கப்பட்டது!",
+  "profileUpdatedSuccess": "சுயவிவரம் வெற்றிகரமாக புதுப்பிக்கப்பட்டது!",
+  "errorOccurred": "பிழை ஏற்பட்டது",
+  "tryAgain": "மீண்டும் முயற்சிக்கவும்",
+  
+  "loading": "ஏற்றுகிறது...",
+  "refreshTree": "மரத்தை புதுப்பிக்கவும்",
+  "centerOnUser": "பயனரில் மையப்படுத்து",
+  
+  "whatsappInviteMessage": "வணக்கம் {name}! நமது குடும்ப மரபைச் சேர்ந்து பாதுகாக்க Vansh இல் என்னுடன் சேரவும்.",
+  "treeMilestone": "நான் Vansh இல் {count} குடும்ப உறுப்பினர்களைச் சேர்த்துள்ளேன்! உங்கள் குடும்ப மரபைப் பாதுகாக்கவும்.",
+  "birthdayWish": "பிறந்தநாள் வாழ்த்துக்கள் {name}! இன்று {age} வயதாகிறது!"
+}
