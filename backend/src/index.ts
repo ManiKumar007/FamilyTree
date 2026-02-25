@@ -44,8 +44,8 @@ const allowedOrigins = env.NODE_ENV === 'production'
       env.APP_URL,
       'https://familytree-web.vercel.app',
       'https://familytree-web-manikumar007s-projects.vercel.app',
-      // Vercel preview & production URLs
-      /https:\/\/.*\.vercel\.app$/,
+      // Add specific Vercel preview URLs here if needed
+      // Do NOT use regex patterns - whitelist specific URLs only for security
     ].filter(Boolean) // Remove any undefined values
   : true; // Allow all origins in development
 
