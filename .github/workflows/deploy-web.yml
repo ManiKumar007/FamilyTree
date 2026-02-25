@@ -1,0 +1,57 @@
+# Deploy Flutter Web - Builds and deploys to Vercel using CLI
+name: Deploy Flutter Web
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'app/**'
+      - '.github/workflows/deploy-web.yml'
+
+jobs:
+  build-and-deploy:
+    name: Build Flutter Web & Deploy to Vercel
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create .env file
+        working-directory: app
+        run: |
+          cat > .env << EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          API_BASE_URL=${{ secrets.API_BASE_URL }}
+          APP_URL=${{ secrets.APP_URL }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          EOF
+
+      - name: Enable web platform
+        working-directory: app
+        run: |
+          if [ ! -d "web" ]; then
+            echo "Enabling web platform..."
+            flutter create . --platforms web
+          fi
+
+      - name: Build Flutter Web
+        working-directory: app
+        run: |
+          flutter pub get
+          flutter build web --release
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: app/build/web
+          vercel-args: '--prod'
