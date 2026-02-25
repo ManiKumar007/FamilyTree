@@ -65,6 +65,12 @@ jobs:
         run: |
           npm install --global vercel@latest
           cd deploy
+          
+          # Create .vercel directory with project configuration
+          mkdir -p .vercel
+          echo '{"orgId":"${{ secrets.VERCEL_ORG_ID }}","projectId":"${{ secrets.VERCEL_PROJECT_ID }}"}' > .vercel/project.json
+          
+          # Deploy to production
           vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
