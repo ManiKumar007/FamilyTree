@@ -47,11 +47,33 @@ jobs:
           flutter pub get
           flutter build web --release
 
+      - name: Prepare deployment directory
+        run: |
+          # Copy built files to a clean deployment directory
+          mkdir -p deploy
+          cp -r app/build/web/* deploy/
+          
+          # Create vercel.json for static file serving
+          cat > deploy/vercel.json << 'EOF'
+          {
+            "version": 2,
+            "routes": [
+              {
+                "handle": "filesystem"
+              },
+              {
+                "src": "/(.*)",
+                "dest": "/index.html"
+              }
+            ]
+          }
+          EOF
+
       - name: Deploy to Vercel
         run: |
           npm install --global vercel@latest
-          cd app/build/web
-          vercel --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
+          cd deploy
+          vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
