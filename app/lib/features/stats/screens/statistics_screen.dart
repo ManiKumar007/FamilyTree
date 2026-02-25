@@ -454,7 +454,7 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                       totalMembers > averageTreeSize
                           ? 'Your family tree is larger than average! Keep growing your tree to preserve your family legacy.'
                           : totalMembers > smallestTreeSize
-                              ? 'You\\'re building a great family tree! Add more members to see deeper connections.'
+                              ? 'You\'re building a great family tree! Add more members to see deeper connections.'
                               : 'Start building your family tree by adding more members!',
                       style: const TextStyle(
                         fontSize: 13,

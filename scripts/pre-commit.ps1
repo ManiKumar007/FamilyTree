@@ -1,9 +1,6 @@
-#!/usr/bin/env pwsh
-# Pre-commit hook: Validates builds before allowing commits
-# Install: Copy-Item scripts\pre-commit.ps1 .git\hooks\pre-commit -Force
-# This runs the same checks as GitHub CI to catch issues locally
+﻿# Pre-commit hook: Validates builds before allowing commits
 
-Write-Host "🔍 Running pre-commit validation..." -ForegroundColor Cyan
+Write-Host "Running pre-commit validation..." -ForegroundColor Cyan
 
 # Get staged files
 $dartFiles = git diff --cached --name-only --diff-filter=ACM | Where-Object { $_ -match '\.dart$' }
@@ -13,47 +10,36 @@ $hasErrors = $false
 
 # Flutter validation
 if ($dartFiles) {
-    Write-Host "`n📱 Flutter files changed - running analyze..." -ForegroundColor Yellow
+    Write-Host "Flutter files changed - running analyze..." -ForegroundColor Yellow
     Push-Location app
-    
-    # Run Flutter analyze (same as CI)
-    Write-Host "   Running: flutter analyze --no-fatal-infos --no-fatal-warnings" -ForegroundColor Gray
-    flutter analyze --no-fatal-infos --no-fatal-warnings 2>&1 | Out-String
-    
+    flutter analyze --no-fatal-infos --no-fatal-warnings
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ Flutter analyze found errors. Fix them before committing." -ForegroundColor Red
+        Write-Host "Flutter analyze found errors" -ForegroundColor Red
         $hasErrors = $true
     } else {
-        Write-Host "✅ Flutter analyze passed" -ForegroundColor Green
+        Write-Host "Flutter analyze passed" -ForegroundColor Green
     }
-    
     Pop-Location
 }
 
 # Backend validation
 if ($backendFiles) {
-    Write-Host "`n🖥️  Backend files changed - running TypeScript check..." -ForegroundColor Yellow
+    Write-Host "Backend files changed - running TypeScript check..." -ForegroundColor Yellow
     Push-Location backend
-    
-    # Run TypeScript check (same as CI)
-    Write-Host "   Running: npx tsc --noEmit" -ForegroundColor Gray
-    npx tsc --noEmit 2>&1 | Out-String
-    
+    npx tsc --noEmit
     if ($LASTEXITCODE -ne 0) {
-        Write-Host "❌ TypeScript compilation failed. Fix errors before committing." -ForegroundColor Red
+        Write-Host "TypeScript compilation failed" -ForegroundColor Red
         $hasErrors = $true
     } else {
-        Write-Host "✅ Backend TypeScript check passed" -ForegroundColor Green
+        Write-Host "Backend TypeScript check passed" -ForegroundColor Green
     }
-    
     Pop-Location
 }
 
 if ($hasErrors) {
-    Write-Host "`n❌ Pre-commit validation FAILED. Please fix errors and try again." -ForegroundColor Red
-    Write-Host "   Tip: Run the commands shown above to see detailed errors." -ForegroundColor Gray
+    Write-Host "Pre-commit validation FAILED" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "`n✅ Pre-commit validation passed - ready to commit!" -ForegroundColor Green
+Write-Host "Pre-commit validation passed!" -ForegroundColor Green
 exit 0

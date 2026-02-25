@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'dart:math' as math;
 import '../../../services/timeline_service.dart';
 import '../../../config/theme.dart';
-import '../../../config/constants.dart';
 
 class FamilyTimelineScreen extends ConsumerStatefulWidget {
   const FamilyTimelineScreen({super.key});
