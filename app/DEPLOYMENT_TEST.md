@@ -12,4 +12,4 @@ Expected outcome:
 3. New deployment appears at familytree-web.vercel.app
 
 ---
-Deployment trigger: Test #2 - After disconnecting Vercel GitHub integration
+Deployment trigger: Test #3 - With GitHub secrets and .vercel/project.json configured
