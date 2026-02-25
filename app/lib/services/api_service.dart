@@ -57,6 +57,28 @@ class ApiService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  /// Generic PUT request
+  Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('$_baseUrl$endpoint'),
+      headers: _headers,
+      body: jsonEncode(data),
+    ).timeout(_timeout);
+    if (response.statusCode != 200) throw _handleError(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  /// Generic DELETE request
+  Future<void> delete(String endpoint) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl$endpoint'),
+      headers: _headers,
+    ).timeout(_timeout);
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw _handleError(response);
+    }
+  }
+
   // ==================== PERSONS ====================
 
   /// Get current user's profile

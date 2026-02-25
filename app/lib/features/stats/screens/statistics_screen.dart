@@ -426,7 +426,8 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                     label: 'Total Trees',
                     value: totalTrees.toString(),
                     color: kSecondaryColor,
-                  ),\n                ),
+                  ),
+                ),
               ],
             ),
             

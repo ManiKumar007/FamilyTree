@@ -257,9 +257,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // Should show validation error
+      final hasRequiredError = find.textContaining('required').evaluate().isNotEmpty ||
+                               find.textContaining('Required').evaluate().isNotEmpty;
       expect(
-        find.textContaining('required') | find.textContaining('Required'),
-        findsAtLeast(1),
+        hasRequiredError,
+        true,
         reason: 'Should show validation error for required fields',
       );
     });
@@ -283,9 +285,11 @@ void main() {
       await tester.pumpAndSettle(const Duration(seconds: 3));
 
       // Should navigate to home screen
+      final hasHomeScreen = find.byIcon(Icons.account_tree).evaluate().isNotEmpty ||
+                            find.text('My Family Tree').evaluate().isNotEmpty;
       expect(
-        find.byIcon(Icons.account_tree) | find.text('My Family Tree'),
-        findsAtLeast(1),
+        hasHomeScreen,
+        true,
         reason: 'Should navigate to home after skipping profile setup',
       );
     });
