@@ -7,6 +7,8 @@ import '../../../config/theme.dart';
 import '../../../config/constants.dart';
 import '../../../widgets/common_widgets.dart';
 import '../../../widgets/form_fields.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../app.dart';
 
 /// Account settings screen for managing authentication settings
 class AccountSettingsScreen extends ConsumerStatefulWidget {
@@ -122,6 +124,29 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                             ? 'Unknown' 
                             : authProviders.map((p) => _formatProviderName(p)).join(', '),
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: AppSpacing.xl),
+
+                // Language Selection Section
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Language / भाषा / மொழி',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        _buildLanguageSelector(),
                       ],
                     ),
                   ),
@@ -338,6 +363,43 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLanguageSelector() {
+    final locale = ref.watch(localeProvider);
+    
+    final languages = [
+      {'code': 'en', 'name': 'English', 'nativeName': 'English'},
+      {'code': 'hi', 'name': 'Hindi', 'nativeName': 'हिन्दी'},
+      {'code': 'ta', 'name': 'Tamil', 'nativeName': 'தமிழ்'},
+      {'code': 'te', 'name': 'Telugu', 'nativeName': 'తెలుగు'},
+      {'code': 'bn', 'name': 'Bengali', 'nativeName': 'বাংলা'},
+      {'code': 'mr', 'name': 'Marathi', 'nativeName': 'मराठी'},
+      {'code': 'gu', 'name': 'Gujarati', 'nativeName': 'ગુજરાતી'},
+      {'code': 'kn', 'name': 'Kannada', 'nativeName': 'ಕನ್ನಡ'},
+    ];
+
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: languages.map((lang) {
+        final isSelected = locale.languageCode == lang['code'];
+        return ChoiceChip(
+          label: Text(lang['nativeName']!),
+          selected: isSelected,
+          onSelected: (selected) {
+            if (selected) {
+              ref.read(localeProvider.notifier).state = Locale(lang['code']!);
+            }
+          },
+          selectedColor: kPrimaryColor,
+          labelStyle: TextStyle(
+            color: isSelected ? Colors.white : kTextPrimary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        );
+      }).toList(),
     );
   }
 

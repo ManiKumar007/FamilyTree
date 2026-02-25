@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import '../../../services/api_service.dart';
+import '../../../services/duplicate_detection_service.dart';
 import '../../../providers/providers.dart';
 import '../../../config/constants.dart';
 import '../../../config/theme.dart';
@@ -41,6 +43,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
   String _relationshipType = 'FATHER_OF';
   DateTime? _dateOfBirth;
   String _maritalStatus = 'single';
+  bool _isAlive = true; // Default to living
   bool _isLoading = false;
   String? _error;
   Map<String, dynamic>? _mergeResult;
@@ -76,6 +79,59 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         _relationshipType == 'MOTHER_OF' ||
         _relationshipType == 'SPOUSE_OF') {
       _maritalStatus = 'married';
+    }
+
+    // Pre-fill inherited family fields from user's profile
+    _loadUserProfile();
+  }
+
+  /// Load user profile and pre-fill inherited family fields
+  Future<void> _loadUserProfile() async {
+    try {
+      final profile = await ref.read(myProfileProvider.future);
+      if (profile != null && mounted) {
+        setState(() {
+          // Pre-fill surname for family members (siblings, parents, children)
+          if (_relationshipType == 'SIBLING_OF' || 
+              _relationshipType == 'FATHER_OF' || 
+              _relationshipType == 'MOTHER_OF' ||
+              _relationshipType == 'CHILD_OF') {
+            if (profile.surname != null && profile.surname!.isNotEmpty) {
+              _surnameController.text = profile.surname!;
+            }
+          }
+          
+          // Pre-fill location (family often lives nearby)
+          if (profile.city != null && profile.city!.isNotEmpty) {
+            _cityController.text = profile.city!;
+          }
+          if (profile.state != null && profile.state!.isNotEmpty) {
+            _stateController.text = profile.state!;
+          }
+          
+          // Pre-fill inherited cultural fields
+          if (profile.community != null && profile.community!.isNotEmpty) {
+            _communityController.text = profile.community!;
+          }
+          if (profile.gotra != null && profile.gotra!.isNotEmpty) {
+            _gotraController.text = profile.gotra!;
+          }
+          
+          // Use user's country code
+          if (profile.phone.isNotEmpty) {
+            // Extract country code from user's phone
+            for (final code in FormConstants.countryCodeValues) {
+              if (profile.phone.startsWith(code)) {
+                _countryCode = code;
+                break;
+              }
+            }
+          }
+        });
+      }
+    } catch (e) {
+      // Silently fail - not critical
+      print('Could not load profile for pre-fill: $e');
     }
   }
 
@@ -129,11 +185,31 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
 
       final anchorPersonId = widget.relativePersonId ?? myProfile?.id;
 
-      // 1. Create person
+      // Check for duplicates before creating
       final givenName = _givenNameController.text.trim();
       final surname = _surnameController.text.trim();
       final fullName = surname.isEmpty ? givenName : '$givenName $surname';
+      final phone = '$_countryCode${_phoneController.text.trim()}';
+      final city = _cityController.text.trim().isEmpty ? null : _cityController.text.trim();
 
+      final duplicateService = ref.read(duplicateDetectionServiceProvider);
+      final duplicates = await duplicateService.checkForDuplicates(
+        name: fullName,
+        phone: phone,
+        dateOfBirth: _dateOfBirth,
+        city: city,
+      );
+
+      // If duplicates found with high match score, show warning
+      if (duplicates.isNotEmpty && duplicates.first.matchScore > 0.7) {
+        final shouldContinue = await _showDuplicateWarning(duplicates);
+        if (!shouldContinue) {
+          setState(() { _isLoading = false; });
+          return;
+        }
+      }
+
+      // 1. Create person
       final result = await apiService.createPerson({
         'name': fullName,
         'given_name': givenName,
@@ -147,6 +223,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
         'community': _communityController.text.trim().isEmpty ? null : _communityController.text.trim(),
         'gotra': _gotraController.text.trim().isEmpty ? null : _gotraController.text.trim(),
         'marital_status': _maritalStatus,
+        'is_alive': _isAlive,
         'photo_url': _uploadedImageUrl,
       });
 
@@ -254,6 +331,94 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Continue Anyway'),
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
+  Future<bool> _showDuplicateWarning(List<DuplicateMatch> duplicates) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            SizedBox(width: 8),
+            Expanded(child: Text('Possible Duplicate Found')),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'A similar person already exists in the tree:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ...duplicates.take(3).map((dup) => Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        dup.name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      if (dup.phone != null) ...[
+                        const SizedBox(height: 4),
+                        Text('Phone: ${dup.phone}'),
+                      ],
+                      if (dup.dateOfBirth != null) ...[
+                        const SizedBox(height: 4),
+                        Text('DOB: ${DateFormat('MMM dd, yyyy').format(dup.dateOfBirth!)}'),
+                      ],
+                      if (dup.city != null) ...[
+                        const SizedBox(height: 4),
+                        Text('City: ${dup.city}'),
+                      ],
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: dup.matchReasons.map((reason) => Chip(
+                          label: Text(
+                            reason,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          backgroundColor: Colors.orange.withOpacity(0.2),
+                          padding: EdgeInsets.zero,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        )).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+              const SizedBox(height: 8),
+              const Text(
+                'Do you want to add this person anyway?',
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('Add Anyway'),
           ),
         ],
       ),
@@ -392,6 +557,60 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
                         .map((o) => o.toMenuItem())
                         .toList(),
                     onChanged: (v) => setState(() { _gender = v!; }),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Living/Deceased Status
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: kDividerColor),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.favorite_outline, size: 20, color: kTextSecondary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Status',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: kTextSecondary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                title: const Text('Living'),
+                                value: true,
+                                groupValue: _isAlive,
+                                onChanged: (value) => setState(() { _isAlive = value!; }),
+                                contentPadding: EdgeInsets.zero,
+                                dense: true,
+                              ),
+                            ),
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                title: const Text('Deceased'),
+                                value: false,
+                                groupValue: _isAlive,
+                                onChanged: (value) => setState(() { _isAlive = value!; }),
+                                contentPadding: EdgeInsets.zero,
+                                dense: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
 

@@ -53,8 +53,10 @@ class StatsService {
     if (response.statusCode != 200) throw _handleError(response);
     
     final wrapper = jsonDecode(response.body);
-    final List<dynamic> data = wrapper['data'] as List<dynamic>;
-    return data.map((item) => item as Map<String, dynamic>).toList();
+    // Backend returns { data: { total_issues, issues, issues_by_type } }
+    final dataObj = wrapper['data'] as Map<String, dynamic>;
+    final List<dynamic> issues = dataObj['issues'] as List<dynamic>;
+    return issues.map((item) => item as Map<String, dynamic>).toList();
   }
 
   /// Find relationship path between two persons

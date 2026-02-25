@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/auth_service.dart';
 import '../../../config/theme.dart';
 import '../widgets/phone_auth_dialog.dart';
@@ -20,8 +21,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _isSendingReset = false;
+  bool _rememberMe = true;
   String? _error;
   String? _resetMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLastEmail();
+  }
+
+  /// Load the last used email if remember me was enabled
+  Future<void> _loadLastEmail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final rememberMe = prefs.getBool('login_remember_me') ?? true;
+      final lastEmail = prefs.getString('login_last_email');
+      
+      if (mounted && rememberMe && lastEmail != null) {
+        setState(() {
+          _emailController.text = lastEmail;
+          _rememberMe = rememberMe;
+        });
+      }
+    } catch (e) {
+      // Silently fail - not critical
+      developer.log('Could not load last email: $e', name: 'LoginScreen');
+    }
+  }
+
+  /// Save email for next login if remember me is enabled
+  Future<void> _saveEmail(String email) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('login_remember_me', _rememberMe);
+      if (_rememberMe) {
+        await prefs.setString('login_last_email', email);
+      } else {
+        await prefs.remove('login_last_email');
+      }
+    } catch (e) {
+      // Silently fail - not critical
+      developer.log('Could not save email: $e', name: 'LoginScreen');
+    }
+  }
 
   @override
   void dispose() {
@@ -54,6 +97,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         'email': response.user?.email,
         'session': response.session != null ? 'present' : 'null'
       });
+      
+      // Save email for next login
+      await _saveEmail(email);
       
       if (mounted) {
         developer.log('🚀 Navigating to home screen', name: 'LoginScreen');
@@ -458,25 +504,58 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 8),
 
-                          // Forgot Password link
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: _isLoading ? null : _showForgotPasswordDialog,
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          // Remember me & Forgot Password row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // Remember me checkbox
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: Checkbox(
+                                      value: _rememberMe,
+                                      onChanged: _isLoading ? null : (value) {
+                                        setState(() { _rememberMe = value ?? true; });
+                                      },
+                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: _isLoading ? null : () {
+                                      setState(() { _rememberMe = !_rememberMe; });
+                                    },
+                                    child: Text(
+                                      'Remember me',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: kTextSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: Text(
-                                'Forgot Password?',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: kPrimaryColor,
-                                  fontWeight: FontWeight.w500,
+                              // Forgot Password link
+                              TextButton(
+                                onPressed: _isLoading ? null : _showForgotPasswordDialog,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  'Forgot Password?',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: kPrimaryColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                           const SizedBox(height: 20),
 

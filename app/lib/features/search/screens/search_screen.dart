@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../providers/providers.dart';
 import '../../../services/auth_service.dart';
 import '../../../models/models.dart';
@@ -18,6 +19,7 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _searchController = TextEditingController();
+  final _occupationController = TextEditingController();
   Timer? _debounce;
   int _selectedDepth = 3;
   String? _selectedOccupation;
@@ -28,6 +30,49 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _loadSearchPreferences();
+  }
+
+  /// Load saved search preferences
+  Future<void> _loadSearchPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() {
+          _selectedDepth = prefs.getInt('search_depth') ?? 3;
+          _selectedOccupation = prefs.getString('search_occupation');
+          _selectedMaritalStatus = prefs.getString('search_marital_status');
+          // Pre-fill occupation field
+          if (_selectedOccupation != null) {
+            _occupationController.text = _selectedOccupation!;
+          }
+        });
+      }
+    } catch (e) {
+      // Silently fail - not critical
+      print('Could not load search preferences: $e');
+    }
+  }
+
+  /// Save search preferences
+  Future<void> _saveSearchPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('search_depth', _selectedDepth);
+      if (_selectedOccupation != null) {
+        await prefs.setString('search_occupation', _selectedOccupation!);
+      } else {
+        await prefs.remove('search_occupation');
+      }
+      if (_selectedMaritalStatus != null) {
+        await prefs.setString('search_marital_status', _selectedMaritalStatus!);
+      } else {
+        await prefs.remove('search_marital_status');
+      }
+    } catch (e) {
+      // Silently fail - not critical
+      print('Could not save search preferences: $e');
+    }
   }
 
   @override
@@ -35,6 +80,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     _debounce?.cancel();
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _occupationController.dispose();
     super.dispose();
   }
 
@@ -185,7 +231,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                   max: 10,
                                   divisions: 9,
                                   label: '$_selectedDepth',
-                                  onChanged: (v) => setState(() { _selectedDepth = v.round(); }),
+                                  onChanged: (v) {
+                                    setState(() { _selectedDepth = v.round(); });
+                                    _saveSearchPreferences();
+                                  },
                                 ),
                               ),
                               Text('$_selectedDepth'),
@@ -206,18 +255,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               DropdownMenuItem(value: 'divorced', child: Text('Divorced')),
                               DropdownMenuItem(value: 'widowed', child: Text('Widowed')),
                             ],
-                            onChanged: (v) => setState(() { _selectedMaritalStatus = v; }),
+                            onChanged: (v) {
+                              setState(() { _selectedMaritalStatus = v; });
+                              _saveSearchPreferences();
+                            },
                           ),
                           const SizedBox(height: 12),
 
                           // Occupation filter
                           TextField(
+                            controller: _occupationController,
                             decoration: const InputDecoration(
                               labelText: 'Occupation',
                               isDense: true,
                               hintText: 'e.g. doctor, engineer',
                             ),
-                            onChanged: (v) => _selectedOccupation = v.isEmpty ? null : v,
+                            onChanged: (v) {
+                              _selectedOccupation = v.isEmpty ? null : v;
+                              _saveSearchPreferences();
+                            },
                           ),
                         ],
                       ),

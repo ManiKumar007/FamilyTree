@@ -182,22 +182,38 @@ class _MobileShell extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
                   child: Row(
                     children: [
-                      Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: kSidebarActive.withValues(alpha: 0.2),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            context.go('/tree');
+                          },
                           borderRadius: BorderRadius.circular(8),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text('MyFamilyTree',
+                                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text('MyFamilyTree',
-                          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                       ),
                       IconButton(
                         icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 20),
@@ -443,30 +459,43 @@ class _SidebarState extends State<_Sidebar> {
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
             child: Row(
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: kSidebarActive.withValues(alpha: 0.2),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => context.go('/tree'),
                     borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'MyFamilyTree',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.3,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: Padding(
+                              padding: const EdgeInsets.all(3),
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'MyFamilyTree',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -22,6 +22,9 @@ import '../features/forum/screens/forum_screen.dart';
 import '../features/notifications/screens/notifications_screen.dart';
 import '../features/stats/screens/statistics_screen.dart';
 import '../features/calendar/screens/calendar_screen.dart';
+import '../features/reminders/screens/reminders_screen.dart';
+import '../features/timeline/screens/family_timeline_screen.dart';
+import '../features/collaboration/screens/collaboration_screen.dart';
 import '../features/admin/screens/admin_dashboard_screen.dart';
 import '../features/admin/screens/error_logs_screen.dart';
 import '../features/admin/screens/user_management_screen.dart';
@@ -230,6 +233,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
+      ),
+
+      // Event Reminders
+      GoRoute(
+        path: '/reminders',
+        builder: (context, state) => const RemindersScreen(),
+      ),
+
+      // Family Timeline
+      GoRoute(
+        path: '/timeline',
+        builder: (context, state) => const FamilyTimelineScreen(),
+      ),
+
+      // Collaboration/Sharing
+      GoRoute(
+        path: '/collaboration',
+        builder: (context, state) => const CollaborationScreen(),
       ),
 
       // Admin routes

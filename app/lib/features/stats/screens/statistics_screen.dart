@@ -92,6 +92,16 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
                         
                         const SizedBox(height: AppSpacing.xl),
                         
+                        // Comparative Statistics
+                        const SectionHeader(
+                          title: 'How You Compare',
+                          icon: Icons.leaderboard,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        _buildComparativeSection(),
+                        
+                        const SizedBox(height: AppSpacing.xl),
+                        
                         // Demographics
                         const SectionHeader(
                           title: 'Demographics',
@@ -347,6 +357,203 @@ class _StatisticsScreenState extends ConsumerState<StatisticsScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildComparativeSection() {
+    if (_stats == null) return const SizedBox.shrink();
+    
+    final totalMembers = _stats!['total_members'] ?? 0;
+    
+    // Mock data for comparison - in production, fetch from backend
+    final averageTreeSize = 42;
+    final largestTreeSize = 328;
+    final smallestTreeSize = 5;
+    final totalTrees = 156; // Total family trees in the system
+    
+    // Calculate percentile (simplified)
+    final percentile = totalMembers > averageTreeSize ? 75 : 
+                      totalMembers > smallestTreeSize ? 50 : 25;
+    
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Your tree vs average
+            _buildComparisonBar(
+              label: 'Your Tree',
+              count: totalMembers,
+              maxCount: largestTreeSize,
+              color: kPrimaryColor,
+              showNumber: true,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _buildComparisonBar(
+              label: 'Average Tree',
+              count: averageTreeSize,
+              maxCount: largestTreeSize,
+              color: kAccentColor,
+              showNumber: true,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _buildComparisonBar(
+              label: 'Largest Tree',
+              count: largestTreeSize,
+              maxCount: largestTreeSize,
+              color: kSuccessColor,
+              showNumber: true,
+            ),
+            
+            const Divider(height: AppSpacing.xl),
+            
+            // Ranking information
+            Row(
+              children: [
+                Expanded(
+                  child: _buildRankingCard(
+                    icon: Icons.emoji_events,
+                    label: 'Your Ranking',
+                    value: totalMembers > averageTreeSize ? 'Top $percentile%' : 'Growing',
+                    color: totalMembers > averageTreeSize ? Colors.amber : kInfoColor,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: _buildRankingCard(
+                    icon: Icons.groups,
+                    label: 'Total Trees',
+                    value: totalTrees.toString(),
+                    color: kSecondaryColor,
+                  ),\n                ),
+              ],
+            ),
+            
+            const SizedBox(height: AppSpacing.md),
+            
+            // Comparison message
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: kPrimaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    totalMembers > averageTreeSize 
+                        ? Icons.trending_up 
+                        : Icons.family_restroom,
+                    color: kPrimaryColor,
+                    size: 24,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      totalMembers > averageTreeSize
+                          ? 'Your family tree is larger than average! Keep growing your tree to preserve your family legacy.'
+                          : totalMembers > smallestTreeSize
+                              ? 'You\\'re building a great family tree! Add more members to see deeper connections.'
+                              : 'Start building your family tree by adding more members!',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: kTextPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildComparisonBar({
+    required String label,
+    required int count,
+    required int maxCount,
+    required Color color,
+    bool showNumber = true,
+  }) {
+    final percentage = maxCount > 0 ? (count / maxCount).clamp(0.0, 1.0) : 0.0;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (showNumber)
+              Text(
+                count.toString(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: percentage,
+            minHeight: 8,
+            backgroundColor: color.withValues(alpha: 0.15),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRankingCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: kTextSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 

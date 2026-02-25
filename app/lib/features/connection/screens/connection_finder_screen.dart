@@ -40,6 +40,20 @@ class _ConnectionFinderScreenState
     if (widget.targetUsername != null) {
       _usernameBController.text = widget.targetUsername!;
     }
+    // Pre-fill own username from profile after frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadMyUsername();
+    });
+  }
+
+  /// Load and pre-fill the current user's username
+  Future<void> _loadMyUsername() async {
+    final profile = await ref.read(myProfileProvider.future);
+    if (profile?.username != null && mounted) {
+      setState(() {
+        _usernameAController.text = profile!.username!;
+      });
+    }
   }
 
   @override
