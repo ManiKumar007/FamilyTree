@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd app && export PATH=\"$PATH:$HOME/flutter/bin\" && chmod +x build.sh && bash build.sh",
+  "buildCommand": "chmod +x build-web.sh && ./build-web.sh",
   "outputDirectory": "app/build/web",
-  "installCommand": "git clone https://github.com/flutter/flutter.git -b stable --depth 1 ~/flutter",
+  "installCommand": "git clone https://github.com/flutter/flutter.git -b stable --depth 1 ~/flutter && ~/flutter/bin/flutter precache --web",
   "framework": null,
   "rewrites": [
     {
