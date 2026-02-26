@@ -5,16 +5,16 @@ on:
   push:
     branches: [master]
     paths:
-      - 'app/**'
-      - 'vercel.json'
-      - '.github/workflows/deploy-web.yml'
+      - "app/**"
+      - "vercel.json"
+      - ".github/workflows/deploy-web.yml"
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     name: Build Flutter Web & Deploy to Vercel
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
 
@@ -24,8 +24,16 @@ jobs:
           channel: stable
           cache: true
 
-      # Skip .env creation - Flutter web doesn't need it at build time
-      # Environment variables are injected at runtime via Vercel
+      - name: Create .env file
+        working-directory: app
+        run: |
+          cat > .env << EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://vojwwcolmnbzogsrmwap.supabase.co' }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'placeholder' }}
+          API_BASE_URL=${{ secrets.API_BASE_URL || 'https://backend-five-blue-16.vercel.app/api' }}
+          APP_URL=${{ secrets.APP_URL || 'https://familytree-web-manikumar007s-projects.vercel.app' }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || 'placeholder' }}
+          EOF
 
       - name: Enable web platform
         working-directory: app
@@ -46,7 +54,7 @@ jobs:
           # Copy built files to a clean deployment directory
           mkdir -p deploy
           cp -r app/build/web/* deploy/
-          
+
           # Create vercel.json for static file serving
           cat > deploy/vercel.json << 'EOF'
           {
@@ -67,11 +75,11 @@ jobs:
         run: |
           npm install --global vercel@latest
           cd deploy
-          
+
           # Create .vercel directory with project configuration
           mkdir -p .vercel
           echo '{"orgId":"${{ secrets.VERCEL_ORG_ID }}","projectId":"${{ secrets.VERCEL_PROJECT_ID }}"}' > .vercel/project.json
-          
+
           # Deploy to production
           vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
         env:
