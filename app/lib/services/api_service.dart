@@ -131,14 +131,27 @@ class ApiService {
 
   /// Update person
   Future<Person> updatePerson(String id, Map<String, dynamic> data) async {
+    print('\n📡 API Service - Updating person $id');
+    print('Update data keys: ${data.keys.join(", ")}');
+    if (data.containsKey('photo_url')) {
+      print('📸 photo_url in update: ${data['photo_url']}');
+    } else {
+      print('⚠️ photo_url NOT in update data');
+    }
     final response = await http.put(
       Uri.parse('$_baseUrl/persons/$id'),
       headers: _headers,
       body: jsonEncode(data),
     );
-    if (response.statusCode != 200) throw _handleError(response);
+    print('📡 Update response status: ${response.statusCode}');
+    if (response.statusCode != 200) {
+      print('❌ Update failed: ${response.body}');
+      throw _handleError(response);
+    }
     final wrapper = jsonDecode(response.body);
-    return Person.fromJson(wrapper['data']);
+    final person = Person.fromJson(wrapper['data']);
+    print('✅ Person updated. photo_url in response: ${person.photoUrl}');
+    return person;
   }
 
   /// Delete person
@@ -193,12 +206,13 @@ class ApiService {
         bytes,
         fileOptions: FileOptions(
           contentType: contentType,
-          upsert: false,
+          upsert: true,
         ),
       );
 
       // Get public URL
       final publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
+      print('📸 Image uploaded successfully. Public URL: $publicUrl');
       
       return publicUrl;
     } catch (e) {

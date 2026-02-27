@@ -45,6 +45,7 @@ const createPersonSchema = z.object({
   sub_caste: z.string().max(200).nullish(),
   kula_devata: z.string().max(200).nullish(),
   pravara: z.string().max(200).nullish(),
+  gotra: z.string().max(200).nullish(),
   is_profile_public: z.boolean().nullish().default(false),
   auth_user_id: z.string().uuid().nullish(), // Allow linking to auth user for profile setup
   verified: z.boolean().nullish(), // Allow setting verified status
@@ -168,7 +169,18 @@ personsRouter.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
  */
 personsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
+    console.log(`📝 PUT /persons/${req.params.id} - Body keys:`, Object.keys(req.body));
+    if (req.body.photo_url !== undefined) {
+      console.log('📸 photo_url in request body:', req.body.photo_url);
+    }
+
     const parsed = updatePersonSchema.parse(req.body);
+    console.log('✅ Zod validation passed. Parsed keys:', Object.keys(parsed));
+    if ((parsed as any).photo_url !== undefined) {
+      console.log('📸 photo_url after Zod parse:', (parsed as any).photo_url);
+    } else {
+      console.log('⚠️ photo_url NOT in parsed output');
+    }
 
     // Normalize phone if provided
     if (parsed.phone) {
@@ -181,6 +193,7 @@ personsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
 
     // Sanitize text fields to prevent XSS
     const sanitized = sanitizeObject(parsed, [...PERSON_SANITIZE_FIELDS]);
+    console.log('🧹 After sanitize. photo_url:', (sanitized as any).photo_url);
 
     // Keep name ↔ given_name/surname in sync on updates
     if (sanitized.given_name || sanitized.surname !== undefined) {
@@ -219,7 +232,11 @@ personsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ DB update error:', error);
+      throw error;
+    }
+    console.log('✅ Person updated. photo_url in DB response:', data?.photo_url);
 
     res.json(successResponse(data));
   } catch (err: any) {

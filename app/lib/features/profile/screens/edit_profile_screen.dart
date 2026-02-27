@@ -193,12 +193,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       // Add uploaded image URL if available
       if (_uploadedImageUrl != null) {
         updateData['photo_url'] = _uploadedImageUrl;
+        print('📸 Including photo_url in save: $_uploadedImageUrl');
       } else if (_imageRemoved) {
         // User explicitly removed the image
         updateData['photo_url'] = null;
+        print('📸 Clearing photo_url (image removed)');
+      } else {
+        print('📸 No image change — _uploadedImageUrl is null, _imageRemoved is false');
       }
 
-      await api.updatePerson(widget.personId, updateData);
+      print('📡 Saving person ${widget.personId} with keys: ${updateData.keys.join(", ")}');
+      final updatedPerson = await api.updatePerson(widget.personId, updateData);
+      print('✅ Save completed. photo_url in response: ${updatedPerson.photoUrl}');
 
       // Refresh providers so tree and profile show updated data
       ref.invalidate(myProfileProvider);

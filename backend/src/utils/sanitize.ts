@@ -61,4 +61,5 @@ export const PERSON_SANITIZE_FIELDS = [
   'sub_caste',
   'kula_devata',
   'pravara',
+  'gotra',
 ] as const;
