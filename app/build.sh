@@ -33,5 +33,11 @@ echo "APP_URL: $(echo "$APP_URL" | tr -d '\n\r ')"
 echo "===================="
 
 # Build Flutter web (canvaskit is default for release builds)
+# Pass env vars both as dart-define (compile-time) and .env (runtime fallback)
 flutter pub get
-flutter build web --release
+flutter build web --release \
+  --dart-define=API_BASE_URL="$API_BASE_URL_CLEAN" \
+  --dart-define=SUPABASE_URL="$(echo "$SUPABASE_URL" | tr -d '\n\r ')" \
+  --dart-define=SUPABASE_ANON_KEY="$(echo "$SUPABASE_ANON_KEY" | tr -d '\n\r ')" \
+  --dart-define=APP_URL="$(echo "$APP_URL" | tr -d '\n\r ')" \
+  --dart-define=GOOGLE_CLIENT_ID="$(echo "$GOOGLE_CLIENT_ID" | tr -d '\n\r ')"
