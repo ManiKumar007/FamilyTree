@@ -1,6 +1,5 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import '../config/theme.dart';
 import '../widgets/common_widgets.dart';
@@ -29,6 +28,7 @@ class ImageUploadWidget extends StatefulWidget {
 class _ImageUploadWidgetState extends State<ImageUploadWidget> {
   final ImagePicker _picker = ImagePicker();
   XFile? _selectedImage;
+  Uint8List? _selectedImageBytes;
   bool _isUploading = false;
 
   Future<void> _pickImage(ImageSource source) async {
@@ -41,8 +41,10 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
       );
 
       if (image != null) {
+        final bytes = await image.readAsBytes();
         setState(() {
           _selectedImage = image;
+          _selectedImageBytes = bytes;
           _isUploading = true;
         });
 
@@ -140,6 +142,7 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
                     Navigator.pop(context);
                     setState(() {
                       _selectedImage = null;
+                      _selectedImageBytes = null;
                     });
                     if (widget.onImageRemoved != null) {
                       widget.onImageRemoved!();
@@ -226,13 +229,11 @@ class _ImageUploadWidgetState extends State<ImageUploadWidget> {
   }
 
   Widget _buildAvatarContent() {
-    // Show newly selected image
-    if (_selectedImage != null) {
+    // Show newly selected image using in-memory bytes (works on web + mobile)
+    if (_selectedImage != null && _selectedImageBytes != null) {
       return CircleAvatar(
         radius: widget.size / 2,
-        backgroundImage: kIsWeb
-            ? NetworkImage(_selectedImage!.path)
-            : FileImage(File(_selectedImage!.path)) as ImageProvider,
+        backgroundImage: MemoryImage(_selectedImageBytes!),
       );
     }
 
