@@ -32,55 +32,12 @@ jobs:
         working-directory: backend
         run: npm run build
 
-      - name: Verify build output
-        working-directory: backend
-        run: |
-          echo "=== Checking dist directory ==="
-          ls -la dist/
-          echo "=== Checking dist/index.js exists ==="
-          test -f dist/index.js && echo "dist/index.js exists" || echo "ERROR: dist/index.js not found"
-
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Deploy to Vercel
-        working-directory: backend
         run: |
-          # Create .vercel directory with project configuration
+          cd backend
           mkdir -p .vercel
-          cat > .vercel/project.json << 'ENDJSON'
-          {
-            "orgId": "${{ secrets.VERCEL_ORG_ID }}",
-            "projectId": "${{ secrets.VERCEL_BACKEND_PROJECT_ID }}"
-          }
-          ENDJSON
-          
-          # Clean up heredoc whitespace
-          sed -i 's/^[[:space:]]*//' .vercel/project.json
-          
-          # Debug: show project.json (secrets are masked by GitHub)
-          echo "=== project.json ==="
-          cat .vercel/project.json
-          echo ""
-          
-          # Debug: verify token length
-          echo "VERCEL_TOKEN length: ${#VERCEL_TOKEN}"
-          echo "VERCEL_ORG_ID length: ${#VERCEL_ORG_ID}"
-          echo "VERCEL_BACKEND_PROJECT_ID length: ${#VERCEL_BACKEND_PROJECT_ID}"
-          
-          # Debug: list files being deployed
-          echo "=== Files in backend/ ==="
-          ls -la
-          
-          # Deploy to production with verbose output
-          vercel deploy --prod --token="${VERCEL_TOKEN}" --yes 2>&1 || {
-            echo "=== DEPLOY FAILED ==="
-            echo "Exit code: $?"
-            echo "Trying with debug flag..."
-            vercel deploy --prod --token="${VERCEL_TOKEN}" --yes --debug 2>&1 | tail -50
-            exit 1
-          }
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_BACKEND_PROJECT_ID: ${{ secrets.VERCEL_BACKEND_PROJECT_ID }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          echo '{"orgId":"${{ secrets.VERCEL_ORG_ID }}","projectId":"${{ secrets.VERCEL_BACKEND_PROJECT_ID }}"}' > .vercel/project.json
+          vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes
