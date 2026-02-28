@@ -27,13 +27,18 @@ jobs:
       - name: Create .env file
         working-directory: app
         run: |
-          cat > .env << EOF
-          SUPABASE_URL=${{ secrets.SUPABASE_URL || 'https://vojwwcolmnbzogsrmwap.supabase.co' }}
-          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY || 'placeholder' }}
-          API_BASE_URL=${{ secrets.API_BASE_URL || 'https://backend-five-blue-16.vercel.app/api' }}
-          APP_URL=${{ secrets.APP_URL || 'https://familytree-web-manikumar007s-projects.vercel.app' }}
-          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || 'placeholder' }}
-          EOF
+          cat > .env << 'ENVEOF'
+          SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          API_BASE_URL=https://backend-five-blue-16.vercel.app/api
+          APP_URL=https://familytree-web-manikumar007s-projects.vercel.app
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          ENVEOF
+          # Remove leading whitespace from each line (heredoc indentation artifact)
+          sed -i 's/^[[:space:]]*//' .env
+          echo "=== .env contents ==="
+          cat .env
 
       - name: Enable web platform
         working-directory: app
@@ -47,7 +52,12 @@ jobs:
         working-directory: app
         run: |
           flutter pub get
-          flutter build web --release
+          flutter build web --release \
+            --dart-define=SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --dart-define=API_BASE_URL=https://backend-five-blue-16.vercel.app/api \
+            --dart-define=APP_URL=https://familytree-web-manikumar007s-projects.vercel.app \
+            --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
 
       - name: Prepare deployment directory
         run: |
@@ -56,7 +66,7 @@ jobs:
           cp -r app/build/web/* deploy/
 
           # Create vercel.json for static file serving
-          cat > deploy/vercel.json << 'EOF'
+          cat > deploy/vercel.json << 'VJEOF'
           {
             "version": 2,
             "routes": [
@@ -69,7 +79,9 @@ jobs:
               }
             ]
           }
-          EOF
+          VJEOF
+          # Remove leading whitespace from JSON (heredoc indentation artifact)
+          sed -i 's/^[[:space:]]*//' deploy/vercel.json
 
       - name: Deploy to Vercel
         run: |
