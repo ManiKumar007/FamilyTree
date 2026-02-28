@@ -263,7 +263,7 @@ personsRouter.post('/check-phone-claim', async (req: AuthenticatedRequest, res: 
       .from('persons')
       .select('*, relationships:relationships!person_id(id, type, related_person_id)')
       .eq('phone', normalizedPhone)
-      .is_('auth_user_id', null)
+      .is('auth_user_id', null)
       .neq('created_by_user_id', req.userId!);
 
     if (error) throw error;
