@@ -143,6 +143,275 @@ personsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
 });
 
 /**
+ * GET /api/persons/check-duplicates — Check for potential duplicate persons
+ * Query params: name (required), phone, date_of_birth, city
+ */
+personsRouter.get('/check-duplicates', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const name = req.query.name as string;
+    if (!name) {
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Name is required'));
+      return;
+    }
+
+    const phone = req.query.phone as string | undefined;
+    const dateOfBirth = req.query.date_of_birth as string | undefined;
+    const city = req.query.city as string | undefined;
+
+    // Build query: search by name similarity
+    let query = supabaseAdmin
+      .from('persons')
+      .select('id, name, given_name, surname, phone, date_of_birth, city, gender, photo_url')
+      .ilike('name', `%${name}%`)
+      .limit(10);
+
+    const { data: nameMatches, error: nameError } = await query;
+    if (nameError) throw nameError;
+
+    // Also check by phone if provided
+    let phoneMatches: any[] = [];
+    if (phone) {
+      const normalizedPhone = normalizePhone(phone);
+      if (isValidPhone(normalizedPhone)) {
+        const { data, error } = await supabaseAdmin
+          .from('persons')
+          .select('id, name, given_name, surname, phone, date_of_birth, city, gender, photo_url')
+          .eq('phone', normalizedPhone)
+          .limit(5);
+        if (!error && data) phoneMatches = data;
+      }
+    }
+
+    // Merge and deduplicate results
+    const allMatches = [...(nameMatches || [])];
+    for (const pm of phoneMatches) {
+      if (!allMatches.find(m => m.id === pm.id)) {
+        allMatches.push(pm);
+      }
+    }
+
+    // Calculate match scores
+    const matches = allMatches.map(person => {
+      let score = 0;
+      const nameLower = name.toLowerCase();
+      const personNameLower = (person.name || '').toLowerCase();
+
+      // Name similarity (basic)
+      if (personNameLower === nameLower) {
+        score += 0.5;
+      } else if (personNameLower.includes(nameLower) || nameLower.includes(personNameLower)) {
+        score += 0.3;
+      }
+
+      // Phone match (strong signal)
+      if (phone && person.phone) {
+        const normalizedPhone = normalizePhone(phone);
+        if (person.phone === normalizedPhone) score += 0.4;
+      }
+
+      // Date of birth match
+      if (dateOfBirth && person.date_of_birth) {
+        if (person.date_of_birth === dateOfBirth) score += 0.1;
+      }
+
+      // City match
+      if (city && person.city) {
+        if (person.city.toLowerCase() === city.toLowerCase()) score += 0.05;
+      }
+
+      return {
+        person,
+        matchScore: Math.min(score, 1.0),
+        matchReason: score >= 0.8 ? 'Strong match' : score >= 0.5 ? 'Possible match' : 'Weak match',
+      };
+    });
+
+    // Filter out very weak matches and sort by score
+    const filtered = matches
+      .filter(m => m.matchScore > 0.2)
+      .sort((a, b) => b.matchScore - a.matchScore);
+
+    res.json(successResponse({ matches: filtered }));
+  } catch (err: any) {
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+  }
+});
+
+/**
+ * POST /api/persons/check-phone-claim — Check if a phone number has existing 
+ * unclaimed profiles that the current user can claim.
+ * Returns matching persons that were added by other users and have no auth_user_id.
+ */
+personsRouter.post('/check-phone-claim', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) {
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Phone number is required'));
+      return;
+    }
+
+    const normalizedPhone = normalizePhone(phone);
+    if (!isValidPhone(normalizedPhone)) {
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Invalid phone number format'));
+      return;
+    }
+
+    // Find persons with this phone number that are:
+    // 1. Not created by the current user
+    // 2. Not already claimed (no auth_user_id)
+    const { data, error } = await supabaseAdmin
+      .from('persons')
+      .select('*, relationships:relationships!person_id(id, type, related_person_id)')
+      .eq('phone', normalizedPhone)
+      .is_('auth_user_id', null)
+      .neq('created_by_user_id', req.userId!);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      res.json(successResponse({ claimable: false, matches: [] }));
+      return;
+    }
+
+    // For each match, get the creator's info and relationship count
+    const matches = await Promise.all(data.map(async (person: any) => {
+      // Get the creator's name
+      let creatorName = 'Someone';
+      if (person.created_by_user_id) {
+        const { data: creator } = await supabaseAdmin
+          .from('persons')
+          .select('name')
+          .eq('auth_user_id', person.created_by_user_id)
+          .single();
+        if (creator) creatorName = creator.name;
+      }
+
+      return {
+        person: {
+          id: person.id,
+          name: person.name,
+          given_name: person.given_name,
+          surname: person.surname,
+          phone: person.phone,
+          gender: person.gender,
+          date_of_birth: person.date_of_birth,
+          city: person.city,
+          state: person.state,
+          photo_url: person.photo_url,
+        },
+        addedBy: creatorName,
+        relationshipCount: person.relationships?.length ?? 0,
+      };
+    }));
+
+    res.json(successResponse({ claimable: true, matches }));
+  } catch (err: any) {
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+  }
+});
+
+/**
+ * POST /api/persons/claim-profile — Claim an existing person profile.
+ * Links the current user's auth_user_id to the person record and 
+ * optionally updates fields the user provided.
+ */
+personsRouter.post('/claim-profile', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { person_id, profile_updates } = req.body;
+
+    if (!person_id) {
+      res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'person_id is required'));
+      return;
+    }
+
+    // Check that the current user doesn't already have a profile
+    const { data: existingProfile } = await supabaseAdmin
+      .from('persons')
+      .select('id')
+      .eq('auth_user_id', req.userId!)
+      .maybeSingle();
+
+    if (existingProfile) {
+      res.status(409).json(errorResponse(ErrorCodes.CONFLICT, 'You already have a profile. Use merge instead.'));
+      return;
+    }
+
+    // Get the person to claim
+    const { data: person, error: personError } = await supabaseAdmin
+      .from('persons')
+      .select('*')
+      .eq('id', person_id)
+      .single();
+
+    if (personError || !person) {
+      res.status(404).json(errorResponse(ErrorCodes.NOT_FOUND, 'Person not found'));
+      return;
+    }
+
+    // Verify the person is claimable (no auth_user_id yet)
+    if (person.auth_user_id) {
+      res.status(409).json(errorResponse(ErrorCodes.CONFLICT, 'This profile has already been claimed'));
+      return;
+    }
+
+    // Build update data: link auth user + apply any profile updates
+    const updateData: Record<string, any> = {
+      auth_user_id: req.userId,
+      verified: true,
+      email: req.body.email || person.email,
+    };
+
+    // Apply optional profile updates (user's input wins for provided fields)
+    if (profile_updates) {
+      const allowedFields = [
+        'username', 'given_name', 'surname', 'name', 'date_of_birth',
+        'occupation', 'community', 'gotra', 'city', 'state',
+        'nakshatra', 'rashi', 'native_place', 'ancestral_village',
+        'sub_caste', 'kula_devata', 'pravara',
+      ];
+      for (const field of allowedFields) {
+        if (profile_updates[field] !== undefined && profile_updates[field] !== null) {
+          updateData[field] = profile_updates[field];
+        }
+      }
+    }
+
+    // Update the person record
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from('persons')
+      .update(updateData)
+      .eq('id', person_id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Notify the original creator that the profile was claimed
+    try {
+      await supabaseAdmin
+        .from('notifications')
+        .insert({
+          user_id: person.created_by_user_id,
+          type: 'invite_accepted',
+          title: 'Profile Claimed',
+          message: `${updated.name} has claimed their profile in your family tree!`,
+          data: { person_id: updated.id, claimed_by: req.userId },
+        });
+    } catch (notifError) {
+      // Non-critical — don't fail the claim if notification fails
+      console.warn('Failed to send claim notification:', notifError);
+    }
+
+    res.json(successResponse({ 
+      person: updated, 
+      message: 'Profile claimed successfully! You are now part of this family tree.' 
+    }));
+  } catch (err: any) {
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+  }
+});
+
+/**
  * GET /api/persons/:id — Get a person by ID
  */
 personsRouter.get('/:id', async (req: AuthenticatedRequest, res: Response) => {

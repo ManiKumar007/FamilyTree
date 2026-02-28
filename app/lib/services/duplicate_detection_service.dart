@@ -74,15 +74,20 @@ class DuplicateDetectionService {
         .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
         .join('&');
 
-    final response = await _apiService.get('/api/persons/check-duplicates?$queryString');
-    
-    final matches = List<Map<String, dynamic>>.from(response['matches'] ?? []);
-    return matches.map((m) => DuplicateMatch.fromJson(m)).toList();
+    try {
+      final response = await _apiService.get('/persons/check-duplicates?$queryString');
+      final matches = List<Map<String, dynamic>>.from(response['matches'] ?? []);
+      return matches.map((m) => DuplicateMatch.fromJson(m)).toList();
+    } catch (e) {
+      // Gracefully handle missing endpoint - don't block member creation
+      print('Duplicate check unavailable: $e');
+      return [];
+    }
   }
 
   /// Find all potential duplicates in the entire tree
   Future<List<Map<String, dynamic>>> findAllDuplicates() async {
-    final response = await _apiService.get('/api/persons/find-duplicates');
+    final response = await _apiService.get('/persons/find-duplicates');
     return List<Map<String, dynamic>>.from(response['data'] ?? []);
   }
 
@@ -92,7 +97,7 @@ class DuplicateDetectionService {
     required String mergePersonId,
     Map<String, dynamic>? fieldOverrides,
   }) async {
-    final response = await _apiService.post('/api/persons/merge', {
+    final response = await _apiService.post('/persons/merge', {
       'keep_person_id': keepPersonId,
       'merge_person_id': mergePersonId,
       'field_overrides': fieldOverrides ?? {},
