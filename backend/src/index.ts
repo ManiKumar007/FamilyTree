@@ -94,6 +94,33 @@ app.use(express.json({ limit: '10mb' }));
 // Structured request logging
 app.use(requestLogger);
 
+// Root endpoint - API info
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'MyFamilyTree API',
+    version: '1.0.0',
+    status: 'running',
+    health: '/api/health',
+    endpoints: [
+      '/api/persons',
+      '/api/relationships',
+      '/api/tree',
+      '/api/search',
+      '/api/merge',
+      '/api/invite',
+      '/api/admin',
+      '/api/forum',
+      '/api/life-events',
+      '/api/notifications',
+      '/api/activity',
+      '/api/calendar',
+      '/api/stats',
+      '/api/documents'
+    ],
+    documentation: 'https://github.com/ManiKumar007/FamilyTree'
+  });
+});
+
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
