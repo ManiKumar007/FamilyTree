@@ -61,12 +61,13 @@ jobs:
 
       - name: Prepare deployment directory
         run: |
-          # Copy built files to a clean deployment directory
-          mkdir -p deploy
-          cp -r app/build/web/* deploy/
+          # Vercel project has Root Directory set to "app"
+          # So we create deploy/app/ with the built files
+          mkdir -p deploy/app
+          cp -r app/build/web/* deploy/app/
 
           # Create vercel.json with rewrites + security headers
-          cat > deploy/vercel.json << 'VJEOF'
+          cat > deploy/app/vercel.json << 'VJEOF'
           {
             "version": 2,
             "rewrites": [
@@ -94,7 +95,7 @@ jobs:
           }
           VJEOF
           # Remove leading whitespace from JSON (heredoc indentation artifact)
-          sed -i 's/^[[:space:]]*//' deploy/vercel.json
+          sed -i 's/^[[:space:]]*//' deploy/app/vercel.json
 
       - name: Deploy to Vercel
         run: |
