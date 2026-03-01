@@ -65,13 +65,12 @@ jobs:
           mkdir -p deploy
           cp -r app/build/web/* deploy/
 
-          # Create vercel.json with routes + security headers
+          # Create vercel.json with rewrites + security headers
           cat > deploy/vercel.json << 'VJEOF'
           {
             "version": 2,
-            "routes": [
-              { "handle": "filesystem" },
-              { "src": "/(.*)", "dest": "/index.html" }
+            "rewrites": [
+              { "source": "/(.*)", "destination": "/index.html" }
             ],
             "headers": [
               {
