@@ -2,9 +2,19 @@
 # Automated Supabase Service Role Key Updater
 # This script will open your Supabase dashboard and guide you through updating the key
 
-$PROJECT_ID = "vojwwcolmnbzogsrmwap"
-$PROJECT_URL = "https://vojwwcolmnbzogsrmwap.supabase.co"
-$CORRECT_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvand3Y29sbW5iem9nc3Jtd2FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNDgyNDYsImV4cCI6MjA4NjcyNDI0Nn0.xVU1_igSVhUm4iFGtV7bPLkHGZG-VtRBBfBugPEa-7g"
+$PROJECT_ID = $env:SUPABASE_PROJECT_ID
+if (-not $PROJECT_ID) { $PROJECT_ID = "vojwwcolmnbzogsrmwap" }
+$PROJECT_URL = "https://$PROJECT_ID.supabase.co"
+# Read anon key from environment or .env file — never hardcode secrets
+$CORRECT_ANON_KEY = $env:SUPABASE_ANON_KEY
+if (-not $CORRECT_ANON_KEY) {
+    $envFile = Get-Content ".\backend\.env" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^SUPABASE_ANON_KEY=' }
+    if ($envFile) { $CORRECT_ANON_KEY = ($envFile -split '=', 2)[1] }
+}
+if (-not $CORRECT_ANON_KEY) {
+    Write-Host "ERROR: Set SUPABASE_ANON_KEY env var or create backend/.env" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "================================" -ForegroundColor Cyan
 Write-Host "Supabase Service Key Fixer" -ForegroundColor Cyan

@@ -50,7 +50,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       }
     } catch (e) {
       // Silently fail - not critical
-      print('Could not load search preferences: $e');
     }
   }
 
@@ -71,7 +70,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       }
     } catch (e) {
       // Silently fail - not critical
-      print('Could not save search preferences: $e');
     }
   }
 

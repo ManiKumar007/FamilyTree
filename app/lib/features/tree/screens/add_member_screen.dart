@@ -131,7 +131,6 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
       }
     } catch (e) {
       // Silently fail - not critical
-      print('Could not load profile for pre-fill: $e');
     }
   }
 
@@ -236,7 +235,7 @@ class _AddMemberScreenState extends ConsumerState<AddMemberScreen> {
           await apiService.updatePerson(newPersonId, {'photo_url': imageUrl});
         } catch (e) {
           // Don't fail the whole operation if image upload fails
-          print('Warning: Image upload failed: $e');
+          if (kDebugMode) debugPrint('Image upload failed');
         }
       }
 

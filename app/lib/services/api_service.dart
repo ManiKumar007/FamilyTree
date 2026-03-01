@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,9 +24,6 @@ class ApiService {
 
   Map<String, String> get _headers {
     final token = _authService.accessToken;
-    if (token == null) {
-      print('⚠️ Warning: No access token available for API call');
-    }
     return {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
@@ -95,14 +93,7 @@ class ApiService {
 
   /// Create a new person
   Future<Map<String, dynamic>> createPerson(Map<String, dynamic> data) async {
-    print('\n📡 API Service - Creating person');
-    print('URL: $_baseUrl/persons');
-    print('Has Token: ${_authService.accessToken != null}');
-    if (_authService.accessToken != null) {
-      print('Token Length: ${_authService.accessToken!.length}');
-      print('Token Preview: ${_authService.accessToken!.substring(0, min(30, _authService.accessToken!.length))}...');
-    }
-    print('Data keys: ${data.keys.join(", ")}');
+    if (kDebugMode) debugPrint('API: Creating person');
     
     final response = await http.post(
       Uri.parse('$_baseUrl/persons'),
@@ -110,8 +101,7 @@ class ApiService {
       body: jsonEncode(data),
     );
     
-    print('Response Status: ${response.statusCode}');
-    print('Response Body: ${response.body}');
+    if (kDebugMode) debugPrint('API: createPerson status=${response.statusCode}');
     
     if (response.statusCode != 201) throw _handleError(response);
     final wrapper = jsonDecode(response.body);
@@ -131,26 +121,18 @@ class ApiService {
 
   /// Update person
   Future<Person> updatePerson(String id, Map<String, dynamic> data) async {
-    print('\n📡 API Service - Updating person $id');
-    print('Update data keys: ${data.keys.join(", ")}');
-    if (data.containsKey('photo_url')) {
-      print('📸 photo_url in update: ${data['photo_url']}');
-    } else {
-      print('⚠️ photo_url NOT in update data');
-    }
+    if (kDebugMode) debugPrint('API: Updating person $id');
     final response = await http.put(
       Uri.parse('$_baseUrl/persons/$id'),
       headers: _headers,
       body: jsonEncode(data),
     );
-    print('📡 Update response status: ${response.statusCode}');
+    if (kDebugMode) debugPrint('API: updatePerson status=${response.statusCode}');
     if (response.statusCode != 200) {
-      print('❌ Update failed: ${response.body}');
       throw _handleError(response);
     }
     final wrapper = jsonDecode(response.body);
     final person = Person.fromJson(wrapper['data']);
-    print('✅ Person updated. photo_url in response: ${person.photoUrl}');
     return person;
   }
 
@@ -212,7 +194,6 @@ class ApiService {
 
       // Get public URL
       final publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
-      print('📸 Image uploaded successfully. Public URL: $publicUrl');
       
       return publicUrl;
     } catch (e) {
@@ -236,7 +217,7 @@ class ApiService {
       await supabase.storage.from('avatars').remove([filePath]);
     } catch (e) {
       // Silently fail - don't throw error if deletion fails
-      print('Warning: Could not delete image: $e');
+      if (kDebugMode) debugPrint('Image deletion failed');
     }
   }
 

@@ -5,8 +5,20 @@ Write-Host "`n========================================" -ForegroundColor Cyan
 Write-Host "  SUPABASE CONNECTION DIAGNOSTIC" -ForegroundColor Cyan
 Write-Host "========================================`n" -ForegroundColor Cyan
 
-$supabaseUrl = "https://vojwwcolmnbzogsrmwap.supabase.co"
-$anonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvand3Y29sbW5iem9nc3Jtd2FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNDgyNDYsImV4cCI6MjA4NjcyNDI0Nn0.xVU1_igSVhUm4iFGtV7bPLkHGZG-VtRBBfBugPEa-7g"
+$supabaseUrl = $env:SUPABASE_URL
+if (-not $supabaseUrl) {
+    $envFile = Get-Content ".\backend\.env" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^SUPABASE_URL=' }
+    if ($envFile) { $supabaseUrl = ($envFile -split '=', 2)[1] }
+}
+$anonKey = $env:SUPABASE_ANON_KEY
+if (-not $anonKey) {
+    $envFile = Get-Content ".\backend\.env" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^SUPABASE_ANON_KEY=' }
+    if ($envFile) { $anonKey = ($envFile -split '=', 2)[1] }
+}
+if (-not $supabaseUrl -or -not $anonKey) {
+    Write-Host "ERROR: Set SUPABASE_URL and SUPABASE_ANON_KEY env vars or create backend/.env" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "Testing connection to Supabase project..." -ForegroundColor Yellow
 Write-Host "Project URL: $supabaseUrl`n" -ForegroundColor Gray
@@ -29,7 +41,7 @@ catch {
 Write-Host "`n[2/4] Testing REST API Endpoint..." -ForegroundColor Cyan
 try {
     $headers = @{
-        "apikey" = $anonKey
+        "apikey"        = $anonKey
         "Authorization" = "Bearer $anonKey"
     }
     $rest = Invoke-WebRequest -Uri "$supabaseUrl/rest/v1/" -Headers $headers -TimeoutSec 10 -UseBasicParsing
@@ -48,12 +60,12 @@ Write-Host "`n[3/4] Testing Actual Login Request..." -ForegroundColor Cyan
 Write-Host "  (This should appear in Supabase Auth logs if it reaches server)" -ForegroundColor Gray
 try {
     $body = @{
-        email = "test@example.com"
+        email    = "test@example.com"
         password = "testpassword123"
     } | ConvertTo-Json
     
     $headers = @{
-        "apikey" = $anonKey
+        "apikey"       = $anonKey
         "Content-Type" = "application/json"
     }
     

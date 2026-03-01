@@ -84,7 +84,7 @@ inviteRouter.post('/generate', async (req: AuthenticatedRequest, res: Response) 
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -152,6 +152,6 @@ inviteRouter.post('/claim', async (req: AuthenticatedRequest, res: Response) => 
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

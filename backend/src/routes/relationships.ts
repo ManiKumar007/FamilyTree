@@ -62,7 +62,7 @@ relationshipsRouter.post('/', async (req: AuthenticatedRequest, res: Response) =
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -91,7 +91,7 @@ relationshipsRouter.get('/:personId', async (req: AuthenticatedRequest, res: Res
 
     res.json(paginatedResponse(data || [], page, pageSize, count || 0));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -133,6 +133,6 @@ relationshipsRouter.delete('/:id', async (req: AuthenticatedRequest, res: Respon
 
     res.status(204).send();
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

@@ -80,7 +80,6 @@ class DuplicateDetectionService {
       return matches.map((m) => DuplicateMatch.fromJson(m)).toList();
     } catch (e) {
       // Gracefully handle missing endpoint - don't block member creation
-      print('Duplicate check unavailable: $e');
       return [];
     }
   }

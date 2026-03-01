@@ -55,28 +55,26 @@ class AuthService {
   }) async {
     // Normalize email to lowercase to prevent case-mismatch issues (especially on iOS)
     final normalizedEmail = email.trim().toLowerCase();
-    developer.log('📝 Attempting sign up', name: 'AuthService', error: {'email': normalizedEmail, 'metadata': metadata});
+    developer.log('Attempting sign up', name: 'AuthService');
     
     try {
       // Validate inputs
       if (normalizedEmail.isEmpty) {
-        developer.log('❌ Email is empty', name: 'AuthService');
         throw Exception('Email cannot be empty');
       }
       if (password.isEmpty) {
-        developer.log('❌ Password is empty', name: 'AuthService');
         throw Exception('Password cannot be empty');
       }
-      if (!normalizedEmail.contains('@')) {
-        developer.log('❌ Invalid email format', name: 'AuthService', error: {'email': normalizedEmail});
-        throw Exception('Invalid email format');
+      if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(normalizedEmail)) {
+        throw Exception('Please enter a valid email address');
       }
-      if (password.length < 6) {
-        developer.log('❌ Password too short', name: 'AuthService');
-        throw Exception('Password must be at least 6 characters');
+      if (password.length < 8) {
+        throw Exception('Password must be at least 8 characters');
+      }
+      if (!RegExp(r'(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(password)) {
+        throw Exception('Password must contain uppercase, lowercase, and a number');
       }
 
-      developer.log('📡 Calling Supabase auth.signUp', name: 'AuthService');
       final response = await _supabase.auth.signUp(
         email: normalizedEmail,
         password: password,
@@ -120,23 +118,19 @@ class AuthService {
     try {
       // Validate inputs
       if (normalizedEmail.isEmpty) {
-        developer.log('❌ Email is empty', name: 'AuthService');
         throw Exception('Email cannot be empty');
       }
       if (password.isEmpty) {
-        developer.log('❌ Password is empty', name: 'AuthService');
         throw Exception('Password cannot be empty');
       }
-      if (!normalizedEmail.contains('@')) {
-        developer.log('❌ Invalid email format', name: 'AuthService', error: {'email': normalizedEmail});
-        throw Exception('Invalid email format');
+      if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(normalizedEmail)) {
+        throw Exception('Please enter a valid email address');
       }
-      if (password.length < 6) {
-        developer.log('❌ Password too short', name: 'AuthService');
-        throw Exception('Password must be at least 6 characters');
+      if (password.length < 8) {
+        throw Exception('Password must be at least 8 characters');
       }
 
-      developer.log('📡 Calling Supabase auth.signInWithPassword', name: 'AuthService');
+      developer.log('Calling Supabase auth.signInWithPassword', name: 'AuthService');
       final response = await _supabase.auth.signInWithPassword(
         email: normalizedEmail,
         password: password,
@@ -350,8 +344,8 @@ class AuthService {
       if (normalizedEmail.isEmpty) {
         throw Exception('Email cannot be empty');
       }
-      if (!normalizedEmail.contains('@')) {
-        throw Exception('Invalid email format');
+      if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(normalizedEmail)) {
+        throw Exception('Please enter a valid email address');
       }
 
       // Set explicit redirect URL to password reset page
@@ -440,31 +434,24 @@ class AuthService {
   /// Returns true if refresh was successful, false otherwise
   Future<bool> refreshSession() async {
     try {
-      developer.log('🔄 Refreshing session', name: 'AuthService');
-      final oldToken = currentSession?.accessToken;
-      print('Old token length: ${oldToken?.length ?? 0}');
+      developer.log('Refreshing session', name: 'AuthService');
       
       final response = await _supabase.auth.refreshSession();
       
       if (response.session != null) {
-        final newToken = response.session!.accessToken;
-        print('New token length: ${newToken.length}');
-        print('Token changed: ${oldToken != newToken}');
-        developer.log('✅ Session refreshed successfully', name: 'AuthService');
+        developer.log('Session refreshed successfully', name: 'AuthService');
         return true;
       } else {
-        developer.log('⚠️ Session refresh returned null', name: 'AuthService');
-        print('❌ Session refresh failed: returned null session');
+        developer.log('Session refresh returned null', name: 'AuthService');
         return false;
       }
     } catch (e, stackTrace) {
       developer.log(
-        '❌ Error refreshing session',
+        'Error refreshing session',
         name: 'AuthService',
         error: e,
         stackTrace: stackTrace,
       );
-      print('❌ Session refresh exception: $e');
       // Don't rethrow - just return false to indicate failure
       return false;
     }

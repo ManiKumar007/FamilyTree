@@ -2,13 +2,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Fix for corporate proxy/firewall with self-signed certificates
-// WARNING: This disables TLS verification - only for development!
-// In production, properly configure trusted certificates instead
-if (process.env.NODE_ENV !== 'production') {
+// Only enable this with explicit opt-in — never based on a negated ENV check
+if (process.env.DISABLE_TLS_VERIFY === 'true' && process.env.NODE_ENV !== 'production') {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  console.warn('⚠️  TLS certificate verification disabled for development');
-  console.warn('   This is required if behind a corporate proxy with self-signed certificates');
-  console.warn('   Do NOT use this in production!');
+  console.warn('⚠️  TLS certificate verification disabled (DISABLE_TLS_VERIFY=true)');
 }
 
 import express from 'express';
@@ -47,7 +44,7 @@ const allowedOrigins = env.NODE_ENV === 'production'
       // Add specific Vercel preview URLs here if needed
       // Do NOT use regex patterns - whitelist specific URLs only for security
     ].filter(Boolean) // Remove any undefined values
-  : true; // Allow all origins in development
+  : ['http://localhost:3000', 'http://localhost:5500', 'http://localhost:8080', 'http://127.0.0.1:5500']; // Restricted localhost origins in development
 
 app.use(cors({
   origin: allowedOrigins,
@@ -88,8 +85,8 @@ const adminLimiter = rateLimit({
 // Apply default rate limit globally
 app.use(defaultLimiter);
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
+// Body parsing (1MB default — sufficient for JSON; file uploads go via Supabase Storage)
+app.use(express.json({ limit: '1mb' }));
 
 // Structured request logging
 app.use(requestLogger);
@@ -127,20 +124,20 @@ app.get('/api/health', (_req, res) => {
 });
 
 // Routes with per-category rate limiting
-app.use('/api/persons', personsRouter);           // Uses default (300/15min) for reads; POST/PUT are low volume
-app.use('/api/relationships', relationshipsRouter);
+app.use('/api/persons', writeLimiter, personsRouter);           // Persons CRUD — 50/15min
+app.use('/api/relationships', writeLimiter, relationshipsRouter); // Relationships CRUD
 app.use('/api/tree', treeRouter);
 app.use('/api/search', searchLimiter, searchRouter);   // Search is expensive — 30/15min
 app.use('/api/merge', writeLimiter, mergeRouter);      // Merge writes — 50/15min
 app.use('/api/invite', writeLimiter, inviteRouter);    // Invite generation — 50/15min
 app.use('/api/admin', adminLimiter, adminRouter);      // Admin — 200/15min
-app.use('/api/forum', forumRouter);                    // Forum posts, comments, likes
-app.use('/api/life-events', lifeEventsRouter);         // Life events for persons
-app.use('/api/notifications', notificationsRouter);    // User notifications
-app.use('/api/activity', activityRouter);              // Activity feed
-app.use('/api/calendar', calendarRouter);              // Family calendar events
-app.use('/api/stats', statsRouter);                    // Statistics and analytics
-app.use('/api/documents', documentsRouter);            // Person documents
+app.use('/api/forum', writeLimiter, forumRouter);      // Forum CRUD — 50/15min
+app.use('/api/life-events', writeLimiter, lifeEventsRouter); // Life events CRUD
+app.use('/api/notifications', writeLimiter, notificationsRouter); // Notifications
+app.use('/api/activity', activityRouter);              // Activity feed (read-only)
+app.use('/api/calendar', writeLimiter, calendarRouter); // Calendar events CRUD
+app.use('/api/stats', statsRouter);                    // Statistics and analytics (read-only)
+app.use('/api/documents', writeLimiter, documentsRouter); // Person documents CRUD
 
 // Error handler (must be last)
 app.use(errorHandler);

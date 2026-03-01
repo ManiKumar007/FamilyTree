@@ -8,11 +8,12 @@ import 'app.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables (fallback, dart-define takes precedence)
+  // Load environment variables (optional fallback — dart-define takes precedence)
+  // In production builds, use --dart-define instead of .env files
   try {
     await dotenv.load(fileName: '.env');
   } catch (e) {
-    debugPrint('⚠️  .env file not found, using dart-define or defaults: $e');
+    // .env file is optional — dart-define values are preferred for production
   }
 
   // Initialize Supabase with persistent session
@@ -24,8 +25,11 @@ Future<void> main() async {
       ? const String.fromEnvironment('SUPABASE_ANON_KEY')
       : dotenv.env['SUPABASE_ANON_KEY'] ?? '';
   
-  debugPrint('🔧 Supabase URL: $supabaseUrl');
-  debugPrint('🔧 Anon Key length: ${supabaseAnonKey.length}');
+  // Only log config status in debug mode — never log actual values
+  assert(() {
+    debugPrint('Supabase configured: ${supabaseUrl.isNotEmpty}');
+    return true;
+  }());
   
   await Supabase.initialize(
     url: supabaseUrl,
@@ -36,20 +40,17 @@ Future<void> main() async {
     ),
   );
 
-  // Handle auth state changes
+  // Handle auth state changes (no PII logging in production)
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-    final session = data.session;
-    if (session != null) {
-      debugPrint('✅ User session active: ${session.user.email}');
-    } else {
-      debugPrint('❌ No active session');
-    }
+    assert(() {
+      debugPrint('Auth state changed: ${data.event}');
+      return true;
+    }());
   });
 
   // Load persisted language preference
   final prefs = await SharedPreferences.getInstance();
   final savedLanguage = prefs.getString('preferred_language') ?? 'en';
-  debugPrint('🌐 Loaded language preference: $savedLanguage');
 
   runApp(
     ProviderScope(

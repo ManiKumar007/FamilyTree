@@ -22,7 +22,7 @@ class AppConfig {
   static String get apiBaseUrl {
     var url = const String.fromEnvironment('API_BASE_URL', defaultValue: '') != '' 
         ? const String.fromEnvironment('API_BASE_URL')
-        : dotenv.env['API_BASE_URL'] ?? 'http://localhost:3000/api';
+        : dotenv.env['API_BASE_URL'] ?? 'https://familytree-api.vercel.app/api';
     
     // On a real Android device (not emulator), replace localhost with the
     // host machine's local-network IP so the phone can reach the backend.
@@ -47,7 +47,7 @@ class AppConfig {
   static String get appUrl => 
       const String.fromEnvironment('APP_URL', defaultValue: '') != '' 
           ? const String.fromEnvironment('APP_URL') 
-          : dotenv.env['APP_URL'] ?? 'http://localhost:5500';
+          : dotenv.env['APP_URL'] ?? 'https://familytree-web.vercel.app';
 }
 
 /// Shared form-related constants to avoid duplication across screens.

@@ -67,7 +67,7 @@ documentsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -86,7 +86,7 @@ documentsRouter.get('/person/:personId', async (req: AuthenticatedRequest, res: 
 
     res.json(successResponse(data || []));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -108,7 +108,7 @@ documentsRouter.get('/:id', async (req: AuthenticatedRequest, res: Response) => 
 
     res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -153,7 +153,7 @@ documentsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) => 
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -187,6 +187,6 @@ documentsRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response) 
 
     res.json(successResponse({ message: `Document '${existing.document_name}' deleted successfully` }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

@@ -23,7 +23,7 @@ statsRouter.get('/family', async (req: AuthenticatedRequest, res: Response) => {
 
     res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -56,7 +56,7 @@ statsRouter.get('/consistency', async (req: AuthenticatedRequest, res: Response)
       issues_by_type: issuesByType,
     }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -145,7 +145,7 @@ statsRouter.post('/relationship-path', async (req: AuthenticatedRequest, res: Re
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -200,6 +200,6 @@ statsRouter.get('/tree-depth', async (req: AuthenticatedRequest, res: Response) 
       total_persons: visited.size,
     }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

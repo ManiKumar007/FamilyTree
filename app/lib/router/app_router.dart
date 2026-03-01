@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -69,14 +70,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLandingRoute = state.matchedLocation == '/landing';
       final isInviteRoute = state.matchedLocation.startsWith('/invite');
       final isResetPasswordRoute = state.matchedLocation == '/reset-password';
+      final isAdminRoute = state.matchedLocation.startsWith('/admin');
 
-      debugPrint('🔄 Router redirect: ${state.matchedLocation}, isLoggedIn: $isLoggedIn, user: ${user?.email ?? "null"}, hasSession: ${session != null}');
+      if (kDebugMode) debugPrint('Router redirect: ${state.matchedLocation}, isLoggedIn: $isLoggedIn');
 
       // Allow landing, login, signup, reset-password, and invite routes without auth
       if (isLandingRoute || isLoginRoute || isInviteRoute || isResetPasswordRoute) return null;
 
       // If not logged in and trying to access protected route, redirect to login
       if (!isLoggedIn) return '/login';
+
+      // Admin route protection: check user role from metadata
+      if (isAdminRoute && isLoggedIn) {
+        final userRole = user.userMetadata?['role'] as String?;
+        if (userRole != 'admin' && userRole != 'super_admin') {
+          return '/tree'; // Redirect non-admin users away from admin pages
+        }
+      }
 
       // If logged in and on login page, redirect to tree
       if (isLoggedIn && isLoginRoute) return '/tree';

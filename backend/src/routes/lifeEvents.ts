@@ -70,7 +70,7 @@ lifeEventsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -89,7 +89,7 @@ lifeEventsRouter.get('/person/:personId', async (req: AuthenticatedRequest, res:
 
     res.json(successResponse(data || []));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -111,7 +111,7 @@ lifeEventsRouter.get('/:id', async (req: AuthenticatedRequest, res: Response) =>
 
     res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -156,7 +156,7 @@ lifeEventsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) =>
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -190,6 +190,6 @@ lifeEventsRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response)
 
     res.json(successResponse({ message: `Life event '${existing.event_type}' deleted successfully` }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

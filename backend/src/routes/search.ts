@@ -79,6 +79,6 @@ searchRouter.get('/', async (req: AuthenticatedRequest, res: Response) => {
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Invalid query parameters', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

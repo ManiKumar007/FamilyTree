@@ -1,8 +1,20 @@
 # Simple Supabase Connection Test
 # This will help determine if logs appear in Supabase Dashboard
 
-$url = "https://vojwwcolmnbzogsrmwap.supabase.co"
-$key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvand3Y29sbW5iem9nc3Jtd2FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNDgyNDYsImV4cCI6MjA4NjcyNDI0Nn0.xVU1_igSVhUm4iFGtV7bPLkHGZG-VtRBBfBugPEa-7g"
+$url = $env:SUPABASE_URL
+if (-not $url) {
+    $envFile = Get-Content ".\backend\.env" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^SUPABASE_URL=' }
+    if ($envFile) { $url = ($envFile -split '=', 2)[1] }
+}
+$key = $env:SUPABASE_ANON_KEY
+if (-not $key) {
+    $envFile = Get-Content ".\backend\.env" -ErrorAction SilentlyContinue | Where-Object { $_ -match '^SUPABASE_ANON_KEY=' }
+    if ($envFile) { $key = ($envFile -split '=', 2)[1] }
+}
+if (-not $url -or -not $key) {
+    Write-Host "ERROR: Set SUPABASE_URL and SUPABASE_ANON_KEY env vars or create backend/.env" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "`nSUPABASE CONNECTION TEST" -ForegroundColor Cyan
 Write-Host "========================`n" -ForegroundColor Cyan

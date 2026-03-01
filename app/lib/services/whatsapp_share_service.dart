@@ -26,7 +26,6 @@ class WhatsAppShareService {
       );
       return launched;
     } catch (e) {
-      print('Error sharing to WhatsApp: $e');
       return false;
     }
   }

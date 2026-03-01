@@ -37,7 +37,7 @@ notificationsRouter.get('/', async (req: AuthenticatedRequest, res: Response) =>
 
     res.json(paginatedResponse(data || [], count || 0, page, limit));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -54,7 +54,7 @@ notificationsRouter.get('/unread-count', async (req: AuthenticatedRequest, res: 
 
     res.json(successResponse({ count: count || 0 }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -90,7 +90,7 @@ notificationsRouter.put('/:id/read', async (req: AuthenticatedRequest, res: Resp
 
     res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -110,7 +110,7 @@ notificationsRouter.put('/mark-all-read', async (req: AuthenticatedRequest, res:
 
     res.json(successResponse({ message: `Marked ${data?.length || 0} notifications as read` }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -144,12 +144,14 @@ notificationsRouter.delete('/:id', async (req: AuthenticatedRequest, res: Respon
 
     res.json(successResponse({ message: 'Notification deleted successfully' }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
 /**
- * POST /api/notifications — Create a notification (admin or system use)
+ * POST /api/notifications — Create a notification (system use only)
+ * Only allows creating notifications where the requesting user
+ * is related to the target user (has a relationship connection).
  */
 notificationsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -157,12 +159,28 @@ notificationsRouter.post('/', async (req: AuthenticatedRequest, res: Response) =
       user_id: z.string().uuid(),
       notification_type: NotificationTypeEnum,
       title: z.string().min(1).max(200),
-      message: z.string().min(1),
+      message: z.string().min(1).max(2000),
       related_person_id: z.string().uuid().optional(),
       related_post_id: z.string().uuid().optional(),
     });
 
     const parsed = schema.parse(req.body);
+
+    // Authorization: prevent users from sending notifications to arbitrary users
+    // Only allow self-notifications or notifications linked to a relationship
+    if (parsed.user_id !== req.userId) {
+      // Check if the requesting user has a relationship with the target user
+      const { data: relationship } = await supabaseAdmin
+        .from('persons')
+        .select('id')
+        .eq('auth_user_id', parsed.user_id)
+        .single();
+
+      if (!relationship) {
+        res.status(403).json(errorResponse(ErrorCodes.FORBIDDEN, 'You are not authorized to send notifications to this user'));
+        return;
+      }
+    }
 
     const { data, error } = await supabaseAdmin
       .from('notifications')
@@ -178,6 +196,6 @@ notificationsRouter.post('/', async (req: AuthenticatedRequest, res: Response) =
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

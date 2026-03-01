@@ -1,26 +1,52 @@
 /**
  * XSS sanitization utility.
- * Strips potentially dangerous HTML/script content from user-provided text fields.
+ * Uses a robust multi-pass approach to strip dangerous HTML/script content.
  *
- * Uses a simple regex-based approach to avoid adding a heavy dependency.
- * For more comprehensive sanitization, consider the `xss` or `sanitize-html` npm package.
+ * For richer HTML contexts (user-generated formatted content), consider
+ * adding the `xss` or `sanitize-html` npm package.
  */
 
 /**
  * Strip HTML tags and common XSS attack vectors from a string.
+ * Multi-pass to handle nested/encoded payloads.
  */
 export function sanitizeString(input: string): string {
-  return input
+  let sanitized = input;
+
+  // Decode HTML entities that could hide payloads
+  sanitized = sanitized
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#x27;/gi, "'")
+    .replace(/&#x2F;/gi, '/');
+
+  // Multi-pass tag removal (handles nested tags like <<script>script>)
+  let previous = '';
+  while (previous !== sanitized) {
+    previous = sanitized;
     // Remove HTML tags
-    .replace(/<[^>]*>/g, '')
-    // Remove javascript: protocol
-    .replace(/javascript\s*:/gi, '')
-    // Remove on* event handlers
+    sanitized = sanitized.replace(/<[^>]*>/g, '');
+  }
+
+  sanitized = sanitized
+    // Remove javascript: protocol (with possible whitespace/encoding tricks)
+    .replace(/j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:/gi, '')
+    // Remove vbscript: protocol
+    .replace(/v\s*b\s*s\s*c\s*r\s*i\s*p\s*t\s*:/gi, '')
+    // Remove on* event handlers (e.g. onerror=, onclick=)
     .replace(/\bon\w+\s*=/gi, '')
     // Remove data: URIs (can contain scripts)
     .replace(/data\s*:[^,]*,/gi, '')
+    // Remove expression() CSS (IE)
+    .replace(/expression\s*\(/gi, '')
+    // Remove url() CSS with javascript
+    .replace(/url\s*\(\s*['"]?\s*javascript/gi, '')
     // Trim whitespace
     .trim();
+
+  return sanitized;
 }
 
 /**

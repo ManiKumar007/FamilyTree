@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -158,37 +159,10 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       final authService = ref.read(authServiceProvider);
       final apiService = ref.read(apiServiceProvider);
 
-      // Check current session state
-      print('\n========================================');
-      print('🔍 Profile Setup - Initial State');
-      print('========================================');
-      final initialSession = authService.currentSession;
       final initialUser = authService.currentUser;
-      print('User: ${initialUser?.email}');
-      print('User ID: ${initialUser?.id}');
-      print('Has Session: ${initialSession != null}');
-      print('Token Length: ${authService.accessToken?.length ?? 0}');
-      if (authService.accessToken != null) {
-        print('Token Preview: ${authService.accessToken!.substring(0, 20)}...');
-      }
-      
-      // Check email confirmation status
-      final user = authService.currentUser;
-      if (user != null) {
-        print('User Email: ${user.email}');
-        print('Email Confirmed: ${user.emailConfirmedAt != null}');
-        print('User Created: ${user.createdAt}');
-        
-        // If email is not confirmed, show warning
-        if (user.emailConfirmedAt == null) {
-          print('⚠️ WARNING: Email not confirmed. This may cause token issues.');
-        }
-      }
-      print('========================================\n');
 
       // Validate we have a user
       if (initialUser == null) {
-        print('❌ No user found - redirecting to login');
         setState(() { 
           _error = 'No user session found. Please sign in.';
           _isLoading = false;
@@ -199,17 +173,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       }
 
       // Refresh the session to ensure we have a valid token
-      print('🔄 Refreshing session before profile creation...');
-      print('Token BEFORE refresh: ${authService.accessToken?.substring(0, 30)}...');
-      
       final refreshed = await authService.refreshSession();
       if (refreshed) {
-        print('✅ Session refreshed successfully');
         // Give a moment for the session to update
         await Future.delayed(const Duration(milliseconds: 100));
-        print('Token AFTER refresh: ${authService.accessToken?.substring(0, 30)}...');
       } else {
-        print('⚠️ Session refresh failed - this will likely cause token errors');
         // For profile setup, we need a valid token, so show error
         setState(() {
           _error = 'Failed to refresh authentication. Please try logging in again.';
@@ -223,9 +191,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       final surname = _surnameController.text.trim();
       final fullName = surname.isEmpty ? givenName : '$givenName $surname';
 
-      print('📝 Creating profile for: $fullName');
-      print('Phone: ${_countryCode}${_phoneController.text.trim()}');
-      print('Auth User ID: ${authService.currentUser!.id}');
+      if (kDebugMode) debugPrint('Creating profile for: $fullName');
       
       final profileData = {
         'username': username,
@@ -251,12 +217,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'verified': true,
       };
       
-      print('Profile data prepared: ${profileData.keys.join(", ")}');
-      print('Making API call to create person...');
-      
       await apiService.createPerson(profileData);
-      
-      print('✅ Profile created successfully!');
 
 
       // Refresh providers to load the new profile
@@ -274,9 +235,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         context.go('/tree');
       }
     } catch (e, stackTrace) {
-      print('\n❌ Error creating profile:');
-      print('Error: $e');
-      print('Stack trace: $stackTrace');
+      if (kDebugMode) debugPrint('Error creating profile: $e');
       
       String errorMessage = e.toString().replaceAll('Exception: ', '');
       

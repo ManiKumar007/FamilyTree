@@ -39,7 +39,7 @@ treeRouter.get('/', async (req: AuthenticatedRequest, res: Response) => {
     const tree = await getFullTree(person.id);
     res.json(successResponse(tree));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -100,7 +100,7 @@ treeRouter.get('/connection-by-username/:usernameA/:usernameB', async (req: Auth
 
     res.json(successResponse(enhancedResult));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -147,7 +147,7 @@ treeRouter.get('/connection/:personAId/:personBId', async (req: AuthenticatedReq
 
     res.json(successResponse(enhancedResult));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -165,6 +165,6 @@ treeRouter.get('/:personId', async (req: AuthenticatedRequest, res: Response) =>
 
     res.json(successResponse(tree));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

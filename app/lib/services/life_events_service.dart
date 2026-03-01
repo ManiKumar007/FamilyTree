@@ -19,9 +19,6 @@ class LifeEventsService {
 
   Map<String, String> get _headers {
     final token = _authService.accessToken;
-    if (token == null) {
-      print('⚠️ Warning: No access token available for API call');
-    }
     return {
       'Content-Type': 'application/json',
       if (token != null) 'Authorization': 'Bearer $token',
@@ -98,8 +95,6 @@ class LifeEventsService {
   // ==================== ERROR HANDLING ====================
 
   Exception _handleError(http.Response response) {
-    print('❌ API Error: ${response.statusCode} - ${response.body}');
-    
     try {
       final error = jsonDecode(response.body);
       final message = error['error'] ?? error['message'] ?? 'Unknown error';

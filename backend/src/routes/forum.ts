@@ -62,7 +62,7 @@ forumRouter.post('/posts', async (req: AuthenticatedRequest, res: Response) => {
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -110,7 +110,7 @@ forumRouter.get('/posts', async (req: AuthenticatedRequest, res: Response) => {
       res.json(paginatedResponse(data || [], count || 0, page, limit));
     }
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -164,7 +164,7 @@ forumRouter.get('/posts/:id', async (req: AuthenticatedRequest, res: Response) =
 
     res.json(successResponse(enrichedData));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -209,7 +209,7 @@ forumRouter.put('/posts/:id', async (req: AuthenticatedRequest, res: Response) =
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -243,7 +243,7 @@ forumRouter.delete('/posts/:id', async (req: AuthenticatedRequest, res: Response
 
     res.json(successResponse({ message: `Post '${existing.title}' deleted successfully` }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -296,7 +296,7 @@ forumRouter.post('/posts/:id/media', async (req: AuthenticatedRequest, res: Resp
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -331,7 +331,7 @@ forumRouter.delete('/media/:id', async (req: AuthenticatedRequest, res: Response
 
     res.json(successResponse({ message: 'Media deleted successfully' }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -363,7 +363,7 @@ forumRouter.post('/comments', async (req: AuthenticatedRequest, res: Response) =
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -397,7 +397,7 @@ forumRouter.delete('/comments/:id', async (req: AuthenticatedRequest, res: Respo
 
     res.json(successResponse({ message: 'Comment deleted successfully' }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -458,7 +458,7 @@ forumRouter.post('/likes', async (req: AuthenticatedRequest, res: Response) => {
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -474,6 +474,6 @@ forumRouter.get('/posts/:id/likes', async (req: AuthenticatedRequest, res: Respo
 
     res.json(successResponse({ count: count || 0 }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

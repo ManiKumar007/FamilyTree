@@ -138,7 +138,7 @@ personsRouter.post('/', async (req: AuthenticatedRequest, res: Response) => {
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -159,10 +159,12 @@ personsRouter.get('/check-duplicates', async (req: AuthenticatedRequest, res: Re
     const city = req.query.city as string | undefined;
 
     // Build query: search by name similarity
+    // Escape ILIKE wildcard characters to prevent pattern injection
+    const escapedName = name.replace(/%/g, '\\%').replace(/_/g, '\\_');
     let query = supabaseAdmin
       .from('persons')
       .select('id, name, given_name, surname, phone, date_of_birth, city, gender, photo_url')
-      .ilike('name', `%${name}%`)
+      .ilike('name', `%${escapedName}%`)
       .limit(10);
 
     const { data: nameMatches, error: nameError } = await query;
@@ -233,7 +235,7 @@ personsRouter.get('/check-duplicates', async (req: AuthenticatedRequest, res: Re
 
     res.json(successResponse({ matches: filtered }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -306,7 +308,7 @@ personsRouter.post('/check-phone-claim', async (req: AuthenticatedRequest, res: 
 
     res.json(successResponse({ claimable: true, matches }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -407,7 +409,7 @@ personsRouter.post('/claim-profile', async (req: AuthenticatedRequest, res: Resp
       message: 'Profile claimed successfully! You are now part of this family tree.' 
     }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -429,7 +431,7 @@ personsRouter.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
 
     res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -513,7 +515,7 @@ personsRouter.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -549,7 +551,7 @@ personsRouter.delete('/:id', async (req: AuthenticatedRequest, res: Response) =>
 
     res.json(successResponse({ message: `Person '${existing.name}' deleted successfully` }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -575,7 +577,7 @@ personsRouter.get('/check-username/:username', async (req: AuthenticatedRequest,
 
     res.json(successResponse({ available: !data }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -597,7 +599,7 @@ personsRouter.get('/by-username/:username', async (req: AuthenticatedRequest, re
 
     res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -621,7 +623,7 @@ personsRouter.get('/by-phone/:phone', async (req: AuthenticatedRequest, res: Res
 
     res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -643,6 +645,6 @@ personsRouter.get('/me/profile', async (req: AuthenticatedRequest, res: Response
 
     res.json(successResponse(data));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

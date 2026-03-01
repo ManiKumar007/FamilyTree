@@ -52,7 +52,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
         final rels = await api.getRelationships(widget.personId);
         setState(() { _relationships = rels; });
       } catch (relError) {
-        print('⚠️ Failed to load relationships: $relError');
+        if (kDebugMode) debugPrint('Failed to load relationships');
       }
 
       // Load life events separately
@@ -61,7 +61,7 @@ class _PersonDetailScreenState extends ConsumerState<PersonDetailScreen> with Si
         final events = await lifeEventsService.getLifeEventsByPerson(widget.personId);
         setState(() { _lifeEvents = events; });
       } catch (eventError) {
-        print('⚠️ Failed to load life events: $eventError');
+        if (kDebugMode) debugPrint('Failed to load life events');
       }
     } catch (e) {
       setState(() { _loadError = e.toString().replaceAll('Exception: ', ''); });

@@ -42,7 +42,7 @@ activityRouter.get('/', async (req: AuthenticatedRequest, res: Response) => {
 
     res.json(paginatedResponse(data || [], count || 0, page, limit));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -62,6 +62,6 @@ activityRouter.get('/person/:personId', async (req: AuthenticatedRequest, res: R
 
     res.json(successResponse(data || []));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

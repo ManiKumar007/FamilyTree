@@ -31,7 +31,7 @@ mergeRouter.get('/pending', async (req: AuthenticatedRequest, res: Response) => 
 
     res.json(paginatedResponse(paged, page, pageSize, total));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -52,7 +52,7 @@ mergeRouter.put('/:id/approve', async (req: AuthenticatedRequest, res: Response)
       res.status(400).json(errorResponse(ErrorCodes.VALIDATION_FAILED, 'Validation failed', err.errors));
       return;
     }
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });
 
@@ -64,6 +64,6 @@ mergeRouter.put('/:id/reject', async (req: AuthenticatedRequest, res: Response) 
     await rejectMerge(req.params.id, req.userId!);
     res.json(successResponse({ status: 'rejected' }));
   } catch (err: any) {
-    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, err.message));
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
   }
 });

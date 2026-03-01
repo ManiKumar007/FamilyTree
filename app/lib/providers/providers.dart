@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/auth_service.dart';
@@ -23,18 +24,14 @@ final currentUserProvider = Provider<User?>((ref) {
 /// Current user's person profile
 final myProfileProvider = FutureProvider<Person?>((ref) async {
   final user = ref.watch(currentUserProvider);
-  if (user == null) {
-    print('⚠️ No user logged in, cannot fetch profile');
-    return null;
-  }
+  if (user == null) return null;
 
   final apiService = ref.watch(apiServiceProvider);
   try {
     final profile = await apiService.getMyProfile();
-    print('✅ Profile fetched successfully: ${profile?.name}');
     return profile;
   } catch (e) {
-    print('❌ Error fetching profile: $e');
+    if (kDebugMode) debugPrint('Error fetching profile');
     return null;
   }
 });
@@ -44,16 +41,12 @@ final myProfileProvider = FutureProvider<Person?>((ref) async {
 /// Family tree data
 final familyTreeProvider = FutureProvider<TreeResponse?>((ref) async {
   final user = ref.watch(currentUserProvider);
-  if (user == null) {
-    print('⚠️ No user logged in, cannot fetch tree');
-    return null;
-  }
+  if (user == null) return null;
 
   final apiService = ref.watch(apiServiceProvider);
-  print('🌲 Fetching family tree...');
   final tree = await apiService.getMyTree();
   final totalRelationships = tree.nodes.fold<int>(0, (sum, node) => sum + node.relationships.length);
-  print('✅ Family tree fetched: ${tree.nodes.length} nodes, $totalRelationships relationships');
+  if (kDebugMode) debugPrint('Family tree fetched: ${tree.nodes.length} nodes, $totalRelationships relationships');
   return tree;
 });
 
@@ -135,18 +128,16 @@ class SearchNotifier extends StateNotifier<SearchState> {
 
     try {
       // Optionally refresh session before searching (non-blocking)
-      print('🔍 Searching with query="${state.query}", occupation="${state.occupation}", depth=${state.depth}');
-      
       final results = await _apiService.search(
         query: state.query.isEmpty ? null : state.query,
         occupation: state.occupation,
         maritalStatus: state.maritalStatus,
         depth: state.depth,
       );
-      print('✅ Search returned ${results.length} results');
+      if (kDebugMode) debugPrint('Search returned ${results.length} results');
       state = state.copyWith(results: results, isLoading: false);
     } catch (e) {
-      print('❌ Search error: $e');
+      if (kDebugMode) debugPrint('Search error');
       String errorMessage = e.toString().replaceAll('Exception: ', '');
       
       // Better error messages
