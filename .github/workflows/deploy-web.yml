@@ -28,7 +28,7 @@ jobs:
         working-directory: app
         run: |
           cat > .env << 'ENVEOF'
-          SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co
+          SUPABASE_URL=https://supabase-proxy.manich623.workers.dev
           SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           API_BASE_URL=https://backend-five-blue-16.vercel.app/api
           APP_URL=https://familytree-web-manikumar007s-projects.vercel.app
@@ -53,7 +53,7 @@ jobs:
         run: |
           flutter pub get
           flutter build web --release \
-            --dart-define=SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co \
+            --dart-define=SUPABASE_URL=https://supabase-proxy.manich623.workers.dev \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
             --dart-define=API_BASE_URL=https://backend-five-blue-16.vercel.app/api \
             --dart-define=APP_URL=https://familytree-web-manikumar007s-projects.vercel.app \
