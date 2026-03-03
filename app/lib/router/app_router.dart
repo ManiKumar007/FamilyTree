@@ -36,9 +36,21 @@ import '../widgets/app_shell.dart';
 // Auth change notifier for GoRouter
 class AuthNotifier extends ChangeNotifier {
   StreamSubscription<AuthState>? _authSubscription;
+  bool _isPasswordRecovery = false;
+
+  /// True while the current session was initiated by a password-reset link.
+  /// Cleared once the user navigates away from /reset-password.
+  bool get isPasswordRecovery => _isPasswordRecovery;
+
+  void clearPasswordRecovery() {
+    _isPasswordRecovery = false;
+  }
 
   AuthNotifier() {
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        _isPasswordRecovery = true;
+      }
       notifyListeners();
     });
   }
@@ -75,6 +87,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isProfileSetupRoute = state.matchedLocation == '/profile-setup';
 
       if (kDebugMode) debugPrint('Router redirect: ${state.matchedLocation}, isLoggedIn: $isLoggedIn');
+
+      // If a password-recovery link was clicked, force-redirect to /reset-password
+      // regardless of current auth state (Supabase creates a session on recovery)
+      if (authNotifier.isPasswordRecovery && !isResetPasswordRoute) {
+        return '/reset-password';
+      }
 
       // Allow landing, login, signup, reset-password, and invite routes without auth
       if (isLandingRoute || isLoginRoute || isInviteRoute || isResetPasswordRoute) return null;

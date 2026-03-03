@@ -10,6 +10,7 @@ import '../../../services/whatsapp_share_service.dart';
 import '../../../providers/providers.dart';
 import '../../../config/constants.dart';
 import '../../../config/theme.dart';
+import '../../../models/models.dart';
 import '../../../widgets/form_fields.dart';
 import '../../../widgets/language_selector.dart';
 import '../../../app.dart';
@@ -47,6 +48,9 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   String? _usernameError;
   Timer? _usernameDebounce;
 
+  // Existing profile (null = new user, non-null = returning user updating profile)
+  Person? _existingProfile;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +67,69 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         }
       }
     }
+    // Load previously saved profile data (for returning users)
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadExistingProfile());
+  }
+
+  /// Load existing profile from API and pre-populate form fields.
+  /// Silently ignored for first-time users who don't have a profile yet.
+  Future<void> _loadExistingProfile() async {
+    try {
+      final apiService = ref.read(apiServiceProvider);
+      final existing = await apiService.getMyProfile();
+      if (existing != null && mounted) {
+        setState(() {
+          _existingProfile = existing;
+          // Name
+          if (existing.givenName != null && existing.givenName!.isNotEmpty) {
+            _givenNameController.text = existing.givenName!;
+            _surnameController.text = existing.surname ?? '';
+          } else {
+            final parts = existing.name.trim().split(RegExp(r'\s+'));
+            _givenNameController.text = parts.first;
+            if (parts.length > 1) {
+              _surnameController.text = parts.sublist(1).join(' ');
+            }
+          }
+          // Username
+          if (existing.username != null && existing.username!.isNotEmpty) {
+            _usernameController.text = existing.username!;
+            _isUsernameAvailable = true; // Already theirs
+          }
+          // Phone
+          _countryCode = _extractCountryCode(existing.phone);
+          _phoneController.text = _stripCountryCode(existing.phone);
+          // Additional details
+          _cityController.text = existing.city ?? '';
+          _stateController.text = existing.state ?? '';
+          _occupationController.text = existing.occupation ?? '';
+          _communityController.text = existing.community ?? '';
+          _gotraController.text = existing.gotra ?? '';
+          _gender = existing.gender;
+          if (existing.dateOfBirth != null) {
+            _dateOfBirth = DateTime.tryParse(existing.dateOfBirth!);
+          }
+        });
+      }
+    } catch (_) {
+      // Silent failure — user is setting up their profile for the first time
+    }
+  }
+
+  /// Extract country code prefix from a full E.164 phone number
+  String _extractCountryCode(String phone) {
+    for (final code in FormConstants.countryCodeValues) {
+      if (phone.startsWith(code)) return code;
+    }
+    return '+91';
+  }
+
+  /// Strip country code prefix from a full E.164 phone number
+  String _stripCountryCode(String phone) {
+    for (final code in FormConstants.countryCodeValues) {
+      if (phone.startsWith(code)) return phone.substring(code.length);
+    }
+    return phone;
   }
 
   @override
@@ -219,54 +286,60 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
       };
       
       print('Profile data prepared: ${profileData.keys.join(", ")}');
-      
-      // Check if phone number matches an existing unclaimed profile
-      print('🔍 Checking if phone number has claimable profiles...');
-      try {
-        final claimResult = await apiService.checkPhoneClaim(
-          profileData['phone'] as String,
-        );
-        final claimable = claimResult['claimable'] as bool? ?? false;
-        final matches = (claimResult['matches'] as List?)
-            ?.map((m) => m as Map<String, dynamic>)
-            .toList() ?? [];
 
-        if (claimable && matches.isNotEmpty && mounted) {
-          print('✅ Found ${matches.length} claimable profile(s)!');
-          // Navigate to claim screen with the matches and profile data
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ClaimProfileScreen(
-                matches: matches,
-                profileData: profileData,
-              ),
-            ),
+      if (_existingProfile != null) {
+        // Updating an existing profile — skip phone claim check
+        print('Updating existing profile: ${_existingProfile!.id}');
+        await apiService.updatePerson(_existingProfile!.id, profileData);
+      } else {
+        // New profile — check for claimable unclaimed profiles first
+        print('🔍 Checking if phone number has claimable profiles...');
+        try {
+          final claimResult = await apiService.checkPhoneClaim(
+            profileData['phone'] as String,
           );
-          return;
+          final claimable = claimResult['claimable'] as bool? ?? false;
+          final matches = (claimResult['matches'] as List?)
+              ?.map((m) => m as Map<String, dynamic>)
+              .toList() ?? [];
+
+          if (claimable && matches.isNotEmpty && mounted) {
+            print('✅ Found ${matches.length} claimable profile(s)!');
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ClaimProfileScreen(
+                  matches: matches,
+                  profileData: profileData,
+                ),
+              ),
+            );
+            return;
+          }
+          print('ℹ️ No claimable profiles found, creating new profile...');
+        } catch (claimError) {
+          print('⚠️ Phone claim check failed (non-critical): $claimError');
         }
-        print('ℹ️ No claimable profiles found, creating new profile...');
-      } catch (claimError) {
-        // Non-critical: if claim check fails, proceed with normal creation
-        print('⚠️ Phone claim check failed (non-critical): $claimError');
+
+        print('Making API call to create person...');
+        await apiService.createPerson(profileData);
       }
 
-      print('Making API call to create person...');
-      
-      await apiService.createPerson(profileData);
-
-
-      // Refresh providers to load the new profile
+      // Refresh providers to reflect the updated/new profile
       ref.invalidate(myProfileProvider);
       ref.invalidate(familyTreeProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile created successfully!')),
+          SnackBar(
+            content: Text(_existingProfile != null
+                ? 'Profile updated successfully!'
+                : 'Profile created successfully!'),
+          ),
         );
-        
-        // Show WhatsApp sharing dialog
-        _showShareDialog();
-        
+
+        // Only show WhatsApp sharing dialog for brand-new profiles
+        if (_existingProfile == null) _showShareDialog();
+
         context.go('/tree');
       }
     } catch (e, stackTrace) {

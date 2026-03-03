@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/auth_service.dart';
+import '../../../router/app_router.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   const ResetPasswordScreen({super.key});
@@ -40,6 +41,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
       if (!mounted) return;
 
+      // Clear the PASSWORD_RECOVERY flag so the router no longer forces /reset-password
+      ref.read(authNotifierProvider).clearPasswordRecovery();
+
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -48,8 +52,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
         ),
       );
 
-      // Redirect to login or tree page
-      context.go('/tree');
+      // Redirect to login (clean session start after password change)
+      context.go('/login');
     } catch (e) {
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');

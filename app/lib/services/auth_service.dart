@@ -349,9 +349,10 @@ class AuthService {
       }
 
       // Set explicit redirect URL to password reset page
+      // NOTE: No '#' - Flutter web uses path-based routing (PathUrlStrategy)
       await _supabase.auth.resetPasswordForEmail(
         normalizedEmail,
-        redirectTo: kIsWeb ? '${AppConfig.appUrl}/#/reset-password' : null,
+        redirectTo: kIsWeb ? '${AppConfig.appUrl}/reset-password' : null,
       );
 
       developer.log('✅ Password reset email sent', name: 'AuthService', error: {'email': email});
