@@ -105,6 +105,13 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Enable Android platform
+        run: |
+          if [ ! -d "android" ]; then
+            echo "Enabling Android platform..."
+            flutter create . --platforms android
+          fi
+
       - name: Create .env file
         run: |
           cat > .env << EOF
