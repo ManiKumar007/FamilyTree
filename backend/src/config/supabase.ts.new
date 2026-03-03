@@ -1,0 +1,60 @@
+/**
+ * Supabase Configuration with Proxy Support
+ * When SUPABASE_PROXY_URL is set, all requests will be routed through Cloudflare Worker
+ */
+
+import { createClient } from '@supabase/supabase-js';
+import { env } from './env';
+
+// Determine the actual Supabase URL to use
+// Priority: SUPABASE_PROXY_URL (for bypassing regional blocks) > SUPABASE_URL (direct)
+const getSupabaseUrl = (): string => {
+  if (env.SUPABASE_PROXY_URL) {
+    console.log('[Supabase Config] Using proxy URL:', env.SUPABASE_PROXY_URL);
+    return env.SUPABASE_PROXY_URL;
+  }
+  console.log('[Supabase Config] Using direct URL:', env.SUPABASE_URL);
+  return env.SUPABASE_URL;
+};
+
+// Admin client with service_role key — bypasses RLS
+// Use this for backend operations (graph queries, merge logic, etc.)
+export const supabaseAdmin = createClient(getSupabaseUrl(), env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
+
+// Client with anon key — respects RLS
+// Use this when you want to act as the authenticated user
+export function createUserClient(accessToken: string) {
+  return createClient(getSupabaseUrl(), env.SUPABASE_ANON_KEY, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  });
+}
+
+// Health check function to verify Supabase connectivity
+export async function checkSupabaseHealth(): Promise<boolean> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .limit(1);
+    
+    if (error) {
+      console.error('[Supabase Health] Error:', error);
+      return false;
+    }
+    
+    console.log('[Supabase Health] Connection successful');
+    return true;
+  } catch (error) {
+    console.error('[Supabase Health] Connection failed:', error);
+    return false;
+  }
+}
