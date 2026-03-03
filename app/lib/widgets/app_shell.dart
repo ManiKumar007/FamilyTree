@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/theme.dart';
 import '../services/auth_service.dart';
 import '../services/notifications_service.dart';
+import 'profile_required_guard.dart';
 
 /// Global key for the mobile shell scaffold to open drawer from child screens
 final mobileShellScaffoldKey = GlobalKey<ScaffoldState>();
@@ -126,7 +127,12 @@ class _DesktopShell extends StatelessWidget {
           ),
           // Main content
           Expanded(
-            child: navigationShell,
+            child: Column(
+              children: [
+                const ProfileCompletionBanner(),
+                Expanded(child: navigationShell),
+              ],
+            ),
           ),
         ],
       ),
@@ -307,7 +313,12 @@ class _MobileShell extends StatelessWidget {
           ),
         ),
       ),
-      body: navigationShell,
+      body: Column(
+        children: [
+          const ProfileCompletionBanner(),
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
           border: Border(

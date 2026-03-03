@@ -13,6 +13,7 @@ import '../../../config/theme.dart';
 import '../../../widgets/form_fields.dart';
 import '../../../widgets/language_selector.dart';
 import '../../../app.dart';
+import 'claim_profile_screen.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -216,6 +217,40 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'auth_user_id': authService.currentUser!.id,
         'verified': true,
       };
+      
+      print('Profile data prepared: ${profileData.keys.join(", ")}');
+      
+      // Check if phone number matches an existing unclaimed profile
+      print('🔍 Checking if phone number has claimable profiles...');
+      try {
+        final claimResult = await apiService.checkPhoneClaim(
+          profileData['phone'] as String,
+        );
+        final claimable = claimResult['claimable'] as bool? ?? false;
+        final matches = (claimResult['matches'] as List?)
+            ?.map((m) => m as Map<String, dynamic>)
+            .toList() ?? [];
+
+        if (claimable && matches.isNotEmpty && mounted) {
+          print('✅ Found ${matches.length} claimable profile(s)!');
+          // Navigate to claim screen with the matches and profile data
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ClaimProfileScreen(
+                matches: matches,
+                profileData: profileData,
+              ),
+            ),
+          );
+          return;
+        }
+        print('ℹ️ No claimable profiles found, creating new profile...');
+      } catch (claimError) {
+        // Non-critical: if claim check fails, proceed with normal creation
+        print('⚠️ Phone claim check failed (non-critical): $claimError');
+      }
+
+      print('Making API call to create person...');
       
       await apiService.createPerson(profileData);
 
@@ -577,6 +612,25 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
                         : const Text('Save & Continue'),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Skip for now
+                  TextButton(
+                    onPressed: _isLoading ? null : () {
+                      ref.read(profileSkippedProvider.notifier).state = true;
+                      context.go('/tree');
+                    },
+                    child: Text(
+                      'Skip for now — I\'ll explore first',
+                      style: TextStyle(color: kTextSecondary),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    'You can browse the app, but you\'ll need to complete your profile before adding family members or making changes.',
+                    style: TextStyle(fontSize: 12, color: kTextDisabled),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),

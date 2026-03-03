@@ -66,6 +66,10 @@ jobs:
           mkdir -p deploy/app
           cp -r app/build/web/* deploy/app/
 
+          # Copy static pages (privacy policy, terms) that Flutter build doesn't include
+          cp -f app/web/privacy-policy.html deploy/ 2>/dev/null || true
+          cp -f app/web/terms-of-service.html deploy/ 2>/dev/null || true
+
           # Create vercel.json with rewrites + security headers
           cat > deploy/app/vercel.json << 'VJEOF'
           {

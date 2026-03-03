@@ -404,6 +404,45 @@ class ApiService {
     return wrapper['data']['available'] as bool;
   }
 
+  // ==================== PHONE CLAIM ====================
+
+  /// Check if a phone number has existing unclaimed profiles that can be claimed.
+  /// Returns a map with 'claimable' (bool) and 'matches' (list).
+  Future<Map<String, dynamic>> checkPhoneClaim(String phone) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/persons/check-phone-claim'),
+      headers: _headers,
+      body: jsonEncode({'phone': phone}),
+    ).timeout(_timeout);
+    if (response.statusCode != 200) throw _handleError(response);
+    final wrapper = jsonDecode(response.body);
+    return wrapper['data'] as Map<String, dynamic>;
+  }
+
+  /// Claim an existing person profile. Links the current user to that person.
+  /// [personId] - the ID of the person to claim.
+  /// [profileUpdates] - optional fields to override (user's input wins).
+  Future<Map<String, dynamic>> claimProfile({
+    required String personId,
+    String? email,
+    Map<String, dynamic>? profileUpdates,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/persons/claim-profile'),
+      headers: _headers,
+      body: jsonEncode({
+        'person_id': personId,
+        'email': email,
+        'profile_updates': profileUpdates,
+      }),
+    ).timeout(_timeout);
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw _handleError(response);
+    }
+    final wrapper = jsonDecode(response.body);
+    return wrapper['data'] as Map<String, dynamic>;
+  }
+
   // ==================== ERROR HANDLING ====================
 
   Exception _handleError(http.Response response) {

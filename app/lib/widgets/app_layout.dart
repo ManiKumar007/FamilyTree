@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/auth_service.dart';
 import '../config/theme.dart';
 
@@ -637,19 +638,19 @@ class AppFooter extends StatelessWidget {
               _FooterLink(
                 label: 'Privacy Policy',
                 onTap: () {
-                  // TODO: Navigate to privacy policy
+                  launchUrl(Uri.parse('https://familytree-web-manikumar007s-projects.vercel.app/privacy-policy.html'));
                 },
               ),
               _FooterLink(
                 label: 'Terms of Service',
                 onTap: () {
-                  // TODO: Navigate to terms
+                  launchUrl(Uri.parse('https://familytree-web-manikumar007s-projects.vercel.app/terms-of-service.html'));
                 },
               ),
               _FooterLink(
                 label: 'Contact',
                 onTap: () {
-                  // TODO: Navigate to contact
+                  launchUrl(Uri.parse('mailto:myfamilytree.app@gmail.com'));
                 },
               ),
             ],

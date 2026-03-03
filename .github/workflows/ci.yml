@@ -79,3 +79,46 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # ─── Flutter Android Build ───────────────────────────────────────
+  flutter-android-build:
+    name: Flutter Android Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co
+          SUPABASE_ANON_KEY=placeholder_for_ci
+          API_BASE_URL=https://backend-five-blue-16.vercel.app/api
+          APP_URL=https://familytree-web.vercel.app
+          GOOGLE_CLIENT_ID=placeholder_for_ci
+          EOF
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run Flutter analyze (errors only)
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Build Android APK (debug)
+        run: flutter build apk --debug

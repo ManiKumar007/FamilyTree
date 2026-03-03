@@ -165,3 +165,20 @@ final searchProvider = StateNotifierProvider<SearchNotifier, SearchState>((ref) 
   final authService = ref.watch(authServiceProvider);
   return SearchNotifier(apiService, authService);
 });
+
+// ==================== PROFILE COMPLETION ====================
+
+/// Whether the current user has completed their profile (has a Person record).
+/// Returns true if profile exists, false if not, null while loading.
+final hasProfileProvider = Provider<bool?>((ref) {
+  final profileAsync = ref.watch(myProfileProvider);
+  return profileAsync.when(
+    data: (profile) => profile != null,
+    loading: () => null,
+    error: (_, __) => false,
+  );
+});
+
+/// Whether the user explicitly skipped profile setup in this session.
+/// Resets on app restart.
+final profileSkippedProvider = StateProvider<bool>((ref) => false);
