@@ -376,7 +376,7 @@ Test-Feature "Backend API Connectivity from Emulator" {
 # ============================================
 Test-Feature "App Performance & Stability" {
     # Check memory usage
-    $memInfo = & $adb -s emulator-5554 shell "dumpsys meminfo com.example.myfamilytree" 2>&1 | Select-String "TOTAL"
+    $memInfo = & $adb -s emulator-5554 shell "dumpsys meminfo com.myfamilytree.app" 2>&1 | Select-String "TOTAL"
     Write-Host "  Memory: $memInfo" -ForegroundColor Gray
     
     # Verify no ANR (App Not Responding)

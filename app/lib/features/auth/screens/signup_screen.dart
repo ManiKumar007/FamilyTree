@@ -60,14 +60,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       });
       
       if (mounted) {
-        developer.log('✉️ Showing success message', name: 'SignupScreen');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created! Please sign in.'),
-            backgroundColor: kSuccessColor,
-          ),
-        );
-        context.go('/login');
+        // If session is available (email confirmation disabled), go directly to profile setup
+        if (response.session != null) {
+          developer.log('🚀 Session available, redirecting to profile setup', name: 'SignupScreen');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created! Let\'s set up your profile.'),
+              backgroundColor: kSuccessColor,
+            ),
+          );
+          context.go('/profile-setup');
+        } else {
+          // Email confirmation required - go to login
+          developer.log('✉️ Email confirmation required, redirecting to login', name: 'SignupScreen');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created! Please check your email and sign in.'),
+              backgroundColor: kSuccessColor,
+            ),
+          );
+          context.go('/login');
+        }
       }
     } catch (e, stackTrace) {
       developer.log(

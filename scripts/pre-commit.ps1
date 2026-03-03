@@ -26,6 +26,8 @@ if ($dartFiles) {
 if ($backendFiles) {
     Write-Host "Backend files changed - running TypeScript check..." -ForegroundColor Yellow
     Push-Location backend
+    
+    # TypeScript type check
     npx tsc --noEmit
     if ($LASTEXITCODE -ne 0) {
         Write-Host "TypeScript compilation failed" -ForegroundColor Red
@@ -33,6 +35,16 @@ if ($backendFiles) {
     } else {
         Write-Host "Backend TypeScript check passed" -ForegroundColor Green
     }
+    
+    # ESLint check
+    Write-Host "Running ESLint..." -ForegroundColor Yellow
+    npm run lint
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "ESLint found issues (warnings allowed)" -ForegroundColor Yellow
+    } else {
+        Write-Host "ESLint check passed" -ForegroundColor Green
+    }
+    
     Pop-Location
 }
 

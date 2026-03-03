@@ -9,6 +9,7 @@ import '../../../services/whatsapp_share_service.dart';
 import '../../../config/theme.dart';
 import '../../../config/responsive.dart';
 import '../../../widgets/app_shell.dart';
+import '../../../widgets/profile_required_guard.dart';
 import '../widgets/person_card.dart';
 import '../widgets/tree_painter.dart';
 import '../widgets/add_family_dialog.dart';
@@ -302,11 +303,10 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
+          if (!await requireProfile(context, ref)) return;
           final profile = await ref.read(myProfileProvider.future);
           if (profile != null && mounted) {
             showAddFamilyDialog(context, profile);
-          } else if (mounted) {
-            context.push('/profile-setup');
           }
         },
         tooltip: 'Add Family Member',
@@ -431,17 +431,29 @@ class _TreeViewScreenState extends ConsumerState<TreeViewScreen> {
                 cardWidth: r.treeCardWidth,
                 onTap: () => context.push('/person/${pn.person.id}'),
                 onEdit: pn.canEdit
-                    ? () => context.push('/edit-profile/${pn.person.id}')
+                    ? () async {
+                        if (!await requireProfile(context, ref)) return;
+                        if (context.mounted) context.push('/edit-profile/${pn.person.id}');
+                      }
                     : null,
                 onInvite: !pn.person.verified
-                    ? () => _showInviteDialog(pn.person)
+                    ? () async {
+                        if (!await requireProfile(context, ref)) return;
+                        _showInviteDialog(pn.person);
+                      }
                     : null,
                 onFindConnection: pn.person.username != null
                     ? () => _navigateToConnectionFinder(pn.person.username!)
                     : null,
-                onAddFamily: () => showAddFamilyDialog(context, pn.person),
+                onAddFamily: () async {
+                  if (!await requireProfile(context, ref)) return;
+                  if (mounted) showAddFamilyDialog(context, pn.person);
+                },
                 onDelete: pn.person.id != tree.rootPersonId
-                    ? () => _showDeleteDialog(pn.person)
+                    ? () async {
+                        if (!await requireProfile(context, ref)) return;
+                        _showDeleteDialog(pn.person);
+                      }
                     : null,
               ),
             )),

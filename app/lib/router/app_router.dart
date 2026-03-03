@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 
+import '../providers/providers.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
 import '../features/auth/screens/profile_setup_screen.dart';
@@ -71,6 +72,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isInviteRoute = state.matchedLocation.startsWith('/invite');
       final isResetPasswordRoute = state.matchedLocation == '/reset-password';
       final isAdminRoute = state.matchedLocation.startsWith('/admin');
+      final isProfileSetupRoute = state.matchedLocation == '/profile-setup';
 
       if (kDebugMode) debugPrint('Router redirect: ${state.matchedLocation}, isLoggedIn: $isLoggedIn');
 
@@ -88,8 +90,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         }
       }
 
-      // If logged in and on login page, redirect to tree
-      if (isLoggedIn && isLoginRoute) return '/tree';
+      // If logged in and on login page, redirect to profile-setup first (router will
+      // let them through to tree if they already have a profile or skipped)
+      if (isLoggedIn && isLoginRoute) {
+        // Check if profile exists by reading the cached provider value
+        final hasProfile = ref.read(hasProfileProvider);
+        final skipped = ref.read(profileSkippedProvider);
+        if (hasProfile == true || skipped) {
+          return '/tree';
+        }
+        return '/profile-setup';
+      }
+
+      // Allow profile-setup route for logged-in users
+      if (isProfileSetupRoute) return null;
 
       return null;
     },

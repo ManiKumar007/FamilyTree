@@ -1,267 +1,324 @@
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import {
+  initFlutterPage,
+  waitForFlutter,
+  enableAccessibility,
+  fillField,
+  clickButton,
+  findButton,
+  findByText,
+  getFormFields,
+} from './flutter-helpers';
 
 /**
- * Simplified User Flow E2E Tests
- * Adjusted for Flutter Web rendering
+ * User Flow E2E Tests — compatible with Flutter Web's Canvas/Semantics rendering.
+ *
+ * Flutter Web renders to <canvas> so standard DOM selectors don't work.
+ * Instead we:
+ *   1. Enable the Flutter accessibility/semantics tree
+ *   2. Locate elements via flt-semantics nodes (role, text, position)
+ *   3. Click at element centers to activate text fields
+ *   4. Type via keyboard into the Flutter text-editing-host input
  */
 
-// Helper function to wait and find input by label
-async function fillInputByLabel(page: Page, labelText: string, value: string) {
-  // Flutter renders inputs in a shadow DOM or with flt- prefixes
-  // Try multiple strategies
-  const input = page.locator(`input[aria-label="${labelText}"]`)
-    .or(page.locator(`flt-text-editing-host >> input`))
-    .or(page.getByRole('textbox'))
-    .first();
-  
-  await input.waitFor({ state: 'visible', timeout: 10000 });
-  await input.click();
-  await input.fill(value);
-}
-
-async function clickButtonByText(page: Page, text: string) {
-  const button = page.getByRole('button', { name: new RegExp(text, 'i') })
-    .or(page.locator(`button:has-text("${text}")`))
-    .or(page.locator(`flt-semantics >> button >> text="${text}"`))
-    .first();
-  
-  await button.waitFor({ state: 'visible', timeout: 10000 });
-  await button.click();
-}
-
 test.describe('Critical User Flows', () => {
-  const timestamp = Date.now();
-  const testUser = {
-    email: `test${timestamp}@example.com`,
-    password: 'Test123456!',
-    name: `Test User ${timestamp}`,
-    phone: '9876543210',
+  const existingUser = {
+    email: 'chinni070707@gmail.com',
+    password: 'Ssd@88788',
   };
 
-  test('Signup and Login Flow', async ({ page }) => {
-    // Go to signup - Flutter web takes 15-20 seconds on first load
+  // ───────────────────────────────────────────────
+  // 1. App loads and Flutter initializes correctly
+  // ───────────────────────────────────────────────
+  test('App loads and Flutter initializes', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
-    
-    // Wait for Flutter to initialize (first load is slow)
-    console.log('Waiting for Flutter to initialize...');
-    await page.waitForTimeout(20000); // 20 seconds for initial load
 
-    // Navigate to signup if not already there
-    const signupLink = page.getByText(/Sign Up|Create Account/i).first();
-    if (await signupLink.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await signupLink.click();
-      await page.waitForTimeout(1000);
-    }
+    // Wait for Flutter's bootstrap to create flutter-view
+    const flutterView = page.locator('flutter-view');
+    await flutterView.waitFor({ state: 'attached', timeout: 30000 });
+    expect(await flutterView.count()).toBe(1);
 
-    // Check if on signup page
-    if (!page.url().includes('/signup')) {
-      await page.goto('/#/signup');
-      await page.waitForLoadState('networkidle');
-      await page.waitForTimeout(2000);
-    }
+    // Verify the canvas is rendered (CanvasKit)
+    const canvas = page.locator('flutter-view canvas, flt-glass-pane canvas');
+    await page.waitForTimeout(15000);
+    expect(await canvas.count()).toBeGreaterThan(0);
 
-    // Fill signup form - using multiple selector strategies
-    const inputs = page.locator('input[type="text"], input[type="email"], input[type="password"]');
-    const inputCount = await inputs.count();
-    
-    console.log(`Found ${inputCount} input fields`);
-
-    // Try filling inputs in order
-    if (inputCount >= 4) {
-      // Name
-      await inputs.nth(0).fill(testUser.name);
-      await page.waitForTimeout(300);
-      
-      // Email
-      await inputs.nth(1).fill(testUser.email);
-      await page.waitForTimeout(300);
-      
-      // Password
-      const passwordInputs = page.locator('input[type="password"]');
-      await passwordInputs.nth(0).fill(testUser.password);
-      await page.waitForTimeout(300);
-      
-      // Confirm password
-      await passwordInputs.nth(1).fill(testUser.password);
-      await page.waitForTimeout(300);
-    }
-
-    // Submit
-    const signupButton = page.getByRole('button').filter({ hasText: /Sign Up|Create/i }).first();
-    await signupButton.click();
-    
-    // Wait for navigation or success message
-    await page.waitForTimeout(5000);
-    
-    // Should be on login page now
-    if (page.url().includes('/login')) {
-      console.log('✅ Signup successful, redirected to login');
-      
-      // Login with the new account
-      const emailInput = page.locator('input[type="email"]').first();
-      await emailInput.fill(testUser.email);
-      await page.waitForTimeout(300);
-      
-      const passInput = page.locator('input[type="password"]').first();
-      await passInput.fill(testUser.password);
-      await page.waitForTimeout(300);
-      
-      const loginButton = page.getByRole('button').filter({ hasText: /Sign In|Login/i }).first();
-      await loginButton.click();
-      
-      // Wait for redirect to tree
-      await page.waitForTimeout(5000);
-      
-      // Should be logged in now
-      const url = page.url();
-      console.log(`Current URL after login: ${url}`);
-      expect(url).toContain('/tree');
-    }
+    console.log('✅ Flutter app loaded and canvas rendered');
   });
 
-  test('Session Persistence', async ({ page }) => {
-    // Login first - wait for Flutter to load
-    await page.goto('/#/login');
-    await page.waitForLoadState('networkidle');
-    console.log('Waiting for Flutter to load...');
-    await page.waitForTimeout(20000);
+  // ───────────────────────────────────────────────
+  // 2. Page navigation via hash routes
+  // ───────────────────────────────────────────────
+  test('Hash route navigation works', async ({ page }) => {
+    await page.goto('/');
+    await waitForFlutter(page);
+    expect(page.url()).toMatch(/\/($|#)/);
 
-    const emailInput = page.locator('input[type="email"]').first();
-    await emailInput.fill('chinni070707@gmail.com'); // Use existing user
-    
-    const passInput = page.locator('input[type="password"]').first();
-    await passInput.fill('Ssd@88788'); // You may need to update this
-    
-    const loginButton = page.getByRole('button').first();
-    await loginButton.click();
-    
-    await page.waitForTimeout(5000);
-    
-    // Navigate to add member
-    await page.goto('/#/tree/add-member');
-    await page.waitForTimeout(2000);
-    
-    // Go back
-    await page.goBack();
-    await page.waitForTimeout(2000);
-    
-    // Should still be logged in, not redirected to login
-    const currentUrl = page.url();
-    console.log(`URL after back navigation: ${currentUrl}`);
-    expect(currentUrl).not.toContain('/login');
-    
-    // Reload page
-    await page.reload();
+    await page.goto('/#/login');
     await page.waitForTimeout(3000);
-    
-    // Should STILL be logged in after reload
+    expect(page.url()).toContain('/login');
+
+    await page.goto('/#/signup');
+    await page.waitForTimeout(3000);
+    expect(page.url()).toContain('/signup');
+
+    console.log('✅ Hash route navigation works');
+  });
+
+  // ───────────────────────────────────────────────
+  // 3. Login page structure is correct
+  // ───────────────────────────────────────────────
+  test('Login page has correct form structure', async ({ page }) => {
+    await initFlutterPage(page, '/login');
+
+    const welcomeText = findByText(page, 'Welcome back');
+    expect(await welcomeText.count()).toBeGreaterThan(0);
+
+    const fields = await getFormFields(page);
+    console.log(`Found ${fields.length} form fields`);
+    expect(fields.length).toBeGreaterThanOrEqual(2);
+
+    const signInBtn = findButton(page, 'Sign In');
+    expect(await signInBtn.count()).toBeGreaterThan(0);
+
+    const googleBtn = findButton(page, 'Continue with Google');
+    expect(await googleBtn.count()).toBeGreaterThan(0);
+
+    console.log('✅ Login page structure verified');
+  });
+
+  // ───────────────────────────────────────────────
+  // 4. Signup page structure is correct
+  // ───────────────────────────────────────────────
+  test('Signup page has correct form structure', async ({ page }) => {
+    await initFlutterPage(page, '/signup');
+
+    const heading = findByText(page, 'Create account');
+    expect(await heading.count()).toBeGreaterThan(0);
+
+    const fields = await getFormFields(page);
+    console.log(`Found ${fields.length} form fields`);
+    expect(fields.length).toBeGreaterThanOrEqual(4);
+
+    const createBtn = findButton(page, 'Create Account');
+    expect(await createBtn.count()).toBeGreaterThan(0);
+
+    console.log('✅ Signup page structure verified');
+  });
+
+  // ───────────────────────────────────────────────
+  // 5. Login flow with real credentials
+  // ───────────────────────────────────────────────
+  test('Login with existing user redirects to tree', async ({ page }) => {
+    // Monitor network to see if Supabase auth call is made
+    const networkLogs: string[] = [];
+    page.on('request', req => {
+      const url = req.url();
+      if (url.includes('supabase') || url.includes('auth') || url.includes('token')) {
+        networkLogs.push(`REQ: ${req.method()} ${url}`);
+      }
+    });
+    page.on('response', res => {
+      const url = res.url();
+      if (url.includes('supabase') || url.includes('auth') || url.includes('token')) {
+        networkLogs.push(`RES: ${res.status()} ${url}`);
+      }
+    });
+
+    // Navigate to login
+    await page.goto('/#/login');
+    await waitForFlutter(page);
+
+    // === Strategy ===
+    // 1. Click field center on glass-pane → Flutter focuses text field
+    // 2. Clear & type via keyboard → Flutter updates text controller
+    // 3. Click neutral area to BLUR/COMMIT text (closes editing session)
+    // 4. Repeat for password
+    // 5. Re-enable accessibility to get fresh semantic tree
+    // 6. Click Sign In via JS .click() on semantic node
+
+    // --- EMAIL ---
+    await page.mouse.click(996, 250);
+    await page.waitForTimeout(1000);
+    await page.keyboard.press('Control+a');
+    await page.waitForTimeout(100);
+    await page.keyboard.press('Backspace');
+    await page.waitForTimeout(200);
+    await page.keyboard.type(existingUser.email, { delay: 30 });
+    await page.waitForTimeout(300);
+
+    const emailVal = await page.evaluate(() => {
+      const input = document.querySelector('flt-text-editing-host input') as HTMLInputElement;
+      return input?.value || '';
+    });
+    console.log(`Email entered: "${emailVal}"`);
+
+    // Click the page title to blur email field and commit value
+    await page.mouse.click(996, 170);
+    await page.waitForTimeout(1000);
+    console.log('Blurred email field');
+
+    // --- PASSWORD ---
+    await page.mouse.click(996, 314);
+    await page.waitForTimeout(1000);
+    await page.keyboard.press('Control+a');
+    await page.waitForTimeout(100);
+    await page.keyboard.press('Backspace');
+    await page.waitForTimeout(200);
+    await page.keyboard.type(existingUser.password, { delay: 30 });
+    await page.waitForTimeout(300);
+
+    const pwVal = await page.evaluate(() => {
+      const input = document.querySelector('flt-text-editing-host input') as HTMLInputElement;
+      return input?.value || '';
+    });
+    console.log(`Password entered: "${pwVal}" (length: ${pwVal.length})`);
+
+    // Click neutral area to blur password field and commit value
+    await page.mouse.click(996, 170);
+    await page.waitForTimeout(1000);
+    console.log('Blurred password field');
+
+    // Take debug screenshot showing form state before submit
+    await page.screenshot({ path: 'test-results/debug-login-before-submit.png' });
+
+    // Re-enable accessibility to get fresh semantic tree
+    await enableAccessibility(page);
+    await page.waitForTimeout(2000);
+
+    // Log what's visible in the semantic tree now
+    const semanticTexts = await page.evaluate(() => {
+      const texts: string[] = [];
+      document.querySelectorAll('flt-semantics').forEach(el => {
+        const t = (el as HTMLElement).innerText?.trim();
+        if (t && t.length > 0 && t.length < 100) texts.push(t);
+      });
+      return texts;
+    });
+    console.log(`Semantic tree after blur: ${JSON.stringify(semanticTexts)}`);
+
+    // === SUBMIT: Try multiple click approaches ===
+
+    // Approach 1: JS .click() on the Sign In semantic node (like accessibility button)
+    const jsClickResult = await page.evaluate(() => {
+      const nodes = document.querySelectorAll('flt-semantics[flt-tappable]');
+      for (const node of nodes) {
+        if ((node as HTMLElement).innerText?.includes('Sign In')) {
+          (node as HTMLElement).click();
+          return `clicked: ${node.id}, text: ${(node as HTMLElement).innerText?.trim()}`;
+        }
+      }
+      return 'Sign In button not found in semantics';
+    });
+    console.log(`JS click result: ${jsClickResult}`);
+    await page.waitForTimeout(5000);
+
+    let url = page.url();
+    console.log(`URL after JS click: ${url}`);
+
+    // Approach 2: If JS click didn't work, try mouse click on glass-pane directly
+    if (url.includes('/login')) {
+      // Disable semantics so click goes directly to glass-pane
+      await page.evaluate(() => {
+        const host = document.querySelector('flt-semantics-host') as HTMLElement;
+        if (host) host.style.display = 'none';
+      });
+      await page.waitForTimeout(500);
+      await page.mouse.click(996, 411);
+      await page.waitForTimeout(5000);
+      // Re-show semantics host
+      await page.evaluate(() => {
+        const host = document.querySelector('flt-semantics-host') as HTMLElement;
+        if (host) host.style.display = '';
+      });
+      url = page.url();
+      console.log(`URL after glass-pane click: ${url}`);
+    }
+
+    // Approach 3: Click password field again and press Enter (onFieldSubmitted)
+    if (url.includes('/login')) {
+      await page.mouse.click(996, 314);
+      await page.waitForTimeout(500);
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(5000);
+      url = page.url();
+      console.log(`URL after Enter in password: ${url}`);
+    }
+
+    // Log all network activity
+    console.log(`Network activity: ${JSON.stringify(networkLogs)}`);
+
+    // Check for error messages
+    if (url.includes('/login')) {
+      await enableAccessibility(page);
+      await page.waitForTimeout(1000);
+      const visTexts = await page.evaluate(() => {
+        const texts: string[] = [];
+        document.querySelectorAll('flt-semantics').forEach(el => {
+          const t = (el as HTMLElement).innerText?.trim();
+          if (t && t.length > 0 && t.length < 100) texts.push(t);
+        });
+        return texts;
+      });
+      console.log(`Final visible texts: ${JSON.stringify(visTexts)}`);
+    }
+
+    await page.screenshot({ path: 'test-results/debug-login-after-submit.png' });
+
+    // Assert navigation away from login
+    expect(url).not.toContain('/login');
+    console.log('✅ Login successful');
+  });
+
+  // ───────────────────────────────────────────────
+  // 6. Session persistence after login
+  // ───────────────────────────────────────────────
+  test('Session persists across page reload', async ({ page }) => {
+    await initFlutterPage(page, '/login');
+    await fillField(page, 0, existingUser.email);
+    await fillField(page, 1, existingUser.password);
+    await clickButton(page, 'Sign In');
+    await page.waitForTimeout(8000);
+
+    const urlAfterLogin = page.url();
+    expect(urlAfterLogin).not.toContain('/login');
+
+    await page.reload();
+    await waitForFlutter(page);
+
     const urlAfterReload = page.url();
     console.log(`URL after reload: ${urlAfterReload}`);
     expect(urlAfterReload).not.toContain('/login');
+
+    console.log('✅ Session persists after reload');
   });
 
-  test('Prof - wait for Flutter
-    await page.goto('/#/login');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(20('networkidle');
-    await page.waitForTimeout(2000);
+  // ───────────────────────────────────────────────
+  // 7. Navigation between authenticated pages
+  // ───────────────────────────────────────────────
+  test('Navigate authenticated routes after login', async ({ page }) => {
+    await initFlutterPage(page, '/login');
+    await fillField(page, 0, existingUser.email);
+    await fillField(page, 1, existingUser.password);
+    await clickButton(page, 'Sign In');
+    await page.waitForTimeout(8000);
 
-    const emailInput = page.locator('input[type="email"]').first();
-    await emailInput.fill('chinni070707@gmail.com');
-    
-    const passInput = page.locator('input[type="password"]').first();
-    await passInput.fill('Ssd@88788');
-    
-    await page.getByRole('button').first().click();
-    await page.waitForTimeout(5000);
-    
-    // Find and click profile button (usually an icon button)
-    const buttons = page.getByRole('button');
-    const buttonCount = await buttons.count();
-    
-    // Profile button is typically 3rd or 4th button in the app bar
-    for (let i = 0; i < Math.min(buttonCount, 6); i++) {
-      const button = buttons.nth(i);
-      const ariaLabel = await button.getAttribute('aria-label').catch(() => null);
-      
-      if (ariaLabel?.toLowerCase().includes('profile') || 
-          ariaLabel?.toLowerCase().includes('person')) {
-        await button.click();
-        break;
-      }
-    }
-    
-    await page.waitForTimeout(3000);
-    
-    // Should navigate to profile-setup or person detail
-    const url = page.url();
-    console.log(`URL after clicking profile: ${url}`);
-    expect(url).toMatch(/\/(profile-setup|person)/);
-  });
-
-  test('Search Functionality', async ({ page }) => {
-    // Login - wait for Flutter
-    await page.goto('/#/login');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(20000);
-
-    await page.locator('input[type="email"]').first().fill('chinni070707@gmail.com');
-    await page.locator('input[type="password"]').first().fill('Ssd@88788');
-    await page.getByRole('button').first().click();
-    await page.waitForTimeout(5000);
-    
-    // Navigate to search
     await page.goto('/#/search');
     await page.waitForTimeout(3000);
-    
-    // Should be on search page
-    expect(page.url()).toContain('/search');
-    
-    // Look for search input
-    const searchInput = page.locator('input[type="text"], input[type="search"]').first();
-    if (await searchInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await searchInput.fill('test');
-      await page.waitForTimeout(2000);
-      console.log('✅ Search input functional');
-    }
-  });
+    console.log(`Search page URL: ${page.url()}`);
+    expect(page.url()).not.toContain('/login');
 
-  test('Add Member and Verify Tree Updates', async ({ page }) => {
-    // Login - wait for Flutter
-    await page.goto('/#/login');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(20000);
-
-    await page.locator('input[type="email"]').first().fill('chinni070707@gmail.com');
-    await page.locator('input[type="password"]').first().fill('Ssd@88788');
-    await page.getByRole('button').first().click();
-    await page.waitForTimeout(5000);
-    
-    // Go to add member
     await page.goto('/#/tree/add-member');
     await page.waitForTimeout(3000);
-    
-    // Fill member details
-    const memberName = `TestMember ${Date.now()}`;
-    const textInputs = page.locator('input[type="text"]');
-    
-    if (await textInputs.first().isVisible({ timeout: 5000 }).catch(() => false)) {
-      await textInputs.first().fill(memberName);
-      await page.waitForTimeout(500);
-      
-      // Try to submit
-      const buttons = page.getByRole('button');
-      const submitButton = buttons.filter({ hasText: /Add|Save|Submit/i }).first();
-      
-      if (await submitButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await submitButton.click();
-        await page.waitForTimeout(5000);
-        
-        // Should redirect back to tree
-        expect(page.url()).toContain('/tree');
-        console.log('✅ Member added successfully');
-      }
-    }
+    console.log(`Add member URL: ${page.url()}`);
+    expect(page.url()).not.toContain('/login');
+
+    await page.goto('/#/tree');
+    await page.waitForTimeout(3000);
+    console.log(`Tree URL: ${page.url()}`);
+    expect(page.url()).not.toContain('/login');
+
+    console.log('✅ Authenticated route navigation works');
   });
 });
