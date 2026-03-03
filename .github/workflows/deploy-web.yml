@@ -28,10 +28,10 @@ jobs:
         working-directory: app
         run: |
           cat > .env << 'ENVEOF'
-          SUPABASE_URL=https://supabase-proxy.manich623.workers.dev
+          SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co
           SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
           API_BASE_URL=https://backend-five-blue-16.vercel.app/api
-          APP_URL=https://familytree-web-manikumar007s-projects.vercel.app
+          APP_URL=https://familytree-web.vercel.app
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           ENVEOF
@@ -53,10 +53,10 @@ jobs:
         run: |
           flutter pub get
           flutter build web --release \
-            --dart-define=SUPABASE_URL=https://supabase-proxy.manich623.workers.dev \
+            --dart-define=SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
             --dart-define=API_BASE_URL=https://backend-five-blue-16.vercel.app/api \
-            --dart-define=APP_URL=https://familytree-web-manikumar007s-projects.vercel.app \
+            --dart-define=APP_URL=https://familytree-web.vercel.app \
             --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
 
       - name: Prepare deployment directory

@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 
 Future<void> main() async {
+  // Use path-based URLs (no '#') for Flutter web — must be called before any
+  // Flutter binding initialization so GoRouter picks up the strategy.
+  usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
 
   // Load environment variables (optional fallback — dart-define takes precedence)
