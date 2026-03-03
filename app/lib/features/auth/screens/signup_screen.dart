@@ -71,15 +71,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           );
           context.go('/profile-setup');
         } else {
-          // Email confirmation required - go to login
-          developer.log('✉️ Email confirmation required, redirecting to login', name: 'SignupScreen');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account created! Please check your email and sign in.'),
-              backgroundColor: kSuccessColor,
-            ),
-          );
-          context.go('/login');
+          // Email confirmation required - show verify email screen
+          developer.log('✉️ Email confirmation required, showing verify email screen', name: 'SignupScreen');
+          final encodedEmail = Uri.encodeComponent(email);
+          context.go('/verify-email?email=$encodedEmail');
         }
       }
     } catch (e, stackTrace) {

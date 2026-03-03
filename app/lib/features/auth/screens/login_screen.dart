@@ -180,7 +180,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _goToSignUp() {
-    context.push('/signup');
+    context.go('/signup');
   }
 
   String _formatErrorMessage(String error) {

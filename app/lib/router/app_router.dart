@@ -10,6 +10,7 @@ import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/signup_screen.dart';
 import '../features/auth/screens/profile_setup_screen.dart';
 import '../features/auth/screens/reset_password_screen.dart';
+import '../features/auth/screens/verify_email_screen.dart';
 import '../features/landing/screens/landing_screen.dart';
 import '../features/tree/screens/tree_view_screen.dart';
 import '../features/tree/screens/add_member_screen.dart';
@@ -77,12 +78,12 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       // Use currentUser instead of currentSession for more reliable auth checking
       final user = Supabase.instance.client.auth.currentUser;
-      final session = Supabase.instance.client.auth.currentSession;
       final isLoggedIn = user != null;
       final isLoginRoute = state.matchedLocation == '/login' || state.matchedLocation == '/signup';
       final isLandingRoute = state.matchedLocation == '/landing';
       final isInviteRoute = state.matchedLocation.startsWith('/invite');
       final isResetPasswordRoute = state.matchedLocation == '/reset-password';
+      final isVerifyEmailRoute = state.matchedLocation == '/verify-email';
       final isAdminRoute = state.matchedLocation.startsWith('/admin');
       final isProfileSetupRoute = state.matchedLocation == '/profile-setup';
 
@@ -96,6 +97,15 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Allow landing, login, signup, reset-password, and invite routes without auth
       if (isLandingRoute || isLoginRoute || isInviteRoute || isResetPasswordRoute) return null;
+
+      // Verify email page: allow for unauthenticated users; if already logged in
+      // (i.e., they clicked the verification link), forward to profile-setup/tree
+      if (isVerifyEmailRoute) {
+        if (!isLoggedIn) return null;
+        final hasProfile = ref.read(hasProfileProvider);
+        final skipped = ref.read(profileSkippedProvider);
+        return (hasProfile == true || skipped) ? '/tree' : '/profile-setup';
+      }
 
       // If not logged in and trying to access protected route, redirect to login
       if (!isLoggedIn) return '/login';
@@ -144,6 +154,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reset-password',
         builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
+        path: '/verify-email',
+        builder: (context, state) {
+          final email = state.uri.queryParameters['email'] ?? '';
+          return VerifyEmailScreen(email: Uri.decodeComponent(email));
+        },
       ),
       GoRoute(
         path: '/profile-setup',

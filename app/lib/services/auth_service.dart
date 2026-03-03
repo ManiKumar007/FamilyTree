@@ -79,6 +79,7 @@ class AuthService {
         email: normalizedEmail,
         password: password,
         data: metadata,
+        emailRedirectTo: kIsWeb ? AppConfig.appUrl : null,
       );
       
       developer.log('✅ Supabase sign up successful', name: 'AuthService', error: {
@@ -333,6 +334,36 @@ class AuthService {
   Future<void> signOut() async {
     developer.log('👋 Signing out', name: 'AuthService');
     await _supabase.auth.signOut();
+  }
+
+  /// Resend email verification link to the given email address
+  Future<void> resendVerificationEmail({required String email}) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    developer.log('📧 Resending verification email', name: 'AuthService', error: {'email': normalizedEmail});
+
+    try {
+      await _supabase.auth.resend(
+        type: OtpType.signup,
+        email: normalizedEmail,
+        emailRedirectTo: kIsWeb ? AppConfig.appUrl : null,
+      );
+      developer.log('✅ Verification email resent', name: 'AuthService');
+    } on AuthException catch (e) {
+      developer.log(
+        '🚫 Supabase AuthException resending verification',
+        name: 'AuthService',
+        error: {'message': e.message},
+      );
+      throw Exception('Could not resend verification email: ${e.message}');
+    } catch (e, stackTrace) {
+      developer.log(
+        '❌ Unexpected error resending verification',
+        name: 'AuthService',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   /// Send password reset email
