@@ -1,0 +1,136 @@
+# Deploy Android - Builds signed APK/AAB and uploads to GitHub Releases
+name: Deploy Android App
+
+on:
+  push:
+    tags:
+      - "v*" # Triggers on version tags like v1.0.0, v1.2.3
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: "Release name (e.g., v1.0.0)"
+        required: false
+        default: ""
+
+jobs:
+  build-and-release:
+    name: Build Android & Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create .env file
+        working-directory: app
+        run: |
+          cat > .env << 'ENVEOF'
+          SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          API_BASE_URL=https://backend-five-blue-16.vercel.app/api
+          APP_URL=https://familytree-web-manikumar007s-projects.vercel.app
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          ENVEOF
+          sed -i 's/^[[:space:]]*//' .env
+
+      # ─── Keystore setup ────────────────────────────────────────────
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > app/android/app/release-keystore.jks
+
+      - name: Create key.properties
+        working-directory: app/android
+        run: |
+          cat > key.properties << EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=release-keystore.jks
+          EOF
+
+      # ─── Build ──────────────────────────────────────────────────────
+      - name: Install dependencies
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build release APK
+        working-directory: app
+        run: |
+          flutter build apk --release \
+            --dart-define=SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --dart-define=API_BASE_URL=https://backend-five-blue-16.vercel.app/api \
+            --dart-define=APP_URL=https://familytree-web-manikumar007s-projects.vercel.app \
+            --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+
+      - name: Build release App Bundle (AAB)
+        working-directory: app
+        run: |
+          flutter build appbundle --release \
+            --dart-define=SUPABASE_URL=https://vojwwcolmnbzogsrmwap.supabase.co \
+            --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }} \
+            --dart-define=API_BASE_URL=https://backend-five-blue-16.vercel.app/api \
+            --dart-define=APP_URL=https://familytree-web-manikumar007s-projects.vercel.app \
+            --dart-define=GOOGLE_WEB_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+
+      # ─── Determine version ──────────────────────────────────────────
+      - name: Get version info
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${{ github.ref_name }}"
+          elif [ -n "${{ github.event.inputs.release_name }}" ]; then
+            VERSION="${{ github.event.inputs.release_name }}"
+          else
+            VERSION="v$(date +'%Y%m%d-%H%M%S')"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      # ─── Upload artifacts ───────────────────────────────────────────
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: myfamilytree-${{ steps.version.outputs.version }}-apk
+          path: app/build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: myfamilytree-${{ steps.version.outputs.version }}-aab
+          path: app/build/app/outputs/bundle/release/app-release.aab
+
+      # ─── Create GitHub Release ───────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: MyFamilyTree ${{ steps.version.outputs.version }}
+          body: |
+            ## MyFamilyTree ${{ steps.version.outputs.version }}
+
+            ### Downloads
+            - **APK** — Install directly on Android devices
+            - **AAB** — For Google Play Store upload
+
+            ### What's Changed
+            See [commit history](https://github.com/${{ github.repository }}/commits/${{ github.sha }}) for details.
+          files: |
+            app/build/app/outputs/flutter-apk/app-release.apk
+            app/build/app/outputs/bundle/release/app-release.aab
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
