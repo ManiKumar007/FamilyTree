@@ -5,6 +5,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConfig {
   // Use dart-define values if available, fallback to .env
+  // NOTE: If Supabase is blocked by Indian ISPs, set SUPABASE_URL to your
+  // Cloudflare Worker proxy URL instead of the direct Supabase URL.
+  // See cloudflare-proxy/README.md for setup instructions.
   static String get supabaseUrl => 
       const String.fromEnvironment('SUPABASE_URL', defaultValue: '') != '' 
           ? const String.fromEnvironment('SUPABASE_URL') 

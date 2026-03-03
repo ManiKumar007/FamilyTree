@@ -96,7 +96,8 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
+          # Don't cache gradle - Flutter manages its own Android build tooling
+          # and the android/ folder may not exist until flutter creates it
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
