@@ -35,16 +35,24 @@ const app = express();
 // Security
 app.use(helmet());
 
-// CORS - Allow multiple origins in production
-const allowedOrigins = env.NODE_ENV === 'production'
-  ? [
-      env.APP_URL,
-      'https://familytree-web.vercel.app',
-      'https://familytree-web-manikumar007s-projects.vercel.app',
-      // Add specific Vercel preview URLs here if needed
-      // Do NOT use regex patterns - whitelist specific URLs only for security
-    ].filter(Boolean) // Remove any undefined values
-  : ['http://localhost:3000', 'http://localhost:5500', 'http://localhost:8080', 'http://127.0.0.1:5500']; // Restricted localhost origins in development
+// CORS - Always include production origins; add localhost only in development.
+// Vercel serverless runtime does not always set NODE_ENV=production, so
+// production origins must be present unconditionally.
+const allowedOrigins: string[] = [
+  env.APP_URL,
+  'https://familytree-web.vercel.app',
+  'https://familytree-web-manikumar007s-projects.vercel.app',
+].filter(Boolean); // Remove any empty/undefined values
+
+// In development, also allow localhost origins
+if (env.NODE_ENV !== 'production') {
+  allowedOrigins.push(
+    'http://localhost:3000',
+    'http://localhost:5500',
+    'http://localhost:8080',
+    'http://127.0.0.1:5500',
+  );
+}
 
 app.use(cors({
   origin: allowedOrigins,
