@@ -1,0 +1,11 @@
+name = "supabase-proxy"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+
+# Set your Supabase project URL as an environment variable
+# Run: npx wrangler secret put SUPABASE_URL
+# Value: https://vojwwcolmnbzogsrmwap.supabase.co
+
+[vars]
+# Non-secret vars go here (override via wrangler secret for production)
+SUPABASE_URL = "https://vojwwcolmnbzogsrmwap.supabase.co"
