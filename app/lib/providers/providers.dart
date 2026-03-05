@@ -13,8 +13,14 @@ final authStateProvider = StreamProvider<AuthState>((ref) {
   return authService.authStateChanges;
 });
 
-/// Current user (null if not logged in)
+/// Current user (null if not logged in).
+/// Watches [authStateProvider] so this provider rebuilds on every Supabase
+/// auth event (sign-in, sign-out, token refresh) — ensuring all downstream
+/// providers (myProfileProvider, familyTreeProvider, etc.) also rebuild.
 final currentUserProvider = Provider<User?>((ref) {
+  // Watching authStateProvider is enough to trigger a rebuild; the actual
+  // current user is read synchronously via authService.
+  ref.watch(authStateProvider);
   final authService = ref.watch(authServiceProvider);
   return authService.currentUser;
 });

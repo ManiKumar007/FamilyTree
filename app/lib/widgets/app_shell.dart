@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/theme.dart';
+import '../providers/providers.dart';
 import '../services/auth_service.dart';
 import '../services/notifications_service.dart';
 import 'profile_required_guard.dart';
@@ -289,8 +290,9 @@ class _MobileShell extends StatelessWidget {
                         constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                         onPressed: () {
                           Navigator.of(context).pop();
-                          final userId = Supabase.instance.client.auth.currentUser?.id;
-                          if (userId != null) context.push('/edit-profile/$userId');
+                          // Use the person record ID (not the Supabase auth UUID).
+                          final personId = ref.read(myProfileProvider).value?.id;
+                          if (personId != null) context.push('/edit-profile/$personId');
                         },
                       ),
                       // Sign out

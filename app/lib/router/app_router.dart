@@ -71,7 +71,17 @@ final authNotifierProvider = Provider<AuthNotifier>((ref) {
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ref.watch(authNotifierProvider);
-  
+
+  // Reset session-scoped state whenever the user signs out so that the next
+  // user to log in on the same device starts with a clean slate.
+  ref.listen(authStateProvider, (_, next) {
+    next.whenData((data) {
+      if (data.event == AuthChangeEvent.signedOut) {
+        ref.read(profileSkippedProvider.notifier).state = false;
+      }
+    });
+  });
+
   return GoRouter(
     initialLocation: '/landing',
     refreshListenable: authNotifier,

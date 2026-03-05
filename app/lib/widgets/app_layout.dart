@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../providers/providers.dart';
 import '../services/auth_service.dart';
 import '../config/theme.dart';
 
@@ -169,7 +170,9 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                           await ref.read(authServiceProvider).signOut();
                           if (context.mounted) context.go('/login');
                         } else if (value == 'profile') {
-                          context.go('/edit-profile/${authService.currentUser?.id}');
+                          // Use the person record ID (not the Supabase auth UUID).
+                          final personId = ref.read(myProfileProvider).value?.id;
+                          if (personId != null) context.go('/edit-profile/$personId');
                         }
                       },
                       itemBuilder: (context) => [
