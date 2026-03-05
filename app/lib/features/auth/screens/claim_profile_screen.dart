@@ -50,9 +50,30 @@ class _ClaimProfileScreenState extends ConsumerState<ClaimProfileScreen> {
         } : null,
       );
 
-      // Refresh providers to load the claimed profile
+      // Give the backend a moment to propagate the auth_user_id link before
+      // we start polling — the claim endpoint writes to the DB synchronously
+      // but connection-pool / replica lag can cause getMyTree() to miss it.
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Pre-warm the tree using the claimed person's ID directly (avoids any
+      // auth_user_id lookup race condition on the first fetch after claim).
+      // We do this BEFORE invalidating familyTreeProvider so the cache is
+      // primed with the existing tree when the tree screen mounts.
+      try {
+        await apiService.getTree(personId);
+      } catch (_) {
+        // Non-critical — continue; tree screen can still refetch on its own.
+      }
+
+      // Refresh myProfile first so hasProfileProvider returns true before
+      // familyTreeProvider fires (prevents an extra empty-tree render).
       ref.invalidate(myProfileProvider);
+      await ref.read(myProfileProvider.future).catchError((_) => null);
+
+      // Now refresh the tree — myProfile is already settled so the backend
+      // lookup by auth_user_id should succeed reliably.
       ref.invalidate(familyTreeProvider);
+      await ref.read(familyTreeProvider.future).catchError((_) => null);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -78,8 +99,17 @@ class _ClaimProfileScreenState extends ConsumerState<ClaimProfileScreen> {
         title: const Text('We Found You!'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/tree'),
-          tooltip: 'Skip — Create new profile',
+          // Pop back to ProfileSetupScreen so the user can proceed with
+          // creating a brand-new profile rather than jumping straight to /tree
+          // (which would leave them with no profile record at all).
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/profile-setup');
+            }
+          },
+          tooltip: 'Back — Create new profile instead',
         ),
       ),
       body: SingleChildScrollView(
@@ -134,9 +164,17 @@ class _ClaimProfileScreenState extends ConsumerState<ClaimProfileScreen> {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // Skip option
+                // Skip option — pop back so ProfileSetupScreen continues to
+                // create a brand-new profile (rather than leaving the user
+                // with no profile record at all).
                 OutlinedButton.icon(
-                  onPressed: _isClaiming ? null : () => context.go('/tree'),
+                  onPressed: _isClaiming ? null : () {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else {
+                      context.go('/profile-setup');
+                    }
+                  },
                   icon: const Icon(Icons.add_circle_outline),
                   label: const Text('No, create a fresh profile instead'),
                   style: OutlinedButton.styleFrom(

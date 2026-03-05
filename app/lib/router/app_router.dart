@@ -133,6 +133,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Allow profile-setup route for logged-in users
       if (isProfileSetupRoute) return null;
 
+      // Guard: logged-in users without a profile must complete setup before
+      // accessing the app — unless they explicitly skipped this session.
+      // We only enforce this on the main app shell routes to avoid redirect
+      // loops on auxiliary pages (settings, person detail, etc.).
+      final mainAppRoutes = ['/tree', '/search', '/connection', '/forum', '/calendar', '/statistics', '/invite'];
+      final isMainAppRoute = mainAppRoutes.any((r) => state.matchedLocation == r || state.matchedLocation.startsWith('$r/'));
+      if (isMainAppRoute) {
+        final hasProfile = ref.read(hasProfileProvider);
+        final skipped = ref.read(profileSkippedProvider);
+        if (hasProfile == false && !skipped) {
+          return '/profile-setup';
+        }
+      }
+
       return null;
     },
     routes: [
