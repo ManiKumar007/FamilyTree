@@ -7,10 +7,160 @@ import { normalizePhone, isValidPhone } from '../utils/phone';
 import { detectMergeByPhone, detectConflicts, createMergeRequest } from '../services/mergeService';
 import { successResponse, errorResponse, paginatedResponse, ErrorCodes } from '../utils/response';
 import { sanitizeObject, PERSON_SANITIZE_FIELDS } from '../utils/sanitize';
+import { sendClaimApprovalRequest, sendClaimOutcomeEmail } from '../services/emailService';
 
 export const personsRouter = Router();
 
-// All routes require authentication
+// ---------------------------------------------------------------------------
+// PUBLIC routes (no auth required — token in URL acts as credential)
+// Must be registered BEFORE the authMiddleware use() call.
+// ---------------------------------------------------------------------------
+
+/** Helper: apply a claim to the persons record and mark it resolved. */
+async function applyClaimToPerson(
+  claim: { id: string; person_id: string; claimed_by_user_id: string; claimant_email?: string; profile_updates?: Record<string, any> },
+  resolvedStatus: 'approved' | 'auto_approved',
+): Promise<void> {
+  const allowedFields = [
+    'username', 'given_name', 'surname', 'name', 'date_of_birth',
+    'occupation', 'community', 'gotra', 'city', 'state',
+    'nakshatra', 'rashi', 'native_place', 'ancestral_village',
+    'sub_caste', 'kula_devata', 'pravara',
+  ];
+  const updateData: Record<string, any> = {
+    auth_user_id: claim.claimed_by_user_id,
+    verified: true,
+    ...(claim.claimant_email ? { email: claim.claimant_email } : {}),
+  };
+  if (claim.profile_updates) {
+    for (const field of allowedFields) {
+      if (claim.profile_updates[field] != null) updateData[field] = claim.profile_updates[field];
+    }
+  }
+  await supabaseAdmin.from('persons').update(updateData).eq('id', claim.person_id);
+  await supabaseAdmin
+    .from('pending_claims')
+    .update({ status: resolvedStatus, resolved_at: new Date().toISOString() })
+    .eq('id', claim.id);
+}
+
+/**
+ * GET /api/persons/claim-approve/:token
+ * Called from the email link — no auth required (token is the credential).
+ * Approves the pending claim and redirects to the frontend.
+ */
+personsRouter.get('/claim-approve/:token', async (req: any, res: Response) => {
+  const { token } = req.params;
+  const frontendUrl = process.env.FRONTEND_URL || 'https://myfamilytree.app';
+  try {
+    const { data: claim, error } = await supabaseAdmin
+      .from('pending_claims')
+      .select('*')
+      .eq('approve_token', token)
+      .single();
+
+    if (error || !claim) {
+      res.status(404).send('<html><body><h2>Link not found or already used.</h2></body></html>');
+      return;
+    }
+    if (claim.status !== 'pending') {
+      res.redirect(`${frontendUrl}/tree?claim_already_processed=true`);
+      return;
+    }
+
+    await applyClaimToPerson(claim, 'approved');
+
+    // Notify claimant
+    const { data: personData } = await supabaseAdmin
+      .from('persons')
+      .select('name')
+      .eq('id', claim.person_id)
+      .single();
+    const personName = personData?.name ?? 'the profile';
+
+    if (claim.claimant_email) {
+      await sendClaimOutcomeEmail({
+        to: claim.claimant_email,
+        personName,
+        approved: true,
+        frontendUrl,
+      }).catch(e => console.warn('Claim outcome email failed:', e));
+    }
+
+    // In-app notification to creator
+    if (claim.created_by_user_id) {
+      try {
+        await supabaseAdmin.from('notifications').insert({
+          user_id: claim.created_by_user_id,
+          type: 'invite_accepted',
+          title: 'Profile Claim Approved',
+          message: `You approved ${personName}'s profile claim.`,
+          data: { person_id: claim.person_id },
+        });
+      } catch (_) { /* non-critical */ }
+    }
+
+    res.redirect(`${frontendUrl}/tree?claim_approved=true`);
+  } catch (err) {
+    console.error('[claim-approve]', err);
+    res.status(500).send('<html><body><h2>Something went wrong. Please open the app.</h2></body></html>');
+  }
+});
+
+/**
+ * GET /api/persons/claim-reject/:token
+ * Called from the email link — no auth required (token is the credential).
+ * Rejects the pending claim.
+ */
+personsRouter.get('/claim-reject/:token', async (req: any, res: Response) => {
+  const { token } = req.params;
+  const frontendUrl = process.env.FRONTEND_URL || 'https://myfamilytree.app';
+  try {
+    const { data: claim, error } = await supabaseAdmin
+      .from('pending_claims')
+      .select('*')
+      .eq('reject_token', token)
+      .single();
+
+    if (error || !claim) {
+      res.status(404).send('<html><body><h2>Link not found or already used.</h2></body></html>');
+      return;
+    }
+    if (claim.status !== 'pending') {
+      res.redirect(`${frontendUrl}/?claim_already_processed=true`);
+      return;
+    }
+
+    await supabaseAdmin
+      .from('pending_claims')
+      .update({ status: 'rejected', resolved_at: new Date().toISOString() })
+      .eq('id', claim.id);
+
+    // Notify claimant
+    const { data: personData } = await supabaseAdmin
+      .from('persons')
+      .select('name')
+      .eq('id', claim.person_id)
+      .single();
+    const personName = personData?.name ?? 'the profile';
+
+    if (claim.claimant_email) {
+      await sendClaimOutcomeEmail({
+        to: claim.claimant_email,
+        personName,
+        approved: false,
+        frontendUrl,
+      }).catch(e => console.warn('Claim outcome email failed:', e));
+    }
+
+    res.redirect(`${frontendUrl}/?claim_rejected=true`);
+  } catch (err) {
+    console.error('[claim-reject]', err);
+    res.status(500).send('<html><body><h2>Something went wrong. Please open the app.</h2></body></html>');
+  }
+});
+
+// All authenticated routes from here down require a valid JWT
 personsRouter.use(authMiddleware);
 
 // Validation schemas
@@ -313,9 +463,9 @@ personsRouter.post('/check-phone-claim', async (req: AuthenticatedRequest, res: 
 });
 
 /**
- * POST /api/persons/claim-profile — Claim an existing person profile.
- * Links the current user's auth_user_id to the person record and 
- * optionally updates fields the user provided.
+ * POST /api/persons/claim-profile — Request to claim an existing person profile.
+ * Creates a pending_claims record and emails the original tree owner for approval.
+ * Auto-approves if an existing pending claim has passed its 7-day expiry.
  */
 personsRouter.post('/claim-profile', async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -350,63 +500,160 @@ personsRouter.post('/claim-profile', async (req: AuthenticatedRequest, res: Resp
       return;
     }
 
-    // Verify the person is claimable (no auth_user_id yet)
     if (person.auth_user_id) {
       res.status(409).json(errorResponse(ErrorCodes.CONFLICT, 'This profile has already been claimed'));
       return;
     }
 
-    // Build update data: link auth user + apply any profile updates
-    const updateData: Record<string, any> = {
-      auth_user_id: req.userId,
-      verified: true,
-      email: req.body.email || person.email,
-    };
+    // Check for an existing pending claim for this person by this user
+    const { data: existingClaim } = await supabaseAdmin
+      .from('pending_claims')
+      .select('*')
+      .eq('person_id', person_id)
+      .eq('status', 'pending')
+      .maybeSingle();
 
-    // Apply optional profile updates (user's input wins for provided fields)
-    if (profile_updates) {
-      const allowedFields = [
-        'username', 'given_name', 'surname', 'name', 'date_of_birth',
-        'occupation', 'community', 'gotra', 'city', 'state',
-        'nakshatra', 'rashi', 'native_place', 'ancestral_village',
-        'sub_caste', 'kula_devata', 'pravara',
-      ];
-      for (const field of allowedFields) {
-        if (profile_updates[field] !== undefined && profile_updates[field] !== null) {
-          updateData[field] = profile_updates[field];
-        }
+    if (existingClaim) {
+      const isExpired = new Date(existingClaim.expires_at) <= new Date();
+      if (!isExpired) {
+        // Still within window — tell the user to wait
+        res.json(successResponse({
+          status: 'pending',
+          message: 'Your claim request is awaiting approval from the family tree owner.',
+          expires_at: existingClaim.expires_at,
+        }));
+        return;
       }
+      // Expired — auto-approve and immediately link the user
+      await applyClaimToPerson(
+        { ...existingClaim, profile_updates: profile_updates || existingClaim.profile_updates },
+        'auto_approved',
+      );
+      const { data: updated } = await supabaseAdmin
+        .from('persons').select('*').eq('id', person_id).single();
+      res.json(successResponse({
+        status: 'approved',
+        person: updated,
+        message: 'Profile claimed! Welcome to your family tree.',
+      }));
+      return;
     }
 
-    // Update the person record
-    const { data: updated, error: updateError } = await supabaseAdmin
-      .from('persons')
-      .update(updateData)
-      .eq('id', person_id)
+    // Create a new pending claim
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const { data: newClaim, error: insertError } = await supabaseAdmin
+      .from('pending_claims')
+      .insert({
+        person_id,
+        claimed_by_user_id: req.userId,
+        created_by_user_id: person.created_by_user_id ?? null,
+        profile_updates: profile_updates ?? {},
+        claimant_email: req.body.email ?? null,
+        expires_at: expiresAt.toISOString(),
+      })
       .select()
       .single();
 
-    if (updateError) throw updateError;
+    if (insertError) throw insertError;
 
-    // Notify the original creator that the profile was claimed
+    // Send approval email to the original tree owner
     try {
-      await supabaseAdmin
-        .from('notifications')
-        .insert({
-          user_id: person.created_by_user_id,
-          type: 'invite_accepted',
-          title: 'Profile Claimed',
-          message: `${updated.name} has claimed their profile in your family tree!`,
-          data: { person_id: updated.id, claimed_by: req.userId },
-        });
-    } catch (notifError) {
-      // Non-critical — don't fail the claim if notification fails
-      console.warn('Failed to send claim notification:', notifError);
+      if (person.created_by_user_id) {
+        const { data: creatorAuth } = await supabaseAdmin.auth.admin.getUserById(
+          person.created_by_user_id,
+        );
+        const creatorEmail = creatorAuth?.user?.email;
+        if (creatorEmail) {
+          const backendBase =
+            process.env.BACKEND_URL ||
+            `https://${(req.headers.host ?? 'api.myfamilytree.app')}`;
+          await sendClaimApprovalRequest({
+            to: creatorEmail,
+            claimantName: profile_updates?.given_name
+              ? `${profile_updates.given_name}${profile_updates.surname ? ' ' + profile_updates.surname : ''}`
+              : 'Someone',
+            personName: person.name,
+            approveUrl: `${backendBase}/api/persons/claim-approve/${newClaim.approve_token}`,
+            rejectUrl:  `${backendBase}/api/persons/claim-reject/${newClaim.reject_token}`,
+            expiresAt,
+          });
+        }
+      }
+    } catch (emailErr) {
+      console.warn('[claim-profile] Email send failed (non-critical):', emailErr);
     }
 
-    res.json(successResponse({ 
-      person: updated, 
-      message: 'Profile claimed successfully! You are now part of this family tree.' 
+    // In-app notification to original creator
+    try {
+      if (person.created_by_user_id) {
+        await supabaseAdmin.from('notifications').insert({
+          user_id: person.created_by_user_id,
+          type: 'invite_accepted',
+          title: 'Profile Claim Request',
+          message: `Someone is requesting to claim ${person.name}'s profile. Open the email we sent you to approve or reject.`,
+          data: { person_id, pending_claim_id: newClaim.id },
+        });
+      }
+    } catch (notifErr) {
+      console.warn('[claim-profile] Notification failed (non-critical):', notifErr);
+    }
+
+    res.json(successResponse({
+      status: 'pending',
+      message: `Your claim request has been sent to ${person.name}'s family tree owner for approval. You'll be notified by email once they respond (auto-approves in 7 days).`,
+      expires_at: expiresAt.toISOString(),
+    }));
+  } catch (err: any) {
+    res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));
+  }
+});
+
+/**
+ * GET /api/persons/my-pending-claim
+ * Returns any pending claim for the current user, auto-approving if expired.
+ * Called by the Flutter app on startup / tree load to check claim state.
+ */
+personsRouter.get('/my-pending-claim', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { data: claim } = await supabaseAdmin
+      .from('pending_claims')
+      .select('*')
+      .eq('claimed_by_user_id', req.userId!)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!claim) {
+      res.json(successResponse({ hasPendingClaim: false }));
+      return;
+    }
+
+    const isExpired = new Date(claim.expires_at) <= new Date();
+    if (isExpired) {
+      await applyClaimToPerson(claim, 'auto_approved');
+      const { data: person } = await supabaseAdmin
+        .from('persons').select('*').eq('id', claim.person_id).single();
+      res.json(successResponse({ hasPendingClaim: false, autoApproved: true, person }));
+      return;
+    }
+
+    const { data: person } = await supabaseAdmin
+      .from('persons')
+      .select('id, name, photo_url')
+      .eq('id', claim.person_id)
+      .single();
+
+    res.json(successResponse({
+      hasPendingClaim: true,
+      claim: {
+        id: claim.id,
+        person_id: claim.person_id,
+        person_name: person?.name,
+        person_photo: person?.photo_url,
+        expires_at: claim.expires_at,
+        created_at: claim.created_at,
+      },
     }));
   } catch (err: any) {
     res.status(500).json(errorResponse(ErrorCodes.INTERNAL_ERROR, 'An internal error occurred'));

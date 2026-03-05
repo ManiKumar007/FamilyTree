@@ -24,7 +24,13 @@ class ClaimProfileScreen extends ConsumerStatefulWidget {
 
 class _ClaimProfileScreenState extends ConsumerState<ClaimProfileScreen> {
   bool _isClaiming = false;
+  bool _isCheckingStatus = false;
   String? _error;
+
+  // Pending-approval state — set when the backend returns status='pending'
+  bool _isPending = false;
+  String? _pendingPersonName;
+  String? _pendingExpiresAt;
 
   Future<void> _claimProfile(Map<String, dynamic> match) async {
     final person = match['person'] as Map<String, dynamic>;
@@ -34,7 +40,7 @@ class _ClaimProfileScreenState extends ConsumerState<ClaimProfileScreen> {
 
     try {
       final apiService = ref.read(apiServiceProvider);
-      await apiService.claimProfile(
+      final response = await apiService.claimProfile(
         personId: personId,
         email: widget.profileData?['email'] as String?,
         profileUpdates: widget.profileData != null ? {
@@ -50,44 +56,108 @@ class _ClaimProfileScreenState extends ConsumerState<ClaimProfileScreen> {
         } : null,
       );
 
-      // Give the backend a moment to propagate the auth_user_id link before
-      // we start polling — the claim endpoint writes to the DB synchronously
-      // but connection-pool / replica lag can cause getMyTree() to miss it.
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Pre-warm the tree using the claimed person's ID directly (avoids any
-      // auth_user_id lookup race condition on the first fetch after claim).
-      // We do this BEFORE invalidating familyTreeProvider so the cache is
-      // primed with the existing tree when the tree screen mounts.
-      try {
-        await apiService.getTree(personId);
-      } catch (_) {
-        // Non-critical — continue; tree screen can still refetch on its own.
+      // ── Pending: tree owner needs to approve first ──────────────────────
+      if (response['status'] == 'pending') {
+        setState(() {
+          _isPending = true;
+          _pendingPersonName = person['name'] as String? ?? 'the profile';
+          _pendingExpiresAt = response['expires_at'] as String?;
+          _isClaiming = false;
+        });
+        return;
       }
 
-      // Refresh myProfile first so hasProfileProvider returns true before
-      // familyTreeProvider fires (prevents an extra empty-tree render).
-      ref.invalidate(myProfileProvider);
-      await ref.read(myProfileProvider.future).catchError((_) => null);
-
-      // Now refresh the tree — myProfile is already settled so the backend
-      // lookup by auth_user_id should succeed reliably.
-      ref.invalidate(familyTreeProvider);
-      await ref.read(familyTreeProvider.future).catchError((_) => null);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile claimed! Welcome to your family tree.'),
-            backgroundColor: kSuccessColor,
-          ),
-        );
-        context.go('/tree');
-      }
+      // ── Approved (immediately or auto-approved after expiry) ────────────
+      await _finishApprovedClaim(apiService, personId);
     } catch (e) {
       setState(() {
         _error = e.toString().replaceAll('Exception: ', '');
         _isClaiming = false;
+      });
+    }
+  }
+
+  /// Shared helper used both after immediate approval and after
+  /// [_checkStatus] detects an auto-approved expired claim.
+  Future<void> _finishApprovedClaim(
+      ApiService apiService, String personId) async {
+    // Give the backend a moment to propagate the auth_user_id link before
+    // we start polling — the claim endpoint writes to the DB synchronously
+    // but connection-pool / replica lag can cause getMyTree() to miss it.
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Pre-warm the tree using the claimed person's ID directly (avoids any
+    // auth_user_id lookup race condition on the first fetch after claim).
+    try {
+      await apiService.getTree(personId);
+    } catch (_) {
+      // Non-critical — continue; tree screen can still refetch on its own.
+    }
+
+    // Refresh myProfile first so hasProfileProvider returns true before
+    // familyTreeProvider fires (prevents an extra empty-tree render).
+    ref.invalidate(myProfileProvider);
+    await ref.read(myProfileProvider.future).catchError((_) => null);
+
+    // Now refresh the tree — myProfile is already settled so the backend
+    // lookup by auth_user_id should succeed reliably.
+    ref.invalidate(familyTreeProvider);
+    await ref.read(familyTreeProvider.future).catchError((_) => null);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile claimed! Welcome to your family tree.'),
+          backgroundColor: kSuccessColor,
+        ),
+      );
+      context.go('/tree');
+    }
+  }
+
+  /// Called when the user taps "Check Status" on the pending-approval screen.
+  Future<void> _checkStatus() async {
+    setState(() { _isCheckingStatus = true; _error = null; });
+    try {
+      final apiService = ref.read(apiServiceProvider);
+      final data = await apiService.getMyPendingClaim();
+
+      if (data['autoApproved'] == true) {
+        // The 7-day window passed — backend auto-approved the claim.
+        final claimedPerson = data['person'] as Map<String, dynamic>?;
+        final claimedId = claimedPerson?['id'] as String?;
+        if (claimedId != null) {
+          await _finishApprovedClaim(apiService, claimedId);
+        } else {
+          // Fallback: no person ID returned — just refresh and go
+          ref.invalidate(myProfileProvider);
+          await ref.read(myProfileProvider.future).catchError((_) => null);
+          ref.invalidate(familyTreeProvider);
+          if (mounted) context.go('/tree');
+        }
+      } else if (data['hasPendingClaim'] == false) {
+        // Claim was rejected (or expired without auto-approve on the backend).
+        setState(() {
+          _isPending = false;
+          _isCheckingStatus = false;
+          _error = 'Your claim request was declined or expired. '  
+              'You may create a fresh profile instead.';
+        });
+      } else {
+        // Still pending — just re-show the pending screen.
+        setState(() { _isCheckingStatus = false; });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Still waiting for the family member to approve…'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isCheckingStatus = false;
+        _error = e.toString().replaceAll('Exception: ', '');
       });
     }
   }
@@ -112,7 +182,7 @@ class _ClaimProfileScreenState extends ConsumerState<ClaimProfileScreen> {
           tooltip: 'Back — Create new profile instead',
         ),
       ),
-      body: SingleChildScrollView(
+      body: _isPending ? _buildPendingBody() : SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Center(
           child: ConstrainedBox(
@@ -201,6 +271,153 @@ class _ClaimProfileScreenState extends ConsumerState<ClaimProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Full-screen body shown after the user submits a claim and it enters
+  /// "pending approval" state, waiting for the tree owner to respond.
+  Widget _buildPendingBody() {
+    // Parse the ISO expiry string into a human-readable date if possible.
+    String expiryText = 'within 7 days';
+    if (_pendingExpiresAt != null) {
+      try {
+        final dt = DateTime.parse(_pendingExpiresAt!).toLocal();
+        expiryText = '${dt.day}/${dt.month}/${dt.year}';
+      } catch (_) {}
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: AppSpacing.xl),
+              // Illustration
+              Center(
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: kWarningColor.withValues(alpha: 0.12),
+                  ),
+                  child: Icon(Icons.hourglass_top_rounded,
+                      size: 52, color: kWarningColor),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text(
+                'Awaiting Approval',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Your request to claim ${_pendingPersonName ?? 'this profile'} '
+                'has been sent to the family member who created the tree.',
+                style: TextStyle(fontSize: 15, color: kTextSecondary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              // Info card
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: kInfoColor.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: kInfoColor.withValues(alpha: 0.25)),
+                ),
+                child: Column(
+                  children: [
+                    _infoRow(Icons.email_outlined, kInfoColor,
+                        'An email has been sent to the tree owner for verification.'),
+                    const SizedBox(height: 8),
+                    _infoRow(Icons.schedule_rounded, kInfoColor,
+                        'If they don\'t respond by $expiryText, your claim will be auto-approved.'),
+                    const SizedBox(height: 8),
+                    _infoRow(Icons.notifications_none_rounded, kInfoColor,
+                        'You\'ll be notified once your request is approved or rejected.'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              // Check status button
+              ElevatedButton.icon(
+                onPressed: _isCheckingStatus ? null : _checkStatus,
+                icon: _isCheckingStatus
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Icon(Icons.refresh_rounded, size: 20),
+                label: Text(_isCheckingStatus
+                    ? 'Checking\u2026'
+                    : 'Check Approval Status'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  backgroundColor: kPrimaryColor,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              // Cancel / create fresh profile instead
+              OutlinedButton.icon(
+                onPressed: _isCheckingStatus
+                    ? null
+                    : () {
+                        setState(() {
+                          _isPending = false;
+                          _pendingPersonName = null;
+                          _pendingExpiresAt = null;
+                        });
+                      },
+                icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                label: const Text('Go back — choose a different match'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                      color: kTextSecondary.withValues(alpha: 0.35)),
+                ),
+              ),
+              if (_error != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: kErrorColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color: kErrorColor.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(_error!,
+                      style: TextStyle(color: kErrorColor, fontSize: 13)),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, Color color, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(text,
+              style: TextStyle(fontSize: 13, color: kTextSecondary)),
+        ),
+      ],
     );
   }
 

@@ -419,9 +419,10 @@ class ApiService {
     return wrapper['data'] as Map<String, dynamic>;
   }
 
-  /// Claim an existing person profile. Links the current user to that person.
-  /// [personId] - the ID of the person to claim.
-  /// [profileUpdates] - optional fields to override (user's input wins).
+  /// Claim an existing person profile.
+  /// Returns a status map: { status: 'pending'|'approved', ... }
+  /// - 'pending': claim request sent; check back via getMyPendingClaim().
+  /// - 'approved': auto-approved an expired pending claim; person record included.
   Future<Map<String, dynamic>> claimProfile({
     required String personId,
     String? email,
@@ -439,6 +440,21 @@ class ApiService {
     if (response.statusCode != 200 && response.statusCode != 201) {
       throw _handleError(response);
     }
+    final wrapper = jsonDecode(response.body);
+    return wrapper['data'] as Map<String, dynamic>;
+  }
+
+  // ==================== ERROR HANDLING ====================
+
+  /// Check if there is a pending claim for the current user.
+  /// If the claim has expired (7 days with no response), the backend
+  /// auto-approves it and returns { autoApproved: true, person: {...} }.
+  Future<Map<String, dynamic>> getMyPendingClaim() async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/persons/my-pending-claim'),
+      headers: _headers,
+    ).timeout(_timeout);
+    if (response.statusCode != 200) throw _handleError(response);
     final wrapper = jsonDecode(response.body);
     return wrapper['data'] as Map<String, dynamic>;
   }
