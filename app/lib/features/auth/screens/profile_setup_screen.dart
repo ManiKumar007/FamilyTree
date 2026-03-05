@@ -324,9 +324,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         await apiService.createPerson(profileData);
       }
 
-      // Refresh providers to reflect the updated/new profile
+      // Refresh providers and wait for them to settle so tree renders
+      // immediately without an empty-state flash.
       ref.invalidate(myProfileProvider);
       ref.invalidate(familyTreeProvider);
+      await Future.wait([
+        ref.read(myProfileProvider.future).catchError((_) => null),
+        ref.read(familyTreeProvider.future).catchError((_) => null),
+      ]);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -337,10 +342,11 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
           ),
         );
 
-        // Only show WhatsApp sharing dialog for brand-new profiles
-        if (_existingProfile == null) _showShareDialog();
+        // Await the share dialog — without await, context.go('/tree') fires
+        // immediately and navigates away before the dialog is visible.
+        if (_existingProfile == null) await _showShareDialog();
 
-        context.go('/tree');
+        if (mounted) context.go('/tree');
       }
     } catch (e, stackTrace) {
       if (kDebugMode) debugPrint('Error creating profile: $e');
@@ -369,8 +375,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     }
   }
 
-  void _showShareDialog() {
-    showDialog(
+  Future<void> _showShareDialog() async {
+    await showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Row(

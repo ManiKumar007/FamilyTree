@@ -78,6 +78,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     next.whenData((data) {
       if (data.event == AuthChangeEvent.signedOut) {
         ref.read(profileSkippedProvider.notifier).state = false;
+        ref.read(profileBannerDismissedProvider.notifier).state = false;
       }
     });
   });

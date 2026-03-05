@@ -292,7 +292,12 @@ class _MobileShell extends StatelessWidget {
                           Navigator.of(context).pop();
                           // Use the person record ID (not the Supabase auth UUID).
                           final personId = ref.read(myProfileProvider).value?.id;
-                          if (personId != null) context.push('/edit-profile/$personId');
+                          if (personId != null) {
+                            context.push('/edit-profile/$personId');
+                          } else {
+                            // No profile yet — send to setup
+                            context.push('/profile-setup');
+                          }
                         },
                       ),
                       // Sign out

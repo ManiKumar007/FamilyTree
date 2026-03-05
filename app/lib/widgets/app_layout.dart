@@ -172,7 +172,12 @@ class AppHeader extends ConsumerWidget implements PreferredSizeWidget {
                         } else if (value == 'profile') {
                           // Use the person record ID (not the Supabase auth UUID).
                           final personId = ref.read(myProfileProvider).value?.id;
-                          if (personId != null) context.go('/edit-profile/$personId');
+                          if (personId != null) {
+                            context.go('/edit-profile/$personId');
+                          } else {
+                            // No profile yet — send to setup
+                            context.go('/profile-setup');
+                          }
                         }
                       },
                       itemBuilder: (context) => [

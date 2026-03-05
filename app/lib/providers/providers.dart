@@ -186,5 +186,11 @@ final hasProfileProvider = Provider<bool?>((ref) {
 });
 
 /// Whether the user explicitly skipped profile setup in this session.
-/// Resets on app restart.
+/// Resets on app restart and on sign-out.
 final profileSkippedProvider = StateProvider<bool>((ref) => false);
+
+/// Whether the user dismissed the profile-completion reminder banner.
+/// Kept separate from [profileSkippedProvider] so that dismissing the banner
+/// does not affect the router redirect guard.
+/// Resets on app restart and on sign-out.
+final profileBannerDismissedProvider = StateProvider<bool>((ref) => false);

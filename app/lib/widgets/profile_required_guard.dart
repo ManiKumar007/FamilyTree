@@ -85,9 +85,11 @@ class ProfileCompletionBanner extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hasProfile = ref.watch(hasProfileProvider);
     final skipped = ref.watch(profileSkippedProvider);
+    final dismissed = ref.watch(profileBannerDismissedProvider);
 
-    // Only show if user is logged in, has no profile, and skipped setup
-    if (hasProfile != false || !skipped) {
+    // Only show if user is logged in, has no profile, skipped setup, and
+    // hasn't dismissed the banner this session.
+    if (hasProfile != false || !skipped || dismissed) {
       return const SizedBox.shrink();
     }
 
@@ -133,8 +135,10 @@ class ProfileCompletionBanner extends ConsumerWidget {
             const SizedBox(width: 4),
             InkWell(
               onTap: () {
-                // Dismiss banner for this session
-                ref.read(profileSkippedProvider.notifier).state = false;
+                // Dismiss banner without touching profileSkippedProvider
+                // (that flag is used by the router guard to allow navigation
+                // without redirecting to /profile-setup).
+                ref.read(profileBannerDismissedProvider.notifier).state = true;
               },
               borderRadius: BorderRadius.circular(12),
               child: Padding(
